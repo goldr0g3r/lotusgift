@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { UserSchema } from './schemas/user.schema';
-import { AccountSchema } from './schemas/account.schema';
+import { randomUUID } from 'crypto';
+import { hashPassword } from 'better-auth/crypto';
 import { CategorySchema } from './schemas/category.schema';
 import { ProductSchema } from './schemas/product.schema';
 import { ClientSchema } from './schemas/client.schema';
@@ -8,8 +8,6 @@ import { TestimonialSchema } from './schemas/testimonial.schema';
 import { BannerSchema } from './schemas/banner.schema';
 import { SiteSettingSchema } from './schemas/site-setting.schema';
 
-const UserModel = mongoose.model('User', UserSchema);
-const AccountModel = mongoose.model('Account', AccountSchema);
 const CategoryModel = mongoose.model('Category', CategorySchema);
 const ProductModel = mongoose.model('Product', ProductSchema);
 const ClientModel = mongoose.model('Client', ClientSchema);
@@ -17,40 +15,49 @@ const TestimonialModel = mongoose.model('Testimonial', TestimonialSchema);
 const BannerModel = mongoose.model('Banner', BannerSchema);
 const SiteSettingModel = mongoose.model('SiteSetting', SiteSettingSchema);
 
-async function createBetterAuthUser(
+async function seedAuthUser(
   email: string,
   password: string,
   name: string,
   role: string,
   extra: Record<string, string | undefined> = {},
 ) {
-  const { scryptSync, randomBytes, randomUUID } = await import('crypto');
-  const salt = randomBytes(16).toString('hex');
-  const hash = scryptSync(password, salt, 64).toString('hex');
-  const hashedPassword = `${salt}:${hash}`;
+  const db = mongoose.connection.db!;
+  const existing = await db.collection('user').findOne({ email });
+  if (existing) {
+    await db.collection('user').updateOne({ email }, { $set: { role } });
+    console.log(`  ${email} already exists, updated role → ${role}`);
+    return;
+  }
 
   const id = randomUUID();
+  const hashed = await hashPassword(password);
+  const now = new Date();
 
-  const user = await UserModel.create({
-    _id: id,
+  await db.collection('user').insertOne({
+    _id: id as any,
     email,
     name,
     role,
     emailVerified: false,
+    createdAt: now,
+    updatedAt: now,
     ...Object.fromEntries(
       Object.entries(extra).filter(([, v]) => v !== undefined),
     ),
   });
 
-  await AccountModel.create({
-    _id: randomUUID(),
-    accountId: user._id,
+  await db.collection('account').insertOne({
+    _id: randomUUID() as any,
+    accountId: id,
     providerId: 'credential',
-    userId: user._id,
-    password: hashedPassword,
+    userId: id,
+    password: hashed,
+    createdAt: now,
+    updatedAt: now,
   });
 
-  return user;
+  console.log(`  Created ${role}: ${email}`);
 }
 
 async function main() {
@@ -58,7 +65,7 @@ async function main() {
   await mongoose.connect(uri);
   console.log('Seeding database...');
 
-  await createBetterAuthUser(
+  await seedAuthUser(
     'admin@lotusgift.com',
     'admin123',
     'Admin User',
@@ -66,7 +73,7 @@ async function main() {
     { phone: '+91 9876543210' },
   );
 
-  await createBetterAuthUser(
+  await seedAuthUser(
     'client@example.com',
     'client123',
     'Demo Client',
