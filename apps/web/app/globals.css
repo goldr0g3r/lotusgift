@@ -1,50 +1,129 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
   }
-}
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.imgDark {
-  display: none;
-}
-
-@media (prefers-color-scheme: dark) {
   html {
-    color-scheme: dark;
+    scroll-behavior: smooth;
   }
 
-  .imgLight {
-    display: none;
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
   }
-  .imgDark {
-    display: unset;
+
+  body {
+    color: #1a1a2e;
+    background: #f8fafb;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  ::selection {
+    background-color: rgba(11, 122, 62, 0.15);
+    color: #075626;
+  }
+}
+
+@layer components {
+  /* — Buttons — */
+  .btn-primary {
+    @apply bg-brand-green-500 text-white px-6 py-2.5 rounded-xl font-semibold
+           shadow-sm shadow-brand-green-500/20
+           hover:bg-brand-green-600 hover:shadow-md hover:shadow-brand-green-500/25
+           active:bg-brand-green-700 active:shadow-sm active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply border border-brand-green-200 text-brand-green-600 bg-brand-green-50/50
+           px-6 py-2.5 rounded-xl font-semibold
+           hover:bg-brand-green-50 hover:border-brand-green-300 hover:shadow-sm
+           active:bg-brand-green-100 active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center gap-2;
+  }
+
+  .btn-accent {
+    @apply bg-brand-pink-500 text-white px-6 py-2.5 rounded-xl font-semibold
+           shadow-sm shadow-brand-pink-500/20
+           hover:bg-brand-pink-600 hover:shadow-md hover:shadow-brand-pink-500/25
+           active:bg-brand-pink-700 active:shadow-sm active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center gap-2;
+  }
+
+  .btn-ghost {
+    @apply text-gray-600 px-4 py-2 rounded-xl font-medium
+           hover:bg-gray-100 hover:text-gray-900
+           active:bg-gray-200 active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center gap-2;
+  }
+
+  /* — Card — */
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100/80 shadow-soft;
+  }
+
+  /* — Inputs — */
+  .input-field {
+    @apply w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white
+           focus:outline-none focus:ring-2 focus:ring-brand-green-500/20
+           focus:border-brand-green-400 focus:shadow-sm
+           placeholder:text-gray-400 transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  /* — Badges — */
+  .badge-green {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+           bg-brand-green-50 text-brand-green-600 ring-1 ring-brand-green-100;
+  }
+
+  .badge-pink {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+           bg-brand-pink-50 text-brand-pink-600 ring-1 ring-brand-pink-100;
+  }
+
+  .badge-gray {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+           bg-gray-100 text-gray-600 ring-1 ring-gray-200;
+  }
+
+  .badge-yellow {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+           bg-amber-50 text-amber-600 ring-1 ring-amber-200;
+  }
+
+  /* — Glass — */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/70 backdrop-blur-xl border border-white/10;
+  }
+
+  /* — Section heading utility — */
+  .section-heading {
+    @apply text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl;
+  }
+
+  .section-subheading {
+    @apply mt-4 text-lg text-gray-500 max-w-2xl;
+  }
+}
+
+/* — Smooth dotted grid background for sections — */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
