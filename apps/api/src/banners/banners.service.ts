@@ -1,28 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Banner, BannerDocument } from '../schemas';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
 
 @Injectable()
 export class BannersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@InjectModel(Banner.name) private bannerModel: Model<BannerDocument>) {}
 
   async findAll(activeOnly = false) {
-    const where = activeOnly ? { isActive: true } : {};
-    return this.prisma.banner.findMany({ where, orderBy: { sortOrder: 'asc' } });
+    const filter = activeOnly ? { isActive: true } : {};
+    return this.bannerModel.find(filter).sort({ sortOrder: 1 });
   }
 
   async create(dto: CreateBannerDto) {
-    return this.prisma.banner.create({ data: dto });
+    return this.bannerModel.create(dto);
   }
 
   async update(id: string, dto: UpdateBannerDto) {
-    const existing = await this.prisma.banner.findUnique({ where: { id } });
+    const existing = await this.bannerModel.findById(id);
     if (!existing) throw new NotFoundException(`Banner #${id} not found`);
-    return this.prisma.banner.update({ where: { id }, data: dto });
+    return this.bannerModel.findByIdAndUpdate(id, dto, { new: true });
   }
 
   async remove(id: string) {
-    return this.prisma.banner.delete({ where: { id } });
+    return this.bannerModel.findByIdAndDelete(id);
   }
 }

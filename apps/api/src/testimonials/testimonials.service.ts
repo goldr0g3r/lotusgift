@@ -1,28 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Testimonial, TestimonialDocument } from '../schemas';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
 
 @Injectable()
 export class TestimonialsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@InjectModel(Testimonial.name) private testimonialModel: Model<TestimonialDocument>) {}
 
   async findAll(activeOnly = false) {
-    const where = activeOnly ? { isActive: true } : {};
-    return this.prisma.testimonial.findMany({ where, orderBy: { sortOrder: 'asc' } });
+    const filter = activeOnly ? { isActive: true } : {};
+    return this.testimonialModel.find(filter).sort({ sortOrder: 1 });
   }
 
   async create(dto: CreateTestimonialDto) {
-    return this.prisma.testimonial.create({ data: dto });
+    return this.testimonialModel.create(dto);
   }
 
   async update(id: string, dto: UpdateTestimonialDto) {
-    const existing = await this.prisma.testimonial.findUnique({ where: { id } });
+    const existing = await this.testimonialModel.findById(id);
     if (!existing) throw new NotFoundException(`Testimonial #${id} not found`);
-    return this.prisma.testimonial.update({ where: { id }, data: dto });
+    return this.testimonialModel.findByIdAndUpdate(id, dto, { new: true });
   }
 
   async remove(id: string) {
-    return this.prisma.testimonial.delete({ where: { id } });
+    return this.testimonialModel.findByIdAndDelete(id);
   }
 }

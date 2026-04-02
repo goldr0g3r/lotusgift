@@ -11,12 +11,12 @@ export class ClientsController {
 
   @Get()
   @ApiQuery({ name: 'search', required: false })
-  findAll(@Query('search') search?: string) {
+  findAll(@Query('search') search?: string): Promise<any> {
     return this.clientsService.findAll({ search });
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<any> {
     return this.clientsService.findOne(id);
   }
 

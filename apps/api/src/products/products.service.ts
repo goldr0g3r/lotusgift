@@ -1,12 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Product, ProductDocument } from '../schemas';
+import { Category, CategoryDocument } from '../schemas';
+import { ProductImage, ProductImageDocument } from '../schemas';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel(ProductImage.name) private productImageModel: Model<ProductImageDocument>,
+  ) {}
 
   async findAll(params: {
     search?: string;
@@ -15,80 +22,103 @@ export class ProductsService {
     isFeatured?: string;
     slug?: string;
   }) {
-    const where: Prisma.ProductWhereInput = { isActive: true };
+    const filter: Record<string, unknown> = { isActive: true };
 
     if (params.search) {
-      where.OR = [
-        { name: { contains: params.search } },
-        { description: { contains: params.search } },
-        { sku: { contains: params.search } },
+      filter.$or = [
+        { name: { $regex: params.search, $options: 'i' } },
+        { description: { $regex: params.search, $options: 'i' } },
+        { sku: { $regex: params.search, $options: 'i' } },
       ];
     }
 
-    if (params.categoryId) where.categoryId = params.categoryId;
-    if (params.isWholesale !== undefined) where.isWholesale = params.isWholesale === 'true';
-    if (params.isFeatured !== undefined) where.isFeatured = params.isFeatured === 'true';
-    if (params.slug) where.category = { slug: params.slug };
+    if (params.categoryId) filter.categoryId = params.categoryId;
+    if (params.isWholesale !== undefined) filter.isWholesale = params.isWholesale === 'true';
+    if (params.isFeatured !== undefined) filter.isFeatured = params.isFeatured === 'true';
 
-    return this.prisma.product.findMany({
-      where,
-      include: { category: true, images: { orderBy: { sortOrder: 'asc' } } },
-      orderBy: { createdAt: 'desc' },
-    });
+    if (params.slug) {
+      const cat = await this.categoryModel.findOne({ slug: params.slug });
+      if (cat) filter.categoryId = cat._id;
+    }
+
+    const products = await this.productModel.find(filter).sort({ createdAt: -1 }).lean();
+    return this.attachCategoriesAndImages(products);
   }
 
   async findAllAdmin(params: { search?: string; categoryId?: string }) {
-    const where: Prisma.ProductWhereInput = {};
+    const filter: Record<string, unknown> = {};
     if (params.search) {
-      where.OR = [
-        { name: { contains: params.search } },
-        { sku: { contains: params.search } },
+      filter.$or = [
+        { name: { $regex: params.search, $options: 'i' } },
+        { sku: { $regex: params.search, $options: 'i' } },
       ];
     }
-    if (params.categoryId) where.categoryId = params.categoryId;
-    return this.prisma.product.findMany({
-      where,
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    if (params.categoryId) filter.categoryId = params.categoryId;
+
+    const products = await this.productModel.find(filter).sort({ createdAt: -1 }).lean();
+    return this.attachCategories(products);
   }
 
   async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
-      include: { category: true, images: { orderBy: { sortOrder: 'asc' } } },
-    });
+    const product = await this.productModel.findById(id).lean();
     if (!product) throw new NotFoundException(`Product #${id} not found`);
-    return product;
+    const [results] = await this.attachCategoriesAndImages([product]);
+    return results;
   }
 
   async findBySlug(slug: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { slug },
-      include: { category: true, images: { orderBy: { sortOrder: 'asc' } } },
-    });
-    if (!product) throw new NotFoundException(`Product not found`);
-    return product;
+    const product = await this.productModel.findOne({ slug }).lean();
+    if (!product) throw new NotFoundException('Product not found');
+    const [result] = await this.attachCategoriesAndImages([product]);
+    return result;
   }
 
-  async create(dto: CreateProductDto) {
-    return this.prisma.product.create({
-      data: dto,
-      include: { category: true },
-    });
+  async create(dto: CreateProductDto): Promise<any> {
+    const product = await this.productModel.create(dto);
+    const category = await this.categoryModel.findById(product.categoryId).lean();
+    return { ...product.toObject(), id: product._id, category };
   }
 
-  async update(id: string, dto: UpdateProductDto) {
+  async update(id: string, dto: UpdateProductDto): Promise<any> {
     await this.findOne(id);
-    return this.prisma.product.update({
-      where: { id },
-      data: dto,
-      include: { category: true },
-    });
+    const product = await this.productModel.findByIdAndUpdate(id, dto, { new: true }).lean();
+    const category = await this.categoryModel.findById(product!.categoryId).lean();
+    return { ...product, id: product!._id, category };
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.product.delete({ where: { id } });
+    return this.productModel.findByIdAndDelete(id);
+  }
+
+  private async attachCategories(products: any[]) {
+    const catIds = [...new Set(products.map((p) => p.categoryId))];
+    const categories = await this.categoryModel.find({ _id: { $in: catIds } }).lean();
+    const catMap = new Map(categories.map((c) => [c._id, c]));
+    return products.map((p) => ({ ...p, id: p._id, category: catMap.get(p.categoryId) || null }));
+  }
+
+  private async attachCategoriesAndImages(products: any[]) {
+    const catIds = [...new Set(products.map((p) => p.categoryId))];
+    const productIds = products.map((p) => p._id);
+
+    const [categories, images] = await Promise.all([
+      this.categoryModel.find({ _id: { $in: catIds } }).lean(),
+      this.productImageModel.find({ productId: { $in: productIds } }).sort({ sortOrder: 1 }).lean(),
+    ]);
+
+    const catMap = new Map(categories.map((c) => [c._id, c]));
+    const imgMap = new Map<string, typeof images>();
+    for (const img of images) {
+      if (!imgMap.has(img.productId)) imgMap.set(img.productId, []);
+      imgMap.get(img.productId)!.push(img);
+    }
+
+    return products.map((p) => ({
+      ...p,
+      id: p._id,
+      category: catMap.get(p.categoryId) || null,
+      images: imgMap.get(p._id) || [],
+    }));
   }
 }

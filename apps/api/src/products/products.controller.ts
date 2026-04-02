@@ -50,12 +50,12 @@ export class ProductsController {
   }
 
   @Post()
-  create(@Body() dto: CreateProductDto) {
+  create(@Body() dto: CreateProductDto): Promise<any> {
     return this.productsService.create(dto);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
+  update(@Param('id') id: string, @Body() dto: UpdateProductDto): Promise<any> {
     return this.productsService.update(id, dto);
   }
 

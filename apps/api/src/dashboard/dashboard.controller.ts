@@ -8,7 +8,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
-  getStats() {
+  getStats(): Promise<any> {
     return this.dashboardService.getStats();
   }
 }

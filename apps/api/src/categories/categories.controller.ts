@@ -12,19 +12,19 @@ export class CategoriesController {
 
   @Public()
   @Get()
-  findAll() {
+  findAll(): Promise<any> {
     return this.categoriesService.findAll();
   }
 
   @Public()
   @Get('slug/:slug')
-  findBySlug(@Param('slug') slug: string) {
+  findBySlug(@Param('slug') slug: string): Promise<any> {
     return this.categoriesService.findBySlug(slug);
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<any> {
     return this.categoriesService.findOne(id);
   }
 

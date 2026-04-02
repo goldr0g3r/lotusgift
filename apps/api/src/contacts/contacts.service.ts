@@ -1,35 +1,37 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { ContactInquiry, ContactInquiryDocument } from '../schemas';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Injectable()
 export class ContactsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@InjectModel(ContactInquiry.name) private contactModel: Model<ContactInquiryDocument>) {}
 
   async findAll(params: { status?: string }) {
-    const where: Record<string, unknown> = {};
-    if (params.status) where.status = params.status;
-    return this.prisma.contactInquiry.findMany({ where, orderBy: { createdAt: 'desc' } });
+    const filter: Record<string, unknown> = {};
+    if (params.status) filter.status = params.status;
+    return this.contactModel.find(filter).sort({ createdAt: -1 });
   }
 
   async findOne(id: string) {
-    const inquiry = await this.prisma.contactInquiry.findUnique({ where: { id } });
+    const inquiry = await this.contactModel.findById(id);
     if (!inquiry) throw new NotFoundException(`Inquiry #${id} not found`);
     return inquiry;
   }
 
   async create(dto: CreateContactDto) {
-    return this.prisma.contactInquiry.create({ data: dto });
+    return this.contactModel.create(dto);
   }
 
   async update(id: string, dto: UpdateContactDto) {
     await this.findOne(id);
-    return this.prisma.contactInquiry.update({ where: { id }, data: dto });
+    return this.contactModel.findByIdAndUpdate(id, dto, { new: true });
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.contactInquiry.delete({ where: { id } });
+    return this.contactModel.findByIdAndDelete(id);
   }
 }

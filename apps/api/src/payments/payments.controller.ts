@@ -19,7 +19,7 @@ export class PaymentsController {
   }
 
   @Post('convert-quote/:quoteId')
-  convertQuoteToOrder(@Param('quoteId') quoteId: string) {
+  convertQuoteToOrder(@Param('quoteId') quoteId: string): Promise<any> {
     return this.paymentsService.convertQuoteToOrder(quoteId);
   }
 }

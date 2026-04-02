@@ -1,16 +1,17 @@
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { MongoClient } from "mongodb";
 
-const prisma = new PrismaClient();
+const client = new MongoClient(
+  process.env.MONGODB_URI || "mongodb://localhost:27017/lotusgift",
+);
+const db = client.db();
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3001",
   secret: process.env.BETTER_AUTH_SECRET,
-  database: prismaAdapter(prisma, {
-    provider: "sqlite",
-  }),
+  database: mongodbAdapter(db, { client }),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
