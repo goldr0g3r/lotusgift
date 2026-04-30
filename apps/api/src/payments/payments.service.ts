@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -19,9 +19,12 @@ export class PaymentsService {
     private config: ConfigService,
   ) {}
 
-  async createRazorpayOrder(orderId: string) {
+  async createRazorpayOrder(orderId: string, actor: { id: string; role?: string }) {
     const order = await this.orderModel.findById(orderId);
     if (!order) throw new BadRequestException('Order not found');
+    if (actor.role !== 'admin' && order.userId && order.userId !== actor.id) {
+      throw new ForbiddenException('You can only pay for your own orders');
+    }
 
     const keyId = this.config.get('RAZORPAY_KEY_ID');
     const keySecret = this.config.get('RAZORPAY_KEY_SECRET');
@@ -56,7 +59,7 @@ export class PaymentsService {
     };
   }
 
-  async verifyPayment(dto: VerifyPaymentDto) {
+  async verifyPayment(dto: VerifyPaymentDto, actor: { id: string; role?: string }) {
     const keySecret = this.config.get('RAZORPAY_KEY_SECRET');
 
     if (!keySecret) {
@@ -64,6 +67,9 @@ export class PaymentsService {
         razorpayOrderId: dto.razorpay_order_id,
       });
       if (order) {
+        if (actor.role !== 'admin' && order.userId && order.userId !== actor.id) {
+          throw new ForbiddenException('You can only verify your own orders');
+        }
         await this.orderModel.findByIdAndUpdate(order._id, {
           razorpayPaymentId: dto.razorpay_payment_id,
           status: 'CONFIRMED',
@@ -88,6 +94,9 @@ export class PaymentsService {
     });
 
     if (order) {
+      if (actor.role !== 'admin' && order.userId && order.userId !== actor.id) {
+        throw new ForbiddenException('You can only verify your own orders');
+      }
       await this.orderModel.findByIdAndUpdate(order._id, {
         razorpayPaymentId: dto.razorpay_payment_id,
         status: 'CONFIRMED',
@@ -98,9 +107,12 @@ export class PaymentsService {
     return { success: true, message: 'Payment verified successfully' };
   }
 
-  async convertQuoteToOrder(quoteId: string): Promise<any> {
+  async convertQuoteToOrder(quoteId: string, actor: { id: string; role?: string }): Promise<any> {
     const quote = await this.quoteModel.findById(quoteId);
     if (!quote) throw new BadRequestException('Quote not found');
+    if (actor.role !== 'admin' && quote.userId && quote.userId !== actor.id) {
+      throw new ForbiddenException('You can only convert your own quotes');
+    }
     if (quote.status !== 'ACCEPTED') throw new BadRequestException('Quote must be accepted before converting to order');
 
     const quoteItems = await this.quoteItemModel.find({ quoteId });

@@ -4,9 +4,7 @@ import {
   MessageSquare, Search, Mail, Phone, Building2, Clock, CheckCircle2,
   Reply, Eye, X, AlertCircle,
 } from "lucide-react";
-import type { ContactInquiry } from "@/lib/api";
-
-const API = "http://localhost:3001/api";
+import { api, type ContactInquiry } from "@/lib/api";
 
 const STATUS_TABS = ["ALL", "NEW", "READ", "REPLIED", "CLOSED"];
 
@@ -26,13 +24,8 @@ export default function InquiriesPage() {
   const [adminNote, setAdminNote] = useState("");
   const [updating, setUpdating] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
   useEffect(() => {
-    fetch(`${API}/contacts`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
+    api.get<ContactInquiry[]>("/contacts")
       .then(data => setInquiries(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -43,13 +36,8 @@ export default function InquiriesPage() {
     try {
       const body: any = { status };
       if (note !== undefined) body.adminNote = note;
-      const res = await fetch(`${API}/contacts/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        const updated = await res.json();
+      const updated = await api.patch<ContactInquiry>(`/contacts/${id}`, body);
+      if (updated?.id) {
         setInquiries(prev => prev.map(i => i.id === id ? { ...i, ...updated } : i));
         if (selectedInquiry?.id === id) {
           setSelectedInquiry(prev => prev ? { ...prev, ...updated } : null);

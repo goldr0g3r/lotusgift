@@ -13,8 +13,7 @@ import {
   AlertCircle,
   Package,
 } from "lucide-react";
-
-const API = "http://localhost:3001/api";
+import { api } from "@/lib/api";
 
 type Quote = {
   id: string;
@@ -62,19 +61,9 @@ export default function PortalDashboardPage() {
     const parsed = JSON.parse(userData);
     setUser(parsed);
 
-    const token = localStorage.getItem("client_token");
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
     Promise.all([
-      fetch(`${API}/quotes?userId=${parsed.id}`, { headers }).then((r) =>
-        r.ok ? r.json() : [],
-      ),
-      fetch(`${API}/orders?userId=${parsed.id}`, { headers }).then((r) =>
-        r.ok ? r.json() : [],
-      ),
+      api.get<Quote[]>("/quotes").catch(() => []),
+      api.get<Order[]>("/orders").catch(() => []),
     ])
       .then(([q, o]) => {
         setQuotes(Array.isArray(q) ? q : []);

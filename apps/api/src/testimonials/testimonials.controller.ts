@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiQuery } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator';
+import { Roles } from '../auth/roles.decorator';
 import { TestimonialsService } from './testimonials.service';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
@@ -18,16 +19,19 @@ export class TestimonialsController {
   }
 
   @Post()
+  @Roles('admin')
   create(@Body() dto: CreateTestimonialDto) {
     return this.testimonialsService.create(dto);
   }
 
   @Patch(':id')
+  @Roles('admin')
   update(@Param('id') id: string, @Body() dto: UpdateTestimonialDto) {
     return this.testimonialsService.update(id, dto);
   }
 
   @Delete(':id')
+  @Roles('admin')
   remove(@Param('id') id: string) {
     return this.testimonialsService.remove(id);
   }

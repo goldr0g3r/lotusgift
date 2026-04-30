@@ -6,8 +6,7 @@ import {
   Truck, Package as PackageIcon, XCircle, IndianRupee,
 } from "lucide-react";
 import type { Order } from "@/lib/api";
-
-const API = "http://localhost:3001/api";
+import { api } from "@/lib/api";
 
 const STATUS_TABS = ["ALL", "PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
@@ -30,10 +29,7 @@ export default function OrdersPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/orders`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then(r => r.json())
+    api.get<Order[]>("/orders")
       .then(data => setOrders(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -42,12 +38,8 @@ export default function OrdersPage() {
   const updateStatus = async (orderId: string, status: string) => {
     setUpdatingId(orderId);
     try {
-      const res = await fetch(`${API}/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
-        body: JSON.stringify({ status }),
-      });
-      if (res.ok) {
+      const updateRes = await api.patch<Order>(`/orders/${orderId}`, { status });
+      if (updateRes?.id) {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
       }
     } catch (err) {

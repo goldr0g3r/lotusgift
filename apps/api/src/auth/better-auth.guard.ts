@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../auth';
 
 export const IS_PUBLIC_KEY = 'isPublic';
+const ROLES_KEY = 'roles';
 
 @Injectable()
 export class BetterAuthGuard implements CanActivate {
@@ -28,6 +30,16 @@ export class BetterAuthGuard implements CanActivate {
 
     if (!session) {
       throw new UnauthorizedException('Not authenticated');
+    }
+
+    const requiredRoles =
+      this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) || [];
+    const userRole = (session.user as { role?: string }).role || 'client';
+    if (requiredRoles.length > 0 && !requiredRoles.includes(userRole)) {
+      throw new ForbiddenException('Insufficient permissions');
     }
 
     request.user = session.user;

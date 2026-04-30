@@ -34,9 +34,10 @@ export class QuotesService {
     return `${prefix}${seq.toString().padStart(3, '0')}`;
   }
 
-  async findAll(params: { status?: string }) {
+  async findAll(params: { status?: string; userId?: string }) {
     const filter: Record<string, unknown> = {};
     if (params.status) filter.status = params.status;
+    if (params.userId) filter.userId = params.userId;
 
     const quotes = await this.quoteModel.find(filter).sort({ createdAt: -1 }).lean();
     return this.attachRelations(quotes);
@@ -63,6 +64,7 @@ export class QuotesService {
     const quote = await this.quoteModel.create({
       quoteNumber,
       clientId: dto.clientId,
+      userId: dto.userId,
       status: 'DRAFT',
       subtotal,
       discount,

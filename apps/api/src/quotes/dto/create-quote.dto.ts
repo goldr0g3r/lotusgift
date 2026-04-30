@@ -23,6 +23,10 @@ export class CreateQuoteItemDto {
 }
 
 export class CreateQuoteDto {
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
   @IsString()
   clientId: string;
 

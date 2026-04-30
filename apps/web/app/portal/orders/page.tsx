@@ -14,8 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-
-const API = "http://localhost:3001/api";
+import { api } from "@/lib/api";
 
 type OrderItem = {
   id: string;
@@ -77,21 +76,7 @@ export default function PortalOrdersPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem("client_user");
-    const token = localStorage.getItem("client_token");
-    if (!userData || !token) return;
-
-    const { id: userId } = JSON.parse(userData);
-    fetch(`${API}/orders?userId=${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load orders");
-        return res.json();
-      })
+    api.get<Order[]>("/orders")
       .then((data) => setOrders(Array.isArray(data) ? data : []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

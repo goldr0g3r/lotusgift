@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiQuery } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator';
+import { Roles } from '../auth/roles.decorator';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -28,6 +29,7 @@ export class ProductsController {
   }
 
   @Get('admin')
+  @Roles('admin')
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'categoryId', required: false })
   findAllAdmin(
@@ -50,16 +52,19 @@ export class ProductsController {
   }
 
   @Post()
+  @Roles('admin')
   create(@Body() dto: CreateProductDto): Promise<any> {
     return this.productsService.create(dto);
   }
 
   @Patch(':id')
+  @Roles('admin')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto): Promise<any> {
     return this.productsService.update(id, dto);
   }
 
   @Delete(':id')
+  @Roles('admin')
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
   }
