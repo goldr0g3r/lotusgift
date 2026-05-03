@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { UserPlus, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
 
@@ -50,13 +50,7 @@ export default function PortalRegisterPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Image
-            src="/logo.png"
-            alt="Lotus Gift"
-            width={160}
-            height={36}
-            className="mx-auto object-contain"
-          />
+          <Logo className="justify-center mx-auto" />
           <h1 className="mt-6 text-2xl font-bold text-gray-900">
             Create Account
           </h1>

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Baskervville:ital,wght@0,400..700;1,400..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,36 +35,22 @@
 }
 
 @layer components {
+
   /* — Buttons — */
   .btn-primary {
-    @apply bg-gradient-to-r from-brand-green-400 to-brand-green-600 text-white px-7 py-3 rounded-2xl font-bold
-           shadow-glow shadow-brand-green-500/30 shadow-inner-light
-           hover:shadow-glow hover:shadow-brand-green-500/50 hover:-translate-y-0.5
-           active:scale-[0.97] active:shadow-sm active:translate-y-0
-           transition-all duration-300 inline-flex items-center gap-2;
+    @apply bg-gradient-to-r from-brand-green-400 to-brand-green-600 text-white px-7 py-3 rounded-2xl font-bold shadow-glow shadow-brand-green-500/30 shadow-inner-light hover:shadow-glow hover:shadow-brand-green-500/50 hover:-translate-y-0.5 active:scale-[0.97] active:shadow-sm active:translate-y-0 transition-all duration-300 inline-flex items-center gap-2;
   }
 
   .btn-secondary {
-    @apply border border-brand-green-200/50 text-brand-green-600 bg-brand-green-50/50 backdrop-blur-md
-           px-7 py-3 rounded-2xl font-bold
-           hover:bg-brand-green-100/50 hover:border-brand-green-300 hover:shadow-glow hover:-translate-y-0.5
-           active:bg-brand-green-200/50 active:scale-[0.97] active:translate-y-0
-           transition-all duration-300 inline-flex items-center gap-2;
+    @apply border border-brand-green-200/50 text-brand-green-600 bg-brand-green-50/50 backdrop-blur-md px-7 py-3 rounded-2xl font-bold hover:bg-brand-green-100/50 hover:border-brand-green-300 hover:shadow-glow hover:-translate-y-0.5 active:bg-brand-green-200/50 active:scale-[0.97] active:translate-y-0 transition-all duration-300 inline-flex items-center gap-2;
   }
 
   .btn-accent {
-    @apply bg-gradient-to-r from-brand-pink-400 to-brand-pink-600 text-white px-7 py-3 rounded-2xl font-bold
-           shadow-glow-pink shadow-brand-pink-500/30 shadow-inner-light
-           hover:shadow-glow-pink hover:shadow-brand-pink-500/50 hover:-translate-y-0.5
-           active:scale-[0.97] active:shadow-sm active:translate-y-0
-           transition-all duration-300 inline-flex items-center gap-2;
+    @apply bg-gradient-to-r from-brand-pink-400 to-brand-pink-600 text-white px-7 py-3 rounded-2xl font-bold shadow-glow-pink shadow-brand-pink-500/30 shadow-inner-light hover:shadow-glow-pink hover:shadow-brand-pink-500/50 hover:-translate-y-0.5 active:scale-[0.97] active:shadow-sm active:translate-y-0 transition-all duration-300 inline-flex items-center gap-2;
   }
 
   .btn-ghost {
-    @apply text-slate-600 px-5 py-2.5 rounded-2xl font-semibold
-           hover:bg-slate-100 hover:text-slate-900
-           active:bg-slate-200 active:scale-[0.97]
-           transition-all duration-300 inline-flex items-center gap-2;
+    @apply text-slate-600 px-5 py-2.5 rounded-2xl font-semibold hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200 active:scale-[0.97] transition-all duration-300 inline-flex items-center gap-2;
   }
 
   /* — Card — */
@@ -72,10 +60,7 @@
 
   /* — Inputs — */
   .input-field {
-    @apply w-full px-5 py-3 border border-slate-200/60 rounded-2xl text-sm bg-white/70 backdrop-blur-md
-           focus:outline-none focus:ring-4 focus:ring-brand-green-500/15
-           focus:border-brand-green-400 focus:shadow-sm focus:bg-white
-           placeholder:text-slate-400 transition-all duration-300;
+    @apply w-full px-5 py-3 border border-slate-200/60 rounded-2xl text-sm bg-white/70 backdrop-blur-md focus:outline-none focus:ring-4 focus:ring-brand-green-500/15 focus:border-brand-green-400 focus:shadow-sm focus:bg-white placeholder:text-slate-400 transition-all duration-300;
   }
 
   .label {
@@ -84,23 +69,19 @@
 
   /* — Badges — */
   .badge-green {
-    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide
-           bg-brand-green-50 text-brand-green-600 ring-1 ring-brand-green-200/50 shadow-sm shadow-brand-green-500/10;
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide bg-brand-green-50 text-brand-green-600 ring-1 ring-brand-green-200/50 shadow-sm shadow-brand-green-500/10;
   }
 
   .badge-pink {
-    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide
-           bg-brand-pink-50 text-brand-pink-600 ring-1 ring-brand-pink-200/50 shadow-sm shadow-brand-pink-500/10;
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide bg-brand-pink-50 text-brand-pink-600 ring-1 ring-brand-pink-200/50 shadow-sm shadow-brand-pink-500/10;
   }
 
   .badge-gray {
-    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide
-           bg-slate-100 text-slate-600 ring-1 ring-slate-200 shadow-sm shadow-slate-500/5;
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide bg-slate-100 text-slate-600 ring-1 ring-slate-200 shadow-sm shadow-slate-500/5;
   }
 
   .badge-yellow {
-    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide
-           bg-amber-50 text-amber-600 ring-1 ring-amber-200/50 shadow-sm shadow-amber-500/10;
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide bg-amber-50 text-amber-600 ring-1 ring-amber-200/50 shadow-sm shadow-amber-500/10;
   }
 
   /* — Glass — */

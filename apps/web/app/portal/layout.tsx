@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
-import Image from "next/image";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import {
   LayoutDashboard,
   FileText,
@@ -85,13 +85,7 @@ export default function PortalLayout({
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100">
-            <Image
-              src="/logo.png"
-              alt="Lotus Gift"
-              width={140}
-              height={32}
-              className="object-contain"
-            />
+            <Logo className="scale-75 origin-left" />
             <button
               onClick={() => setSidebarOpen(false)}
               className="ml-auto lg:hidden p-1 rounded-md hover:bg-gray-100"
