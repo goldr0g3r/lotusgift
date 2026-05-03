@@ -30,7 +30,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     api.get<Order[]>("/orders")
-      .then(data => setOrders(Array.isArray(data) ? data : data.data || []))
+      .then((data: any) => setOrders(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

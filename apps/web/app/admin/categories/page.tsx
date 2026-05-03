@@ -33,7 +33,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     fetch(`${API}/categories`)
       .then(r => r.json())
-      .then(data => setCategories(Array.isArray(data) ? data : data.data || []))
+      .then((data: any) => setCategories(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

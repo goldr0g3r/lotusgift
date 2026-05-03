@@ -30,7 +30,7 @@ export default function QuotesPage() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then(r => r.json())
-      .then(data => setQuotes(Array.isArray(data) ? data : data.data || []))
+      .then((data: any) => setQuotes(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
