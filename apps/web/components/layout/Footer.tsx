@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { Phone, Mail, MapPin, ArrowRight } from "lucide-react";
 
 function FacebookIcon({ className }: { className?: string }) {
@@ -100,13 +100,7 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           {/* Brand column */}
           <div className="lg:col-span-4">
-            <Image
-              src="/logo.png"
-              alt="Lotus Gift"
-              width={140}
-              height={32}
-              className="object-contain brightness-0 invert opacity-90"
-            />
+            <Logo className="!text-white opacity-90" />
             <p className="mt-5 text-sm leading-relaxed text-gray-500 max-w-xs">
               Your trusted partner for premium promotional products and
               corporate gifts. Helping businesses make lasting impressions since

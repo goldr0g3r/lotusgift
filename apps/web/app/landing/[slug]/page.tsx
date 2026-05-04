@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { ArrowRight, Phone, CheckCircle, Star, Package, Users, Truck, Shield } from "lucide-react";
 
 const API = "http://localhost:3001/api";
@@ -76,7 +76,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-green-600 via-brand-green-700 to-brand-green-800 text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 lg:py-24 text-center">
-          <Image src="/logo.png" alt="Lotus Gift" width={160} height={36} className="mx-auto object-contain brightness-0 invert mb-8" />
+          <Logo className="!text-white mb-8 justify-center mx-auto" />
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">{pageData?.heading}</h1>
           {pageData?.subheading && <p className="mt-4 text-lg text-brand-green-100 max-w-2xl mx-auto">{pageData.subheading}</p>}
           <div className="mt-8 flex flex-wrap justify-center gap-4">

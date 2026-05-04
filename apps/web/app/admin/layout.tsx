@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import {
   LayoutDashboard, Package, FolderOpen, ShoppingCart, FileText,
   Users, MessageSquare, Palette, Settings, LogOut, Menu, X,
@@ -70,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <aside className={`fixed lg:sticky top-0 left-0 h-screen bg-white border-r border-gray-200 z-50 transition-all duration-200 flex flex-col ${sidebarOpen ? "w-64" : "w-20"} ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          {sidebarOpen && <Image src="/logo.png" alt="Lotus Gift" width={120} height={28} className="object-contain" />}
+          {sidebarOpen && <Logo className="scale-75 origin-left" />}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded-lg hover:bg-gray-100 hidden lg:block">
             <ChevronLeft className={`w-4 h-4 text-gray-400 transition-transform ${!sidebarOpen ? "rotate-180" : ""}`} />
           </button>

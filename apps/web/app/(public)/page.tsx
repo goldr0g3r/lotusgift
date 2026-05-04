@@ -141,7 +141,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-green-500 via-brand-green-600 to-brand-green-800" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-green-500 via-brand-green-600 to-brand-green-800 bg-[length:200%_200%] animate-gradient-shift" />
         {/* Animated mesh blobs */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-32 -left-32 h-[32rem] w-[32rem] rounded-full bg-brand-pink-400/15 blur-3xl animate-float" />
@@ -159,31 +159,31 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 pb-32 pt-20 sm:px-6 sm:pb-36 sm:pt-24 lg:px-8 lg:pb-44 lg:pt-32">
           <div className="mx-auto max-w-3xl text-center lg:max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm text-white text-sm font-medium mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-white text-sm font-bold tracking-wide mb-8 animate-fade-in-up">
               <Sparkles className="w-4 h-4 text-brand-pink-300" />
               Trusted corporate gifting partner
             </div>
-            <h1 className="text-balance text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.15]">
+            <h1 className="text-balance text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[4rem] lg:leading-[1.1] animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               Corporate Gifting,{" "}
-              <span className="bg-gradient-to-r from-brand-pink-200 via-white to-brand-green-200 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-brand-pink-300 via-white to-brand-green-200 bg-clip-text text-transparent drop-shadow-sm">
                 Made Effortless
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-brand-green-100/90 sm:text-xl">
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-brand-green-50/90 sm:text-xl animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
               Curated merchandise, clear pricing, and end-to-end support — so
               your brand shows up consistently, on budget, and on time.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
               <Link
                 href="/request-quote"
-                className="group bg-white text-brand-green-700 px-8 py-3.5 rounded-xl font-bold text-base shadow-lg shadow-black/10 hover:shadow-xl hover:shadow-black/15 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 inline-flex items-center gap-2"
+                className="group bg-white text-brand-green-700 px-8 py-4 rounded-2xl font-bold text-base shadow-glow hover:shadow-glow-pink active:scale-[0.97] transition-all duration-300 inline-flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: "0.3s" }}
               >
                 Get a Quote
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden />
               </Link>
               <a
                 href="#categories"
-                className="border border-white/30 bg-white/5 text-white backdrop-blur-sm px-7 py-3.5 rounded-xl font-semibold text-base hover:bg-white/10 active:bg-white/15 transition-all duration-200 inline-flex items-center gap-2"
+                className="border border-white/30 bg-white/5 text-white backdrop-blur-md px-8 py-4 rounded-2xl font-bold text-base hover:bg-white/10 active:bg-white/15 transition-all duration-300 inline-flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: "0.4s" }}
               >
                 Explore Categories
                 <ChevronRight className="h-5 w-5" aria-hidden />
@@ -432,10 +432,10 @@ export default function HomePage() {
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
                   href="/request-quote"
-                  className="group bg-white text-brand-green-700 px-8 py-3.5 rounded-xl font-bold text-base shadow-lg shadow-black/10 hover:shadow-xl hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 inline-flex items-center gap-2"
+                  className="group bg-white text-brand-green-700 px-8 py-4 rounded-2xl font-bold text-base shadow-glow hover:shadow-glow-pink hover:bg-slate-50 active:scale-[0.97] transition-all duration-300 inline-flex items-center gap-2"
                 >
                   Request a Quote
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden />
                 </Link>
                 <a
                   href="mailto:quotes@lotusgift.com"

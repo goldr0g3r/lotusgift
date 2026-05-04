@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import Image from "next/image";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import Logo from "@/components/Logo";
 import { signIn } from "@/lib/auth-client";
 
 export default function AdminLoginPage() {
@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-brand-green-50 to-brand-pink-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Image src="/logo.png" alt="Lotus Gift" width={180} height={40} className="mx-auto object-contain" />
+          <Logo className="justify-center mx-auto" />
           <p className="mt-2 text-sm text-gray-500">Admin Dashboard</p>
         </div>
         <div className="card p-8">

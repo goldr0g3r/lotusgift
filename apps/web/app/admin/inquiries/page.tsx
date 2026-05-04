@@ -26,7 +26,7 @@ export default function InquiriesPage() {
 
   useEffect(() => {
     api.get<ContactInquiry[]>("/contacts")
-      .then(data => setInquiries(Array.isArray(data) ? data : data.data || []))
+      .then((data: any) => setInquiries(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

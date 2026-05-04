@@ -23,7 +23,7 @@ export default function WholesalePage() {
   useEffect(() => {
     fetch(`${API}/products?isWholesale=true`)
       .then((r) => r.json())
-      .then((data) => setProducts(Array.isArray(data) ? data : data.data || []))
+      .then((data: any) => setProducts(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

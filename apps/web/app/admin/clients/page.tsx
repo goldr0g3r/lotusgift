@@ -19,7 +19,7 @@ export default function ClientsPage() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then(r => r.json())
-      .then(data => setClients(Array.isArray(data) ? data : data.data || []))
+      .then((data: any) => setClients(Array.isArray(data) ? data : data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

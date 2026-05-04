@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronDown, Phone, ArrowRight } from "lucide-react";
+import Logo from "@/components/Logo";
+import { Menu, X, ChevronDown, Phone, ArrowRight, Shield, User, Users } from "lucide-react";
 
 const categories = [
   { name: "Corporate Gift Sets", slug: "corporate-gift-sets" },
@@ -20,7 +21,8 @@ const categories = [
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Products", href: "/products", hasDropdown: true },
-  { label: "About Us", href: "/about" },
+  { label: "Categories", href: "/admin/categories" },
+  { label: "Clients", href: "/admin/clients", icon: Users },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -46,132 +48,120 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/80 backdrop-blur-xl shadow-soft border-b border-gray-100/60"
-          : "bg-white/95 backdrop-blur-md border-b border-transparent"
-      }`}
+      className={`fixed top-4 left-0 right-0 z-50 transition-all duration-500 px-4 sm:px-6 lg:px-8`}
     >
-      {/* Top bar */}
-      <div className="bg-gradient-to-r from-brand-green-600 via-brand-green-600 to-brand-green-700 text-white text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
-          <span className="font-medium tracking-wide opacity-90">
-            Premium Promotional Products & Corporate Gifts
-          </span>
-          <div className="hidden sm:flex items-center gap-5">
-            <a
-              href="tel:+919876543210"
-              className="flex items-center gap-1.5 hover:text-brand-green-100 transition-colors"
-            >
-              <Phone className="w-3 h-3" />
-              <span>+91 98765 43210</span>
-            </a>
-          </div>
-        </div>
-      </div>
+      <div
+        className={`mx-auto max-w-7xl rounded-[2rem] transition-all duration-500 ${
+          scrolled
+            ? "bg-white/80 backdrop-blur-2xl shadow-elevated border border-white/60"
+            : "bg-white/95 backdrop-blur-xl shadow-soft border border-transparent"
+        }`}
+      >
+        <nav className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            <Link href="/" className="flex-shrink-0 group">
+              <Logo className="transition-transform duration-300 group-hover:scale-[1.03]" />
+            </Link>
 
-      {/* Main nav */}
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex-shrink-0 group">
-            <Image
-              src="/logo.png"
-              alt="Lotus Gift"
-              width={140}
-              height={32}
-              className="object-contain transition-transform duration-200 group-hover:scale-[1.02]"
-            />
-          </Link>
-
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-0.5">
-            {navLinks.map((link) =>
-              link.hasDropdown ? (
-                <div
-                  key={link.href}
-                  className="relative"
-                  onMouseEnter={() => setProductsOpen(true)}
-                  onMouseLeave={() => setProductsOpen(false)}
-                >
-                  <Link
-                    href={link.href}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg inline-flex items-center gap-1 transition-all duration-200 ${
-                      isActive(link.href) || isActive("/categories")
-                        ? "text-brand-green-600 bg-brand-green-50"
-                        : "text-gray-600 hover:text-brand-green-600 hover:bg-brand-green-50/60"
-                    }`}
+            {/* Desktop nav */}
+            <div className="hidden lg:flex items-center gap-1">
+              {navLinks.map((link) =>
+                link.hasDropdown ? (
+                  <div
+                    key={link.href}
+                    className="relative"
+                    onMouseEnter={() => setProductsOpen(true)}
+                    onMouseLeave={() => setProductsOpen(false)}
                   >
-                    {link.label}
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform duration-200 ${productsOpen ? "rotate-180" : ""}`}
-                    />
-                  </Link>
-                  {productsOpen && (
-                    <div className="absolute top-full left-0 pt-2 z-50 animate-slide-down">
-                      <div className="w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-elevated border border-gray-100/80 p-2">
-                        {categories.map((cat) => (
-                          <Link
-                            key={cat.slug}
-                            href={`/categories/${cat.slug}`}
-                            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-brand-green-50 hover:text-brand-green-600 rounded-xl transition-colors"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand-green-300" />
-                            {cat.name}
-                          </Link>
-                        ))}
-                        <div className="border-t border-gray-100 mt-1 pt-1">
-                          <Link
-                            href="/products"
-                            className="flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-brand-green-600 hover:bg-brand-green-50 rounded-xl transition-colors"
-                          >
-                            View All Products
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
+                    <Link
+                      href={link.href}
+                      className={`px-3 py-2 text-sm font-bold rounded-xl inline-flex items-center gap-1.5 transition-all duration-300 ${
+                        isActive(link.href) || isActive("/categories")
+                          ? "text-brand-green-600 bg-brand-green-50/80 shadow-inner-light"
+                          : "text-slate-600 hover:text-brand-green-600 hover:bg-brand-green-50/50"
+                      }`}
+                    >
+                      {link.label}
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-300 ${productsOpen ? "rotate-180" : ""}`}
+                      />
+                    </Link>
+                    {productsOpen && (
+                      <div className="absolute top-full left-0 pt-3 z-50 animate-slide-down">
+                        <div className="w-72 bg-white/90 backdrop-blur-2xl rounded-[1.5rem] shadow-elevated-lg border border-slate-100 p-3">
+                          {categories.map((cat) => (
+                            <Link
+                              key={cat.slug}
+                              href={`/categories/${cat.slug}`}
+                              className="flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-brand-green-50 hover:text-brand-green-600 rounded-xl transition-colors"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-green-300 shadow-glow" />
+                              {cat.name}
+                            </Link>
+                          ))}
+                          <div className="border-t border-slate-100/60 mt-2 pt-2">
+                            <Link
+                              href="/products"
+                              className="flex items-center justify-between px-3 py-2.5 text-sm font-bold text-brand-green-600 hover:bg-brand-green-50 rounded-xl transition-colors"
+                            >
+                              View All Products
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    isActive(link.href)
-                      ? "text-brand-green-600 bg-brand-green-50"
-                      : "text-gray-600 hover:text-brand-green-600 hover:bg-brand-green-50/60"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ),
-            )}
-          </div>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/portal/login"
-              className="hidden sm:inline-flex text-sm font-medium text-gray-500 hover:text-brand-green-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
-            >
-              Client Login
-            </Link>
-            <Link href="/request-quote" className="btn-primary text-sm !py-2 !px-5">
-              Get a Quote
-            </Link>
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
-            >
-              {mobileOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`px-3 py-2 text-sm font-bold rounded-xl flex items-center gap-1.5 transition-all duration-300 ${
+                      isActive(link.href)
+                        ? "text-brand-green-600 bg-brand-green-50/80 shadow-inner-light"
+                        : "text-slate-600 hover:text-brand-green-600 hover:bg-brand-green-50/50"
+                    }`}
+                  >
+                    {link.icon && <link.icon className="w-4 h-4" />}
+                    {link.label}
+                  </Link>
+                ),
               )}
-            </button>
+            </div>
+
+            {/* Right actions */}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/admin"
+                className="hidden md:inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-brand-green-600 transition-all duration-300 px-3 py-2 rounded-xl hover:bg-slate-50"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+              <Link
+                href="/portal/login"
+                className="hidden md:inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-brand-green-600 transition-all duration-300 px-3 py-2 rounded-xl hover:bg-slate-50"
+              >
+                <User className="w-4 h-4" />
+                Login
+              </Link>
+              <Link href="/request-quote" className="btn-primary text-sm !py-2 !px-5 shadow-glow ml-1">
+                Get a Quote
+              </Link>
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="lg:hidden p-2 rounded-2xl hover:bg-slate-100 transition-colors ml-2"
+              >
+                {mobileOpen ? (
+                  <X className="w-6 h-6 text-slate-700" />
+                ) : (
+                  <Menu className="w-6 h-6 text-slate-700" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
@@ -183,12 +173,13 @@ export default function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`block px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+                  className={`px-4 py-3 text-sm font-medium rounded-xl flex items-center gap-2 transition-colors ${
                     isActive(link.href)
                       ? "text-brand-green-600 bg-brand-green-50"
-                      : "text-gray-700 hover:bg-gray-50"
+                      : "text-slate-700 hover:bg-slate-50"
                   }`}
                 >
+                  {link.icon && <link.icon className="w-4 h-4" />}
                   {link.label}
                 </Link>
               ))}
@@ -218,12 +209,20 @@ export default function Header() {
               </Link>
             ))}
 
-            <div className="border-t border-gray-100 mt-3 pt-3">
+            <div className="border-t border-slate-100 mt-3 pt-3">
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-4 py-3 text-sm font-bold text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
               <Link
                 href="/portal/login"
-                className="block px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-sm font-bold text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
               >
-                Client Login
+                <User className="w-4 h-4" />
+                Login
               </Link>
             </div>
           </div>
