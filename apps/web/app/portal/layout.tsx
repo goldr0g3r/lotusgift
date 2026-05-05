@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
-import Image from "next/image";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -15,7 +14,10 @@ import {
   Menu,
   X,
   ChevronRight,
+  Search,
+  Sparkles,
 } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 const navItems = [
   { name: "Dashboard", href: "/portal", icon: LayoutDashboard },
@@ -39,17 +41,13 @@ export default function PortalLayout({
 
   useEffect(() => {
     if (publicPaths.includes(pathname)) return;
-    if (!isPending && !user) {
-      router.push("/portal/login");
-    }
+    if (!isPending && !user) router.push("/portal/login");
   }, [pathname, isPending, user, router]);
 
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {
-        onSuccess: () => {
-          router.push("/portal/login");
-        },
+        onSuccess: () => router.push("/portal/login"),
       },
     });
   };
@@ -58,52 +56,57 @@ export default function PortalLayout({
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-gray-50/80 flex items-center justify-center">
-        <p className="text-sm text-gray-500">Loading…</p>
+      <div className="min-h-screen bg-lotus-cream flex items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-lotus-emerald-700 border-t-transparent" />
       </div>
     );
   }
 
   const isActive = (href: string) =>
-    href === "/portal" ? pathname === "/portal" : pathname.startsWith(href);
-
+    href === "/portal" ? pathname === "/portal" : pathname?.startsWith(href);
   const currentPage = navItems.find((item) => isActive(item.href));
 
   return (
-    <div className="min-h-screen bg-gray-50/80">
+    <div className="min-h-screen bg-lotus-cream">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-[260px] bg-white border-r border-gray-100
-                     transform transition-transform duration-200 ease-in-out
-                     lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={cn(
+          "fixed top-0 left-0 z-50 h-full w-[260px] bg-white border-r border-stone-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100">
-            <Image
-              src="/logo.png"
-              alt="Lotus Gift"
-              width={140}
-              height={32}
-              className="object-contain"
-            />
+          <div className="flex items-center gap-2.5 px-5 h-16 border-b border-stone-200">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-lotus-emerald-700 to-lotus-emerald-900 flex items-center justify-center shadow-warm">
+              <span className="font-display text-base font-bold text-white">L</span>
+            </div>
+            <div className="leading-none">
+              <span className="block font-display text-base font-bold tracking-tight text-stone-900">
+                Lotus Gift
+              </span>
+              <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.18em] text-lotus-gold-700">
+                Client Portal
+              </span>
+            </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="ml-auto lg:hidden p-1 rounded-md hover:bg-gray-100"
+              className="ml-auto lg:hidden p-1 rounded-md hover:bg-stone-100"
+              aria-label="Close menu"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-stone-500" />
             </button>
           </div>
-          <p className="px-5 pt-2 text-xs font-medium text-brand-green-500 uppercase tracking-wider">
-            Client Portal
-          </p>
 
-          <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <p className="px-3 pb-2 text-[10px] font-semibold text-stone-400 uppercase tracking-[0.18em]">
+              Workspace
+            </p>
             {navItems.map((item) => {
               const active = isActive(item.href);
               return (
@@ -111,49 +114,71 @@ export default function PortalLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                    ${
-                      active
-                        ? "bg-brand-green-50 text-brand-green-600"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                    active
+                      ? "bg-lotus-emerald-50 text-lotus-emerald-800"
+                      : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+                  )}
                 >
                   <item.icon
-                    className={`w-5 h-5 ${active ? "text-brand-green-500" : "text-gray-400"}`}
+                    className={cn(
+                      "w-5 h-5",
+                      active ? "text-lotus-emerald-700" : "text-stone-400",
+                    )}
                   />
                   {item.name}
                   {active && (
-                    <ChevronRight className="w-4 h-4 ml-auto text-brand-green-400" />
+                    <ChevronRight className="w-4 h-4 ml-auto text-lotus-emerald-500" />
                   )}
                 </Link>
               );
             })}
+
+            <p className="mt-6 px-3 pb-2 text-[10px] font-semibold text-stone-400 uppercase tracking-[0.18em]">
+              Quick links
+            </p>
+            <Link
+              href="/products"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+            >
+              <Sparkles className="w-5 h-5 text-lotus-gold-600" />
+              Browse catalog
+            </Link>
+            <Link
+              href="/request-quote"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+            >
+              <FileText className="w-5 h-5 text-lotus-gold-600" />
+              New quote request
+            </Link>
           </nav>
 
-          <div className="p-3 border-t border-gray-100 space-y-1">
+          <div className="p-3 border-t border-stone-200 space-y-1">
             <Link
               href="/"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-              Back to Website
+              <ArrowLeft className="w-5 h-5 text-stone-400" />
+              Back to website
             </Link>
 
             {user && (
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-brand-green-50/50">
-                <div className="w-8 h-8 rounded-full bg-brand-green-500 flex items-center justify-center text-white text-sm font-semibold">
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-lotus-emerald-50/60 ring-1 ring-lotus-emerald-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-lotus-emerald-700 to-lotus-emerald-900 text-white text-sm font-bold">
                   {user.name?.charAt(0).toUpperCase() || "C"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-semibold text-stone-900 truncate">
                     {user.name}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className="text-xs text-stone-500 truncate">{user.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-1 rounded-md hover:bg-white text-gray-400 hover:text-red-500"
+                  className="p-1.5 rounded-lg hover:bg-white text-stone-400 hover:text-lotus-rose-600"
                   title="Logout"
+                  aria-label="Logout"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -164,22 +189,30 @@ export default function PortalLayout({
       </aside>
 
       <div className="lg:pl-[260px]">
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <header className="sticky top-0 z-30 bg-lotus-cream/85 backdrop-blur-md border-b border-stone-200">
           <div className="flex items-center gap-4 px-4 sm:px-6 h-16">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100"
+              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-stone-100"
+              aria-label="Open menu"
             >
-              <Menu className="w-5 h-5 text-gray-600" />
+              <Menu className="w-5 h-5 text-stone-600" />
             </button>
-            <div className="flex-1">
-              <h1 className="text-lg font-semibold text-gray-900">
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-lg font-bold text-stone-900 truncate">
                 {currentPage?.name || "Portal"}
               </h1>
             </div>
+            <div className="hidden md:flex items-center relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <input
+                placeholder="Search quotes, orders..."
+                className="input-field !py-2 !pl-9 w-64 bg-white"
+              />
+            </div>
             {user && (
-              <span className="text-sm text-gray-500 hidden sm:block">
-                Welcome, {user.name}
+              <span className="text-sm text-stone-500 hidden xl:block">
+                Hi, {user.name}
               </span>
             )}
           </div>

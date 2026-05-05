@@ -14,146 +14,144 @@ import {
   Target,
   Heart,
   Package,
+  Sparkles,
 } from "lucide-react";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
+import { aboutImages } from "@/lib/images";
 
 const stats = [
   { label: "Products", value: "500+", icon: Package },
-  { label: "Happy Clients", value: "1,200+", icon: Users },
-  { label: "Years Experience", value: "5+", icon: Clock },
-  { label: "Avg. Rating", value: "4.8/5", icon: Star },
+  { label: "Happy clients", value: "1,200+", icon: Users },
+  { label: "Years experience", value: "5+", icon: Clock },
+  { label: "Avg. rating", value: "4.8/5", icon: Star },
+];
+
+const milestones = [
+  { year: "2019", title: "Founded", body: "Lotus Gift opens with a 50-product catalog and 8 wholesale clients." },
+  { year: "2021", title: "100+ teams", body: "Onboarded 100+ corporate teams across India for quarterly programs." },
+  { year: "2023", title: "Eco line", body: "Launched eco-friendly product line and dedicated sustainability QC." },
+  { year: "2025", title: "1,200+ clients", body: "Pan-India dispatch with 3–5 day SLA and dedicated coordinators." },
 ];
 
 const features = [
-  {
-    icon: Shield,
-    title: "Quality Guaranteed",
-    description:
-      "Every product goes through rigorous quality checks so your brand is always represented at its best.",
-  },
-  {
-    icon: Palette,
-    title: "Custom Branding",
-    description:
-      "Full-spectrum customisation — logos, colours, packaging — tailored to your brand identity.",
-  },
-  {
-    icon: Truck,
-    title: "Fast Delivery",
-    description:
-      "Streamlined production and logistics ensure your order reaches you on schedule, every time.",
-  },
-  {
-    icon: IndianRupee,
-    title: "Competitive Pricing",
-    description:
-      "Volume-based pricing tiers and transparent quotes mean maximum value for every rupee.",
-  },
-  {
-    icon: Headphones,
-    title: "Dedicated Support",
-    description:
-      "A single point of contact from brief to delivery, so you never have to chase updates.",
-  },
-  {
-    icon: Leaf,
-    title: "Eco-Friendly Options",
-    description:
-      "Sustainable materials and processes for brands that care about their environmental impact.",
-  },
+  { icon: Shield, title: "Quality guaranteed", description: "Every product goes through rigorous quality checks so your brand always represents at its best." },
+  { icon: Palette, title: "Custom branding", description: "Full-spectrum customisation — logos, colours, packaging — tailored to your brand identity." },
+  { icon: Truck, title: "Fast delivery", description: "Streamlined production and logistics ensure your order reaches you on schedule, every time." },
+  { icon: IndianRupee, title: "Competitive pricing", description: "Volume-based pricing tiers and transparent quotes mean maximum value for every rupee." },
+  { icon: Headphones, title: "Dedicated support", description: "A single point of contact from brief to delivery, so you never have to chase updates." },
+  { icon: Leaf, title: "Eco-friendly options", description: "Sustainable materials and processes for brands that care about their environmental impact." },
 ];
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-green-500 via-brand-green-600 to-brand-green-700">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-brand-pink-500 blur-3xl" />
-          <div className="absolute bottom-10 right-20 w-96 h-96 rounded-full bg-white blur-3xl" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 text-center">
-          <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur text-white border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <Heart className="w-4 h-4" />
-            Our Story
-          </span>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-            About <span className="text-brand-pink-300">Lotus Gift</span>
-          </h1>
-          <p className="mt-6 text-lg text-brand-green-100 max-w-2xl mx-auto leading-relaxed">
-            We help businesses create memorable brand experiences through
-            premium promotional products and corporate gifts.
-          </p>
+      <section className="relative overflow-hidden">
+        <div className="grid lg:grid-cols-2">
+          <div className="relative bg-gradient-to-br from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900 px-6 py-20 sm:px-10 lg:px-14 lg:py-28">
+            <div className="pointer-events-none absolute inset-0 lotus-pattern opacity-20" aria-hidden />
+            <div className="relative">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-lotus-gold-200 ring-1 ring-white/15">
+                <Heart className="h-3 w-3" />
+                Our story
+              </span>
+              <h1 className="mt-5 font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.05]">
+                Crafting brand moments that{" "}
+                <span className="bg-gradient-to-r from-lotus-gold-300 to-lotus-gold-100 bg-clip-text text-transparent">
+                  outlast a campaign
+                </span>
+              </h1>
+              <p className="mt-5 max-w-xl text-base sm:text-lg text-stone-100/85 leading-relaxed">
+                We help India&apos;s most thoughtful brands turn programs, gifts and
+                events into memorable, on-brand experiences.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href="/request-quote" className="btn-accent">
+                  <Sparkles className="h-4 w-4" />
+                  Start a quote
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/5 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/15 transition-colors"
+                >
+                  Talk to our team
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="relative h-[360px] lg:h-auto">
+            <ImageWithFallback
+              src={aboutImages.story.src}
+              alt={aboutImages.story.alt}
+              priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+          </div>
         </div>
       </section>
 
-      {/* Stats */}
       <section className="relative -mt-10 z-10 max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 grid grid-cols-2 lg:grid-cols-4 divide-x divide-gray-100">
+        <div className="card grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-stone-100">
           {stats.map((stat) => (
             <div key={stat.label} className="flex items-center gap-3 p-6">
-              <div className="w-10 h-10 rounded-lg bg-brand-green-50 flex items-center justify-center flex-shrink-0">
-                <stat.icon className="w-5 h-5 text-brand-green-500" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100">
+                <stat.icon className="h-5 w-5 text-lotus-emerald-700" />
               </div>
               <div>
-                <div className="text-xl font-bold text-gray-900">
+                <div className="text-xl font-bold text-stone-900 tabular-nums">
                   {stat.value}
                 </div>
-                <div className="text-xs text-gray-500">{stat.label}</div>
+                <div className="text-xs text-stone-500">{stat.label}</div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Mission & Vision */}
       <section className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="badge-green mb-3">Who We Are</span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-2">
-                Crafting Brand Moments{" "}
-                <span className="text-brand-green-600">Since 2019</span>
-              </h2>
-              <p className="mt-6 text-gray-500 leading-relaxed">
-                Lotus Gift was founded with a simple belief: the right
-                promotional product doesn&apos;t just carry a logo — it carries
-                a story. From a small catalogue to over 500 products, we have
-                grown into one of India&apos;s trusted sources for corporate
-                gifting and branded merchandise.
-              </p>
-              <p className="mt-4 text-gray-500 leading-relaxed">
-                We partner with businesses of every scale — from start-ups
-                ordering their first branded pens to enterprises running
-                nationwide campaigns — delivering quality, creativity, and
-                reliability at every step.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="card p-6">
-                <div className="w-12 h-12 rounded-xl bg-brand-green-50 flex items-center justify-center mb-4">
-                  <Target className="w-6 h-6 text-brand-green-500" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="relative aspect-[4/5] lg:aspect-square overflow-hidden rounded-3xl ring-1 ring-stone-200 shadow-elevated">
+            <ImageWithFallback
+              src={aboutImages.warehouse.src}
+              alt={aboutImages.warehouse.alt}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+          </div>
+          <div>
+            <span className="eyebrow">Who we are</span>
+            <h2 className="mt-3 h2-display">
+              Five years, hundreds of brands, one promise
+            </h2>
+            <p className="mt-5 text-stone-500 leading-relaxed">
+              Lotus Gift was founded with a simple belief: the right promotional product
+              doesn&apos;t just carry a logo — it carries a story. From a small catalogue
+              to over 500 products, we&apos;ve grown into one of India&apos;s trusted sources
+              for corporate gifting and branded merchandise.
+            </p>
+            <p className="mt-4 text-stone-500 leading-relaxed">
+              We partner with businesses of every scale — from start-ups ordering their
+              first branded pens to enterprises running nationwide campaigns — delivering
+              quality, creativity, and reliability at every step.
+            </p>
+            <div className="mt-8 grid sm:grid-cols-2 gap-4">
+              <div className="card p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100">
+                  <Target className="h-5 w-5 text-lotus-emerald-700" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  Our Mission
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  To empower brands with high-quality, customisable promotional
-                  products that create lasting impressions and real business
-                  value.
+                <h3 className="mt-3 font-semibold text-stone-900">Our mission</h3>
+                <p className="mt-1.5 text-sm text-stone-500 leading-relaxed">
+                  Empower brands with high-quality, customisable promotional products
+                  that create lasting impressions and real business value.
                 </p>
               </div>
-              <div className="card p-6">
-                <div className="w-12 h-12 rounded-xl bg-brand-pink-50 flex items-center justify-center mb-4">
-                  <Award className="w-6 h-6 text-brand-pink-500" />
+              <div className="card p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-gold-50 ring-1 ring-lotus-gold-100">
+                  <Award className="h-5 w-5 text-lotus-gold-700" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  Our Vision
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  To be India&apos;s most trusted promotional products partner,
-                  known for innovation, sustainability, and exceptional service.
+                <h3 className="mt-3 font-semibold text-stone-900">Our vision</h3>
+                <p className="mt-1.5 text-sm text-stone-500 leading-relaxed">
+                  Be India&apos;s most trusted promotional products partner — known for
+                  innovation, sustainability, and exceptional service.
                 </p>
               </div>
             </div>
@@ -161,64 +159,98 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-20 lg:py-28 bg-gradient-to-br from-gray-50 to-brand-green-50/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-lotus-cream py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="eyebrow">Milestones</span>
+            <h2 className="mt-3 h2-display">A short timeline</h2>
+          </div>
+          <div className="relative">
+            <div
+              aria-hidden
+              className="absolute left-1/2 top-0 hidden md:block h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-lotus-gold-300/60 to-transparent"
+            />
+            <ol className="space-y-8 md:space-y-10">
+              {milestones.map((m, i) => (
+                <li
+                  key={m.year}
+                  className={`md:grid md:grid-cols-2 md:gap-10 items-center ${
+                    i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
+                  }`}
+                >
+                  <div className="card p-5">
+                    <span className="eyebrow">{m.year}</span>
+                    <h3 className="mt-2 font-display text-lg font-bold text-stone-900">
+                      {m.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm text-stone-500 leading-relaxed">
+                      {m.body}
+                    </p>
+                  </div>
+                  <div className="hidden md:flex justify-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-lotus-gold-500 text-stone-900 font-bold ring-4 ring-lotus-cream">
+                      {i + 1}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="badge-pink mb-3">Why Choose Us</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-2">
-              What Sets Us Apart
-            </h2>
-            <p className="mt-4 text-gray-500 leading-relaxed">
-              Six reasons businesses across India trust Lotus Gift for their
-              promotional needs.
+            <span className="eyebrow">Why choose us</span>
+            <h2 className="mt-3 h2-display">What sets us apart</h2>
+            <p className="mt-4 text-stone-500 leading-relaxed">
+              Six reasons businesses across India trust Lotus Gift for their promotional needs.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="card p-6 hover:shadow-md transition-all duration-200"
+                className="card p-6 hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-green-50 to-brand-pink-50 flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-brand-green-500" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-lotus-cream to-lotus-gold-100 ring-1 ring-lotus-gold-200">
+                  <feature.icon className="h-6 w-6 text-lotus-gold-700" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  {feature.description}
-                </p>
+                <h3 className="mt-5 text-lg font-semibold text-stone-900">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-stone-500">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 lg:py-28 bg-brand-green-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Ready to Make Your Brand Stand Out?
-          </h2>
-          <p className="mt-4 text-brand-green-100 text-lg max-w-2xl mx-auto">
-            Whether you need 50 pens or 50,000 gift sets, we&apos;re here to
-            help. Get in touch or request a personalised quote today.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/request-quote"
-              className="bg-white text-brand-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors inline-flex items-center gap-2 shadow-lg shadow-brand-green-900/20"
-            >
-              Request a Quote
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/contact"
-              className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
-            >
-              Contact Us
-            </Link>
+      <section className="px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900 px-6 py-14 text-center shadow-elevated-lg sm:px-14 lg:py-20">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-lotus-gold-500/15 blur-3xl" />
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+              Ready to make your brand stand out?
+            </h2>
+            <p className="mt-4 text-lg text-stone-100/85 max-w-2xl mx-auto">
+              Whether you need 50 pens or 50,000 gift sets — we&apos;re here to help.
+              Tell us your brief and we&apos;ll come back with options.
+            </p>
+            <div className="mt-9 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/request-quote"
+                className="inline-flex items-center gap-2 rounded-xl bg-lotus-gold-500 px-7 py-3.5 text-sm font-bold text-stone-900 hover:bg-lotus-gold-400 transition-colors"
+              >
+                Request a Quote
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-7 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+              >
+                Contact us
+              </Link>
+            </div>
           </div>
         </div>
       </section>

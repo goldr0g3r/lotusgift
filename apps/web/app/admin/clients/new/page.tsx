@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { Input, Label, Textarea } from "@/components/ui/Input";
+import { toast } from "@/components/ui/Toaster";
 
-const API = "http://localhost:3001/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 export default function NewClientPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
@@ -24,10 +25,9 @@ export default function NewClientPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (!companyName || !contactName || !email) {
-      setError("Company name, contact person, and email are required");
+      toast.error("Company, contact, and email are required");
       return;
     }
 
@@ -53,6 +53,7 @@ export default function NewClientPage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: "include",
         body: JSON.stringify(body),
       });
 
@@ -61,9 +62,10 @@ export default function NewClientPage() {
         throw new Error(data.message || "Failed to create client");
       }
 
+      toast.success("Client created");
       router.push("/admin/clients");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create client");
+      toast.error(err instanceof Error ? err.message : "Failed to create");
     } finally {
       setSaving(false);
     }
@@ -74,68 +76,61 @@ export default function NewClientPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/clients"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+          className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Add New Client</h2>
-          <p className="text-gray-500 mt-1">Register a new business client</p>
+          <span className="eyebrow">Sales</span>
+          <h2 className="mt-1 font-display text-2xl font-bold text-stone-900">
+            Add new client
+          </h2>
+          <p className="text-stone-500 mt-1 text-sm">
+            Register a new business client
+          </p>
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="card p-6 space-y-5">
-          <h3 className="text-base font-semibold text-gray-900">
-            Company Information
+          <h3 className="font-display text-lg font-semibold text-stone-900">
+            Company information
           </h3>
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="sm:col-span-2">
-              <label className="label">Company Name *</label>
-              <input
-                type="text"
+              <Label>Company name *</Label>
+              <Input
                 placeholder="e.g., Acme Corporation"
-                className="input-field"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="label">Contact Person *</label>
-              <input
-                type="text"
+              <Label>Contact person *</Label>
+              <Input
                 placeholder="Full name"
-                className="input-field"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="label">Email *</label>
-              <input
+              <Label>Email *</Label>
+              <Input
                 type="email"
                 placeholder="contact@company.com"
-                className="input-field"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="label">Phone</label>
-              <input
+              <Label>Phone</Label>
+              <Input
                 type="tel"
                 placeholder="+91 98765 43210"
-                className="input-field"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
@@ -144,44 +139,38 @@ export default function NewClientPage() {
         </div>
 
         <div className="card p-6 space-y-5">
-          <h3 className="text-base font-semibold text-gray-900">Address</h3>
+          <h3 className="font-display text-lg font-semibold text-stone-900">
+            Address
+          </h3>
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="sm:col-span-2">
-              <label className="label">Street Address</label>
-              <input
-                type="text"
+              <Label>Street address</Label>
+              <Input
                 placeholder="123 Business Ave"
-                className="input-field"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
             <div>
-              <label className="label">City</label>
-              <input
-                type="text"
+              <Label>City</Label>
+              <Input
                 placeholder="City"
-                className="input-field"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
               />
             </div>
             <div>
-              <label className="label">State</label>
-              <input
-                type="text"
+              <Label>State</Label>
+              <Input
                 placeholder="State"
-                className="input-field"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
               />
             </div>
             <div>
-              <label className="label">PIN Code</label>
-              <input
-                type="text"
+              <Label>PIN code</Label>
+              <Input
                 placeholder="641001"
-                className="input-field"
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
               />
@@ -190,13 +179,12 @@ export default function NewClientPage() {
         </div>
 
         <div className="card p-6 space-y-5">
-          <h3 className="text-base font-semibold text-gray-900">
-            Additional Notes
+          <h3 className="font-display text-lg font-semibold text-stone-900">
+            Additional notes
           </h3>
-          <textarea
+          <Textarea
             rows={4}
             placeholder="Any relevant notes about this client..."
-            className="input-field resize-none"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -212,7 +200,7 @@ export default function NewClientPage() {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {saving ? "Saving..." : "Save Client"}
+            {saving ? "Saving..." : "Save client"}
           </button>
         </div>
       </form>

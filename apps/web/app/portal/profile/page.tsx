@@ -8,11 +8,13 @@ import {
   Building2,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Save,
 } from "lucide-react";
-
-const API = "http://localhost:3001/api";
+import { api } from "@/lib/api";
+import { Input, Label } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { toast } from "@/components/ui/Toaster";
 
 type UserProfile = {
   id: string;
@@ -26,30 +28,16 @@ type UserProfile = {
 
 export default function PortalProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("client_token");
-    if (!token) return;
-
-    fetch(`${API}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load profile");
-        return res.json();
-      })
-      .then((data: UserProfile) => {
+    api
+      .get<UserProfile>("/auth/me")
+      .then((data) => {
         setProfile(data);
         setForm({
           name: data.name || "",
@@ -57,15 +45,6 @@ export default function PortalProfilePage() {
           phone: data.phone || "",
           company: data.company || "",
         });
-        localStorage.setItem(
-          "client_user",
-          JSON.stringify({
-            id: data.id,
-            name: data.name,
-            email: data.email,
-            role: data.role,
-          }),
-        );
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -85,55 +64,25 @@ export default function PortalProfilePage() {
     }
     setEditing(false);
     setError("");
-    setSuccess("");
   };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setSaving(true);
-
-    const token = localStorage.getItem("client_token");
-    if (!token || !profile) return;
-
     try {
-      const res = await fetch(`${API}/auth/me`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name,
-          phone: form.phone || null,
-          company: form.company || null,
-        }),
+      const updated = await api.patch<UserProfile>("/auth/me", {
+        name: form.name,
+        phone: form.phone || null,
+        company: form.company || null,
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(
-          data.message || "Failed to update profile",
-        );
-      }
-
-      const updated: UserProfile = await res.json();
       setProfile(updated);
-      localStorage.setItem(
-        "client_user",
-        JSON.stringify({
-          id: updated.id,
-          name: updated.name,
-          email: updated.email,
-          role: updated.role,
-        }),
-      );
       setEditing(false);
-      setSuccess("Profile updated successfully");
-      setTimeout(() => setSuccess(""), 3000);
+      toast.success("Profile updated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
+      const msg = err instanceof Error ? err.message : "Update failed";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -141,8 +90,9 @@ export default function PortalProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-green-500" />
+      <div className="space-y-4 max-w-3xl">
+        <Skeleton className="h-32" />
+        <Skeleton className="h-64" />
       </div>
     );
   }
@@ -150,182 +100,156 @@ export default function PortalProfilePage() {
   if (!profile && error) {
     return (
       <div className="card p-12 text-center">
-        <AlertCircle className="w-12 h-12 text-red-300 mx-auto" />
-        <h3 className="mt-4 text-sm font-medium text-gray-900">
-          Error loading profile
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">{error}</p>
+        <AlertCircle className="w-12 h-12 text-lotus-rose-300 mx-auto" />
+        <h3 className="mt-4 font-semibold text-stone-900">Error loading profile</h3>
+        <p className="text-sm text-stone-500 mt-1">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Profile</h2>
-        <p className="text-gray-500 mt-1">Manage your account information</p>
+    <div className="space-y-6 max-w-3xl">
+      <div className="card overflow-hidden">
+        <div className="relative h-28 bg-gradient-to-r from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900">
+          <div className="pointer-events-none absolute inset-0 lotus-pattern opacity-30" />
+        </div>
+        <div className="px-6 pb-6 -mt-10 flex flex-col sm:flex-row sm:items-end gap-4">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-bold text-lotus-emerald-800 ring-4 ring-white shadow-soft">
+            {profile?.name?.charAt(0).toUpperCase() || "?"}
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-2xl font-bold text-stone-900">
+              {profile?.name}
+            </h2>
+            <p className="text-sm text-stone-500">{profile?.email}</p>
+          </div>
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="btn-secondary text-sm self-start sm:self-auto"
+            >
+              Edit profile
+            </button>
+          )}
+        </div>
       </div>
 
-      {success && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-brand-green-50 text-brand-green-600 text-sm">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          <span>{success}</span>
-        </div>
-      )}
-
       {error && editing && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-lotus-rose-50 text-lotus-rose-700 text-sm ring-1 ring-lotus-rose-100">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="card">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-brand-green-50 flex items-center justify-center">
-              <span className="text-xl font-bold text-brand-green-600">
-                {profile?.name?.charAt(0).toUpperCase() || "?"}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {profile?.name}
-              </h3>
-              <p className="text-sm text-gray-500">{profile?.email}</p>
-            </div>
-          </div>
-          {!editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="btn-secondary text-sm"
-            >
-              Edit Profile
-            </button>
-          )}
-        </div>
-
-        <form onSubmit={handleSave} className="p-6 space-y-5">
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="name" className="label">
-                <User className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
-                Full Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                required
-                disabled={!editing}
-                className="input-field disabled:bg-gray-50 disabled:text-gray-500"
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="label">
-                <Mail className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                disabled
-                className="input-field disabled:bg-gray-50 disabled:text-gray-500"
-                value={form.email}
-              />
-              {editing && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Email cannot be changed
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="label">
-                <Phone className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                disabled={!editing}
-                className="input-field disabled:bg-gray-50 disabled:text-gray-500"
-                placeholder="Not provided"
-                value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="company" className="label">
-                <Building2 className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
-                Company
-              </label>
-              <input
-                id="company"
-                type="text"
-                disabled={!editing}
-                className="input-field disabled:bg-gray-50 disabled:text-gray-500"
-                placeholder="Not provided"
-                value={form.company}
-                onChange={(e) => update("company", e.target.value)}
-              />
-            </div>
-          </div>
-
-          {editing && (
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="btn-primary"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
+      <Tabs defaultValue="info">
+        <TabsList>
+          <TabsTrigger value="info">Personal info</TabsTrigger>
+          <TabsTrigger value="account">Account</TabsTrigger>
+        </TabsList>
+        <TabsContent value="info">
+          <form onSubmit={handleSave} className="card p-6 space-y-5">
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div>
+                <Label htmlFor="name">
+                  <User className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
+                  Full name
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  required
+                  disabled={!editing}
+                  value={form.name}
+                  onChange={(e) => update("name", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">
+                  <Mail className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
+                  Email
+                </Label>
+                <Input id="email" type="email" disabled value={form.email} />
+                {editing && (
+                  <p className="text-xs text-stone-400 mt-1">
+                    Email cannot be changed
+                  </p>
                 )}
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="btn-ghost"
-              >
-                Cancel
-              </button>
+              </div>
+              <div>
+                <Label htmlFor="phone">
+                  <Phone className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
+                  Phone number
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  disabled={!editing}
+                  placeholder="Not provided"
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="company">
+                  <Building2 className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
+                  Company
+                </Label>
+                <Input
+                  id="company"
+                  type="text"
+                  disabled={!editing}
+                  placeholder="Not provided"
+                  value={form.company}
+                  onChange={(e) => update("company", e.target.value)}
+                />
+              </div>
             </div>
-          )}
-        </form>
-      </div>
 
-      <div className="card p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">
-          Account Details
-        </h3>
-        <div className="grid sm:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-500">Account Type</span>
-            <p className="font-medium text-gray-900 mt-0.5">
-              {profile?.role === "CLIENT" ? "Client" : profile?.role}
-            </p>
+            {editing && (
+              <div className="flex items-center gap-3 pt-2">
+                <button type="submit" disabled={saving} className="btn-primary">
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {saving ? "Saving..." : "Save changes"}
+                </button>
+                <button type="button" onClick={handleCancel} className="btn-ghost">
+                  Cancel
+                </button>
+              </div>
+            )}
+          </form>
+        </TabsContent>
+        <TabsContent value="account">
+          <div className="card p-6">
+            <h3 className="font-display text-lg font-bold text-stone-900">
+              Account details
+            </h3>
+            <div className="mt-4 grid sm:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-200">
+                <span className="text-xs text-stone-500">Account type</span>
+                <p className="font-medium text-stone-900 mt-0.5">
+                  {profile?.role === "CLIENT" ? "Client" : profile?.role}
+                </p>
+              </div>
+              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-200">
+                <span className="text-xs text-stone-500">Member since</span>
+                <p className="font-medium text-stone-900 mt-0.5">
+                  {profile?.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString("en-IN", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "—"}
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-500">Member Since</span>
-            <p className="font-medium text-gray-900 mt-0.5">
-              {profile?.createdAt
-                ? new Date(profile.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : "N/A"}
-            </p>
-          </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

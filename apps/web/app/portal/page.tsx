@@ -1,19 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   FileText,
   ShoppingCart,
   Clock,
   ArrowRight,
-  Loader2,
   Send,
   CheckCircle2,
   AlertCircle,
   Package,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
 import { api } from "@/lib/api";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Badge } from "@/components/ui/Badge";
 
 type Quote = {
   id: string;
@@ -32,35 +36,25 @@ type Order = {
   createdAt: string;
 };
 
-const quoteStatusConfig: Record<
+const quoteStatusTone: Record<
   string,
-  { label: string; className: string; icon: typeof Clock }
+  { label: string; tone: "gray" | "yellow" | "emerald" | "rose"; icon: typeof Clock }
 > = {
-  DRAFT: { label: "Draft", className: "badge-gray", icon: Clock },
-  SENT: { label: "Sent", className: "badge-yellow", icon: Send },
-  ACCEPTED: { label: "Accepted", className: "badge-green", icon: CheckCircle2 },
-  REJECTED: {
-    label: "Rejected",
-    className:
-      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600",
-    icon: AlertCircle,
-  },
-  EXPIRED: { label: "Expired", className: "badge-gray", icon: AlertCircle },
+  DRAFT: { label: "Draft", tone: "gray", icon: Clock },
+  SENT: { label: "Sent", tone: "yellow", icon: Send },
+  ACCEPTED: { label: "Accepted", tone: "emerald", icon: CheckCircle2 },
+  REJECTED: { label: "Rejected", tone: "rose", icon: AlertCircle },
+  EXPIRED: { label: "Expired", tone: "gray", icon: AlertCircle },
 };
 
 export default function PortalDashboardPage() {
-  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
+  const { data: sessionData } = useSession();
+  const user = sessionData?.user ?? null;
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem("client_user");
-    if (!userData) return;
-
-    const parsed = JSON.parse(userData);
-    setUser(parsed);
-
     Promise.all([
       api.get<Quote[]>("/quotes").catch(() => []),
       api.get<Order[]>("/orders").catch(() => []),
@@ -72,199 +66,235 @@ export default function PortalDashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const pendingQuotes = quotes.filter(
-    (q) => q.status === "SENT" || q.status === "DRAFT",
-  );
+  const pendingQuotes = quotes.filter((q) => q.status === "SENT" || q.status === "DRAFT");
+  const totalSpent = orders.reduce((s, o) => s + o.total, 0);
 
   const stats = [
     {
-      title: "Total Quotes",
+      title: "Total quotes",
       value: quotes.length,
       icon: FileText,
-      color: "green" as const,
+      tone: "emerald" as const,
       href: "/portal/quotes",
+      delta: "+ 2 this month",
     },
     {
-      title: "Total Orders",
+      title: "Total orders",
       value: orders.length,
       icon: ShoppingCart,
-      color: "pink" as const,
+      tone: "gold" as const,
       href: "/portal/orders",
+      delta: "+ 1 this month",
     },
     {
-      title: "Pending Quotes",
+      title: "Pending quotes",
       value: pendingQuotes.length,
       icon: Clock,
-      color: "amber" as const,
+      tone: "rose" as const,
       href: "/portal/quotes",
+      delta: pendingQuotes.length > 0 ? "Awaiting your review" : "All caught up",
+    },
+    {
+      title: "Lifetime spend",
+      value: `₹${totalSpent.toLocaleString("en-IN")}`,
+      icon: TrendingUp,
+      tone: "emerald" as const,
+      href: "/portal/orders",
+      delta: "Across orders",
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-green-500" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.name || "Client"}
-        </h2>
-        <p className="text-gray-500 mt-1">
-          Here&apos;s an overview of your quotes and orders.
-        </p>
+      <div className="rounded-2xl bg-gradient-to-br from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900 p-6 sm:p-8 text-white relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-lotus-gold-500/15 blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-lotus-gold-200 ring-1 ring-white/15">
+              <Sparkles className="h-3 w-3" />
+              Welcome back
+            </span>
+            <h2 className="mt-3 font-display text-2xl sm:text-3xl font-bold">
+              {user?.name ? `Hi ${user.name.split(" ")[0]},` : "Hi there,"} let&apos;s
+              build your next program
+            </h2>
+            <p className="mt-2 text-sm text-stone-100/80 max-w-xl">
+              Browse fresh ideas, request quotes, or track orders in flight.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/request-quote"
+              className="inline-flex items-center gap-2 rounded-xl bg-lotus-gold-500 px-5 py-2.5 text-sm font-bold text-stone-900 hover:bg-lotus-gold-400 transition-colors"
+            >
+              New quote
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/15"
+            >
+              Browse catalog
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <Link
             key={stat.title}
             href={stat.href}
-            className="card p-5 hover:shadow-md transition-all group"
+            className="card p-5 hover:shadow-elevated hover:-translate-y-0.5 transition-all group"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  stat.color === "green"
-                    ? "bg-brand-green-50"
-                    : stat.color === "pink"
-                      ? "bg-brand-pink-50"
-                      : "bg-amber-50"
-                }`}
+                className={
+                  stat.tone === "emerald"
+                    ? "flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100"
+                    : stat.tone === "gold"
+                      ? "flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-gold-50 ring-1 ring-lotus-gold-100"
+                      : "flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-rose-50 ring-1 ring-lotus-rose-100"
+                }
               >
                 <stat.icon
-                  className={`w-5 h-5 ${
-                    stat.color === "green"
-                      ? "text-brand-green-500"
-                      : stat.color === "pink"
-                        ? "text-brand-pink-500"
-                        : "text-amber-500"
-                  }`}
+                  className={
+                    stat.tone === "emerald"
+                      ? "h-5 w-5 text-lotus-emerald-700"
+                      : stat.tone === "gold"
+                        ? "h-5 w-5 text-lotus-gold-700"
+                        : "h-5 w-5 text-lotus-rose-700"
+                  }
                 />
               </div>
+              <ArrowRight className="h-4 w-4 text-stone-300 group-hover:translate-x-0.5 group-hover:text-lotus-emerald-700 transition" />
             </div>
             <div className="mt-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {stat.value}
+              <div className="text-2xl font-bold text-stone-900 tabular-nums">
+                {loading ? <Skeleton className="h-6 w-20" /> : stat.value}
               </div>
-              <div className="text-sm text-gray-500 mt-0.5">{stat.title}</div>
+              <div className="text-sm text-stone-500 mt-0.5">{stat.title}</div>
+              <div className="mt-2 text-[11px] text-stone-400">{stat.delta}</div>
             </div>
           </Link>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Recent Quotes</h3>
+        <div className="lg:col-span-2 card overflow-hidden">
+          <div className="flex items-center justify-between p-5 border-b border-stone-100">
+            <h3 className="font-display text-lg font-bold text-stone-900">
+              Recent quotes
+            </h3>
             <Link
               href="/portal/quotes"
-              className="text-sm text-brand-green-600 hover:text-brand-green-700 font-medium inline-flex items-center gap-1"
+              className="text-sm text-lotus-emerald-700 hover:text-lotus-emerald-900 font-semibold inline-flex items-center gap-1"
             >
               View all
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          {quotes.length === 0 ? (
-            <div className="p-8 text-center">
-              <FileText className="w-10 h-10 text-gray-200 mx-auto" />
-              <p className="text-sm text-gray-500 mt-3">No quotes yet</p>
+          {loading ? (
+            <div className="p-5 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-14" />
+              ))}
+            </div>
+          ) : quotes.length === 0 ? (
+            <div className="p-10 text-center">
+              <FileText className="w-10 h-10 text-stone-200 mx-auto" />
+              <p className="text-sm text-stone-500 mt-3">No quotes yet</p>
+              <Link href="/request-quote" className="btn-primary mt-4 text-sm">
+                Start your first quote
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-stone-100">
               {quotes.slice(0, 5).map((quote) => {
-                const config = quoteStatusConfig[quote.status] || {
-                  label: quote.status,
-                  className: "badge-gray",
-                  icon: Clock,
-                };
+                const cfg = quoteStatusTone[quote.status] || quoteStatusTone.DRAFT!;
+                const Icon = cfg.icon;
                 return (
-                  <div
+                  <Link
                     key={quote.id}
-                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/50 transition-colors"
+                    href="/portal/quotes"
+                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-stone-50/60 transition-colors"
                   >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-50 ring-1 ring-stone-200">
+                      <FileText className="h-5 w-5 text-stone-400" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-stone-900">
                           {quote.quoteNumber}
                         </span>
-                        <span className={config.className}>
-                          {config.label}
-                        </span>
+                        <Badge tone={cfg.tone}>
+                          <Icon className="w-3 h-3" />
+                          {cfg.label}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {quote.items?.length || 0} items &middot;{" "}
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        {quote.items?.length || 0} items ·{" "}
                         {new Date(quote.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-sm font-bold text-stone-900 tabular-nums">
                         ₹{quote.total.toLocaleString("en-IN")}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
           )}
         </div>
 
-        <div className="card">
-          <div className="p-5 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Quick Actions</h3>
+        <div className="card overflow-hidden">
+          <div className="p-5 border-b border-stone-100">
+            <h3 className="font-display text-lg font-bold text-stone-900">
+              Quick actions
+            </h3>
           </div>
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-2">
             <Link
               href="/portal/quotes"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+              className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-stone-50 transition-colors group"
             >
-              <div className="w-10 h-10 rounded-lg bg-brand-green-50 flex items-center justify-center group-hover:bg-brand-green-100 transition-colors">
-                <FileText className="w-5 h-5 text-brand-green-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100">
+                <FileText className="h-5 w-5 text-lotus-emerald-700" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  View My Quotes
-                </p>
-                <p className="text-xs text-gray-500">
-                  Check status &amp; details
-                </p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-stone-900">View my quotes</p>
+                <p className="text-xs text-stone-500">Check status & details</p>
               </div>
+              <ArrowRight className="h-4 w-4 text-stone-300 group-hover:translate-x-0.5 group-hover:text-lotus-emerald-700 transition" />
             </Link>
             <Link
               href="/portal/orders"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+              className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-stone-50 transition-colors group"
             >
-              <div className="w-10 h-10 rounded-lg bg-brand-pink-50 flex items-center justify-center group-hover:bg-brand-pink-100 transition-colors">
-                <ShoppingCart className="w-5 h-5 text-brand-pink-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-gold-50 ring-1 ring-lotus-gold-100">
+                <ShoppingCart className="h-5 w-5 text-lotus-gold-700" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Track Orders
-                </p>
-                <p className="text-xs text-gray-500">
-                  View shipping &amp; progress
-                </p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-stone-900">Track orders</p>
+                <p className="text-xs text-stone-500">View shipping & progress</p>
               </div>
+              <ArrowRight className="h-4 w-4 text-stone-300 group-hover:translate-x-0.5 group-hover:text-lotus-emerald-700 transition" />
             </Link>
             <Link
               href="/products"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+              className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-stone-50 transition-colors group"
             >
-              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                <Package className="w-5 h-5 text-amber-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lotus-rose-50 ring-1 ring-lotus-rose-100">
+                <Package className="h-5 w-5 text-lotus-rose-700" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Browse Products
-                </p>
-                <p className="text-xs text-gray-500">
-                  Explore our catalog
-                </p>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-stone-900">Browse products</p>
+                <p className="text-xs text-stone-500">Explore the catalog</p>
               </div>
+              <ArrowRight className="h-4 w-4 text-stone-300 group-hover:translate-x-0.5 group-hover:text-lotus-emerald-700 transition" />
             </Link>
           </div>
         </div>

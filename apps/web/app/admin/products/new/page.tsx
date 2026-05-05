@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Save, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Upload, Save, Loader2 } from "lucide-react";
 import type { Category } from "@/lib/api";
+import { Input, Label, Select, Textarea } from "@/components/ui/Input";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
+import { toast } from "@/components/ui/Toaster";
+import { cn } from "@/lib/cn";
 
-const API = "http://localhost:3001/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 function slugify(text: string) {
   return text
@@ -22,7 +26,6 @@ export default function NewProductPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -46,7 +49,7 @@ export default function NewProductPage() {
       .then((data) =>
         setCategories(Array.isArray(data) ? data : data.data || []),
       )
-      .catch(() => setError("Failed to load categories"))
+      .catch(() => toast.error("Failed to load categories"))
       .finally(() => setLoadingCats(false));
   }, []);
 
@@ -57,10 +60,9 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (!name || !sku || !description || !categoryId || !priceFrom) {
-      setError("Please fill in all required fields");
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -95,6 +97,7 @@ export default function NewProductPage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: "include",
         body: JSON.stringify(body),
       });
 
@@ -103,11 +106,10 @@ export default function NewProductPage() {
         throw new Error(data.message || "Failed to create product");
       }
 
+      toast.success("Product created");
       router.push("/admin/products");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create product",
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to create");
     } finally {
       setSaving(false);
     }
@@ -118,72 +120,64 @@ export default function NewProductPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/products"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+          className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Add New Product</h2>
-          <p className="text-gray-500 mt-1">
+          <span className="eyebrow">Catalog</span>
+          <h2 className="mt-1 font-display text-2xl font-bold text-stone-900">
+            Add new product
+          </h2>
+          <p className="text-stone-500 mt-1 text-sm">
             Add a new product to your catalog
           </p>
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="card p-6 space-y-5">
-          <h3 className="text-base font-semibold text-gray-900">
-            Basic Information
+          <h3 className="font-display text-lg font-semibold text-stone-900">
+            Basic information
           </h3>
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="sm:col-span-2">
-              <label className="label">Product Name *</label>
-              <input
-                type="text"
-                placeholder="e.g., Custom Branded Pens"
-                className="input-field"
+              <Label>Product name *</Label>
+              <Input
+                placeholder="e.g., Custom branded pens"
                 value={name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="label">Slug</label>
-              <input
-                type="text"
-                className="input-field font-mono text-sm"
+              <Label>Slug</Label>
+              <Input
+                className="font-mono text-sm"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="auto-generated"
               />
             </div>
             <div>
-              <label className="label">SKU *</label>
-              <input
-                type="text"
+              <Label>SKU *</Label>
+              <Input
                 placeholder="e.g., PEN-001"
-                className="input-field font-mono"
+                className="font-mono"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="label">Category *</label>
+              <Label>Category *</Label>
               {loadingCats ? (
-                <div className="input-field flex items-center gap-2 text-gray-400">
+                <div className="flex items-center gap-2 text-stone-400 px-4 py-2.5 rounded-xl ring-1 ring-stone-200 bg-stone-50">
                   <Loader2 className="w-4 h-4 animate-spin" /> Loading...
                 </div>
               ) : (
-                <select
-                  className="input-field"
+                <Select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
                   required
@@ -196,36 +190,32 @@ export default function NewProductPage() {
                       {cat.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
             </div>
             <div>
-              <label className="label">Min Order Qty</label>
-              <input
+              <Label>Min order qty</Label>
+              <Input
                 type="number"
                 min="1"
                 placeholder="1"
-                className="input-field"
                 value={minOrderQty}
                 onChange={(e) => setMinOrderQty(e.target.value)}
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="label">Short Description</label>
-              <input
-                type="text"
+              <Label>Short description</Label>
+              <Input
                 placeholder="Brief one-liner for listings"
-                className="input-field"
                 value={shortDesc}
                 onChange={(e) => setShortDesc(e.target.value)}
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="label">Description *</label>
-              <textarea
+              <Label>Description *</Label>
+              <Textarea
                 rows={4}
                 placeholder="Describe the product, materials, customization options..."
-                className="input-field resize-none"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
@@ -235,99 +225,103 @@ export default function NewProductPage() {
         </div>
 
         <div className="card p-6 space-y-5">
-          <h3 className="text-base font-semibold text-gray-900">Pricing</h3>
+          <h3 className="font-display text-lg font-semibold text-stone-900">
+            Pricing
+          </h3>
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
-              <label className="label">Price From (₹) *</label>
-              <input
+              <Label>Price from (₹) *</Label>
+              <Input
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                className="input-field"
                 value={priceFrom}
                 onChange={(e) => setPriceFrom(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="label">Price To (₹)</label>
-              <input
+              <Label>Price to (₹)</Label>
+              <Input
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                className="input-field"
                 value={priceTo}
                 onChange={(e) => setPriceTo(e.target.value)}
               />
             </div>
             <div>
-              <label className="label">Stock Quantity</label>
-              <input
+              <Label>Stock quantity</Label>
+              <Input
                 type="number"
                 min="0"
                 placeholder="0"
-                className="input-field"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-5 flex items-center gap-6">
+          <div className="border-t border-stone-100 pt-5 flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-brand-green-500 focus:ring-brand-green-500"
+                className="w-4 h-4 rounded border-stone-300 text-lotus-emerald-700 focus:ring-lotus-emerald-500"
               />
-              <span className="text-sm text-gray-700">Featured Product</span>
+              <span className="text-sm text-stone-700">Featured product</span>
             </label>
           </div>
 
-          <div className="border-t border-gray-100 pt-5">
+          <div className="border-t border-stone-100 pt-5">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-medium text-gray-900">
-                  Wholesale Pricing
+                <h4 className="text-sm font-semibold text-stone-900">
+                  Wholesale pricing
                 </h4>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-stone-500 mt-0.5">
                   Enable wholesale pricing for bulk buyers
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsWholesale(!isWholesale)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${isWholesale ? "bg-brand-green-500" : "bg-gray-200"}`}
+                className={cn(
+                  "relative w-11 h-6 rounded-full transition-colors",
+                  isWholesale ? "bg-lotus-emerald-700" : "bg-stone-300",
+                )}
+                aria-label="Toggle wholesale"
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isWholesale ? "translate-x-5" : ""}`}
+                  className={cn(
+                    "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform",
+                    isWholesale && "translate-x-5",
+                  )}
                 />
               </button>
             </div>
             {isWholesale && (
               <div className="grid sm:grid-cols-2 gap-5 mt-5">
                 <div>
-                  <label className="label">Wholesale Price (₹)</label>
-                  <input
+                  <Label>Wholesale price (₹)</Label>
+                  <Input
                     type="number"
                     step="0.01"
                     min="0"
                     placeholder="0.00"
-                    className="input-field"
                     value={wholesalePrice}
                     onChange={(e) => setWholesalePrice(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="label">Minimum Quantity</label>
-                  <input
+                  <Label>Minimum quantity</Label>
+                  <Input
                     type="number"
                     min="1"
                     placeholder="e.g., 100"
-                    className="input-field"
                     value={wholesaleMinQty}
                     onChange={(e) => setWholesaleMinQty(e.target.value)}
                   />
@@ -338,27 +332,37 @@ export default function NewProductPage() {
         </div>
 
         <div className="card p-6 space-y-5">
-          <h3 className="text-base font-semibold text-gray-900">
-            Product Image
+          <h3 className="font-display text-lg font-semibold text-stone-900">
+            Product image
           </h3>
-          <div>
-            <label className="label">Image URL</label>
-            <input
-              type="url"
-              placeholder="https://example.com/image.jpg"
-              className="input-field"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
-          </div>
-          {!imageUrl && (
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center">
-              <Upload className="w-8 h-8 text-gray-300 mx-auto" />
-              <p className="text-sm text-gray-500 mt-3">
-                Or enter an image URL above
+          <div className="grid sm:grid-cols-[1fr_220px] gap-5">
+            <div>
+              <Label>Image URL</Label>
+              <Input
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+              />
+              <p className="text-xs text-stone-400 mt-2">
+                Paste a public image URL. Cloudinary upload coming soon.
               </p>
             </div>
-          )}
+            <div className="relative aspect-square rounded-xl overflow-hidden bg-stone-100 ring-1 ring-stone-200">
+              {imageUrl ? (
+                <ImageWithFallback
+                  src={imageUrl}
+                  alt="Product preview"
+                  sizes="220px"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-stone-400">
+                  <Upload className="w-7 h-7" />
+                  <span className="mt-2 text-xs">Preview</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-2">
@@ -371,7 +375,7 @@ export default function NewProductPage() {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {saving ? "Saving..." : "Save Product"}
+            {saving ? "Saving..." : "Save product"}
           </button>
         </div>
       </form>

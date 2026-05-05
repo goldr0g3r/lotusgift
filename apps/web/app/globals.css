@@ -20,87 +20,109 @@
   }
 
   body {
-    color: #1a1a2e;
-    background: #f8fafb;
+    color: #1f2937;
+    background: #faf7f2;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background-color: rgba(11, 122, 62, 0.15);
-    color: #075626;
+    background-color: rgba(16, 185, 129, 0.18);
+    color: #065f46;
   }
 }
 
 @layer components {
   /* — Buttons — */
   .btn-primary {
-    @apply bg-brand-green-500 text-white px-6 py-2.5 rounded-xl font-semibold
-           shadow-sm shadow-brand-green-500/20
-           hover:bg-brand-green-600 hover:shadow-md hover:shadow-brand-green-500/25
-           active:bg-brand-green-700 active:shadow-sm active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center gap-2;
+    @apply bg-lotus-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold
+           shadow-sm shadow-lotus-emerald-700/20
+           hover:bg-lotus-emerald-800 hover:shadow-md hover:shadow-lotus-emerald-700/25
+           active:bg-lotus-emerald-900 active:shadow-sm active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center justify-center gap-2;
   }
 
   .btn-secondary {
-    @apply border border-brand-green-200 text-brand-green-600 bg-brand-green-50/50
+    @apply border border-lotus-emerald-200 text-lotus-emerald-800 bg-lotus-emerald-50/60
            px-6 py-2.5 rounded-xl font-semibold
-           hover:bg-brand-green-50 hover:border-brand-green-300 hover:shadow-sm
-           active:bg-brand-green-100 active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center gap-2;
+           hover:bg-lotus-emerald-50 hover:border-lotus-emerald-300 hover:shadow-sm
+           active:bg-lotus-emerald-100 active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center justify-center gap-2;
   }
 
   .btn-accent {
-    @apply bg-brand-pink-500 text-white px-6 py-2.5 rounded-xl font-semibold
-           shadow-sm shadow-brand-pink-500/20
-           hover:bg-brand-pink-600 hover:shadow-md hover:shadow-brand-pink-500/25
-           active:bg-brand-pink-700 active:shadow-sm active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center gap-2;
+    @apply bg-lotus-gold-600 text-white px-6 py-2.5 rounded-xl font-semibold
+           shadow-sm shadow-lotus-gold-600/25
+           hover:bg-lotus-gold-700 hover:shadow-md hover:shadow-lotus-gold-700/25
+           active:bg-lotus-gold-800 active:shadow-sm active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center justify-center gap-2;
+  }
+
+  .btn-outline {
+    @apply border border-stone-300 text-stone-700 bg-white px-6 py-2.5 rounded-xl font-semibold
+           hover:bg-stone-50 hover:border-stone-400
+           active:bg-stone-100 active:scale-[0.98]
+           transition-all duration-200 inline-flex items-center justify-center gap-2;
   }
 
   .btn-ghost {
-    @apply text-gray-600 px-4 py-2 rounded-xl font-medium
-           hover:bg-gray-100 hover:text-gray-900
-           active:bg-gray-200 active:scale-[0.98]
+    @apply text-stone-600 px-4 py-2 rounded-xl font-medium
+           hover:bg-stone-100 hover:text-stone-900
+           active:bg-stone-200 active:scale-[0.98]
            transition-all duration-200 inline-flex items-center gap-2;
   }
 
   /* — Card — */
   .card {
-    @apply bg-white rounded-2xl border border-gray-100/80 shadow-soft;
+    @apply bg-white rounded-2xl border border-stone-200/70 shadow-soft;
+  }
+
+  .card-warm {
+    @apply bg-lotus-ivory rounded-2xl border border-lotus-gold-100 shadow-warm;
   }
 
   /* — Inputs — */
   .input-field {
-    @apply w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white
-           focus:outline-none focus:ring-2 focus:ring-brand-green-500/20
-           focus:border-brand-green-400 focus:shadow-sm
-           placeholder:text-gray-400 transition-all duration-200;
+    @apply w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-white
+           focus:outline-none focus:ring-2 focus:ring-lotus-emerald-500/20
+           focus:border-lotus-emerald-500
+           placeholder:text-stone-400 transition-all duration-200;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1.5;
+    @apply block text-sm font-medium text-stone-700 mb-1.5;
   }
 
   /* — Badges — */
   .badge-green {
     @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-brand-green-50 text-brand-green-600 ring-1 ring-brand-green-100;
+           bg-lotus-emerald-50 text-lotus-emerald-800 ring-1 ring-lotus-emerald-100;
   }
 
-  .badge-pink {
+  .badge-gold {
     @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-brand-pink-50 text-brand-pink-600 ring-1 ring-brand-pink-100;
+           bg-lotus-gold-50 text-lotus-gold-800 ring-1 ring-lotus-gold-100;
+  }
+
+  .badge-pink,
+  .badge-rose {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+           bg-lotus-rose-50 text-lotus-rose-700 ring-1 ring-lotus-rose-100;
   }
 
   .badge-gray {
     @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-gray-100 text-gray-600 ring-1 ring-gray-200;
+           bg-stone-100 text-stone-700 ring-1 ring-stone-200;
   }
 
   .badge-yellow {
     @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-amber-50 text-amber-600 ring-1 ring-amber-200;
+           bg-lotus-gold-50 text-lotus-gold-800 ring-1 ring-lotus-gold-200;
+  }
+
+  .badge-outline {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+           bg-white text-stone-600 ring-1 ring-stone-200;
   }
 
   /* — Glass — */
@@ -108,22 +130,63 @@
     @apply bg-white/70 backdrop-blur-xl border border-white/40;
   }
 
-  .glass-dark {
-    @apply bg-gray-900/70 backdrop-blur-xl border border-white/10;
+  .glass-warm {
+    @apply bg-lotus-ivory/80 backdrop-blur-xl border border-lotus-gold-100;
   }
 
-  /* — Section heading utility — */
+  .glass-dark {
+    @apply bg-stone-900/70 backdrop-blur-xl border border-white/10;
+  }
+
+  /* — Section heading utilities — */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.18em]
+           bg-lotus-gold-50 text-lotus-gold-800 ring-1 ring-lotus-gold-100;
+  }
+
+  .h1-display {
+    @apply font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.05] tracking-tight text-stone-900;
+  }
+
+  .h2-display {
+    @apply font-display text-3xl sm:text-4xl font-bold tracking-tight text-stone-900;
+  }
+
   .section-heading {
-    @apply text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl;
+    @apply h2-display;
   }
 
   .section-subheading {
-    @apply mt-4 text-lg text-gray-500 max-w-2xl;
+    @apply mt-4 text-lg text-stone-500 max-w-2xl;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 
 /* — Smooth dotted grid background for sections — */
 .dot-grid {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+.lotus-pattern {
+  background-image:
+    radial-gradient(circle at 25% 30%, rgba(217, 119, 6, 0.06) 0, transparent 35%),
+    radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.06) 0, transparent 35%);
 }

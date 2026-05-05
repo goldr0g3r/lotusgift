@@ -11,11 +11,13 @@ import {
   Send,
   Calculator,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
 import type { Client, Product } from "@/lib/api";
+import { Input, Label, Select, Textarea } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/components/ui/Toaster";
 
-const API = "http://localhost:3001/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 interface QuoteItem {
   productId: string;
@@ -31,7 +33,6 @@ export default function NewQuotePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const [clientId, setClientId] = useState("");
   const [validUntil, setValidUntil] = useState("");
@@ -46,14 +47,18 @@ export default function NewQuotePage() {
       : {};
 
     Promise.all([
-      fetch(`${API}/clients`, { headers }).then((r) => r.json()),
-      fetch(`${API}/products/admin`, { headers }).then((r) => r.json()),
+      fetch(`${API}/clients`, { headers, credentials: "include" }).then((r) =>
+        r.json(),
+      ),
+      fetch(`${API}/products/admin`, { headers, credentials: "include" }).then(
+        (r) => r.json(),
+      ),
     ])
       .then(([c, p]) => {
         setClients(Array.isArray(c) ? c : c.data || []);
         setProducts(Array.isArray(p) ? p : p.data || []);
       })
-      .catch(() => setError("Failed to load clients or products"))
+      .catch(() => toast.error("Failed to load clients or products"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -93,13 +98,12 @@ export default function NewQuotePage() {
   const total = Math.max(0, subtotal - discount);
 
   const handleSave = async (sendAfterSave: boolean) => {
-    setError("");
     if (!clientId) {
-      setError("Please select a client");
+      toast.error("Please select a client");
       return;
     }
     if (items.length === 0 || items.some((i) => !i.productId)) {
-      setError("Please add at least one product to the quote");
+      toast.error("Please add at least one product to the quote");
       return;
     }
 
@@ -113,6 +117,7 @@ export default function NewQuotePage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: "include",
         body: JSON.stringify({
           clientId,
           discount,
@@ -140,13 +145,15 @@ export default function NewQuotePage() {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
+          credentials: "include",
           body: JSON.stringify({ status: "SENT" }),
         });
       }
 
+      toast.success(sendAfterSave ? "Quote sent" : "Quote saved");
       router.push("/admin/quotes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create quote");
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -154,8 +161,12 @@ export default function NewQuotePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-green-500" />
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-72" />
+        <div className="grid lg:grid-cols-3 gap-6">
+          <Skeleton className="lg:col-span-2 h-96" />
+          <Skeleton className="h-96" />
+        </div>
       </div>
     );
   }
@@ -165,33 +176,31 @@ export default function NewQuotePage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/quotes"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+          className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Create Quote</h2>
-          <p className="text-gray-500 mt-1">
+          <span className="eyebrow">Sales</span>
+          <h2 className="mt-1 font-display text-2xl font-bold text-stone-900">
+            Create quote
+          </h2>
+          <p className="text-stone-500 mt-1 text-sm">
             Build a new quotation for a client
           </p>
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="card p-6 space-y-5">
-            <h3 className="text-base font-semibold text-gray-900">Client</h3>
+            <h3 className="font-display text-lg font-semibold text-stone-900">
+              Client
+            </h3>
             <div>
-              <label className="label">Select Client</label>
-              <select
-                className="input-field"
+              <Label>Select client</Label>
+              <Select
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
               >
@@ -203,13 +212,12 @@ export default function NewQuotePage() {
                     {client.companyName} ({client.contactName})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="label">Valid Until</label>
-              <input
+              <Label>Valid until</Label>
+              <Input
                 type="date"
-                className="input-field"
                 value={validUntil}
                 onChange={(e) => setValidUntil(e.target.value)}
               />
@@ -218,29 +226,26 @@ export default function NewQuotePage() {
 
           <div className="card p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-gray-900">
-                Line Items
+              <h3 className="font-display text-lg font-semibold text-stone-900">
+                Line items
               </h3>
               <button
                 type="button"
                 onClick={addItem}
-                className="btn-ghost text-sm text-brand-green-600 hover:text-brand-green-700"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-lotus-emerald-700 hover:text-lotus-emerald-900"
               >
-                <Plus className="w-4 h-4" />
-                Add Item
+                <Plus className="w-4 h-4" /> Add item
               </button>
             </div>
 
             {items.length === 0 ? (
-              <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-xl">
-                <Calculator className="w-8 h-8 text-gray-300 mx-auto" />
-                <p className="text-sm text-gray-500 mt-2">
-                  No items added yet
-                </p>
+              <div className="py-10 text-center border-2 border-dashed border-stone-200 rounded-2xl">
+                <Calculator className="w-8 h-8 text-stone-300 mx-auto" />
+                <p className="text-sm text-stone-500 mt-2">No items added yet</p>
                 <button
                   type="button"
                   onClick={addItem}
-                  className="mt-3 text-sm font-medium text-brand-green-600 hover:text-brand-green-700"
+                  className="mt-3 text-sm font-semibold text-lotus-emerald-700 hover:text-lotus-emerald-900"
                 >
                   + Add your first item
                 </button>
@@ -250,12 +255,12 @@ export default function NewQuotePage() {
                 {items.map((item, index) => (
                   <div
                     key={index}
-                    className="grid grid-cols-12 gap-3 items-end p-4 bg-gray-50/50 rounded-lg"
+                    className="grid grid-cols-12 gap-3 items-end p-4 bg-stone-50/60 rounded-2xl ring-1 ring-stone-200"
                   >
                     <div className="col-span-12 sm:col-span-5">
-                      <label className="label text-xs">Product</label>
-                      <select
-                        className="input-field text-sm"
+                      <Label className="!text-xs">Product</Label>
+                      <Select
+                        className="!text-sm"
                         value={item.productId}
                         onChange={(e) =>
                           handleProductSelect(index, e.target.value)
@@ -264,18 +269,17 @@ export default function NewQuotePage() {
                         <option value="">Select product</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name} (₹
-                            {p.priceFrom.toLocaleString("en-IN")})
+                            {p.name} (₹{p.priceFrom.toLocaleString("en-IN")})
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                     <div className="col-span-4 sm:col-span-2">
-                      <label className="label text-xs">Qty</label>
-                      <input
+                      <Label className="!text-xs">Qty</Label>
+                      <Input
                         type="number"
                         min="1"
-                        className="input-field text-sm"
+                        className="!text-sm"
                         value={item.quantity}
                         onChange={(e) =>
                           updateItem(index, {
@@ -285,12 +289,12 @@ export default function NewQuotePage() {
                       />
                     </div>
                     <div className="col-span-4 sm:col-span-2">
-                      <label className="label text-xs">Unit Price (₹)</label>
-                      <input
+                      <Label className="!text-xs">Unit (₹)</Label>
+                      <Input
                         type="number"
                         step="0.01"
                         min="0"
-                        className="input-field text-sm"
+                        className="!text-sm"
                         value={item.unitPrice}
                         onChange={(e) =>
                           updateItem(index, {
@@ -300,8 +304,8 @@ export default function NewQuotePage() {
                       />
                     </div>
                     <div className="col-span-3 sm:col-span-2">
-                      <label className="label text-xs">Total</label>
-                      <div className="text-sm font-semibold text-gray-900 py-2.5">
+                      <Label className="!text-xs">Total</Label>
+                      <div className="text-sm font-semibold text-stone-900 py-2.5 tabular-nums">
                         ₹
                         {(item.quantity * item.unitPrice).toLocaleString(
                           "en-IN",
@@ -312,7 +316,8 @@ export default function NewQuotePage() {
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="p-2 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500"
+                        className="p-2 rounded-md hover:bg-lotus-rose-50 text-stone-400 hover:text-lotus-rose-600"
+                        aria-label="Remove"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -324,11 +329,12 @@ export default function NewQuotePage() {
           </div>
 
           <div className="card p-6 space-y-5">
-            <h3 className="text-base font-semibold text-gray-900">Notes</h3>
-            <textarea
+            <h3 className="font-display text-lg font-semibold text-stone-900">
+              Notes
+            </h3>
+            <Textarea
               rows={3}
               placeholder="Additional notes, terms, or special instructions..."
-              className="input-field resize-none"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -337,23 +343,25 @@ export default function NewQuotePage() {
 
         <div className="space-y-6">
           <div className="card p-6 space-y-4 sticky top-24">
-            <h3 className="text-base font-semibold text-gray-900">Summary</h3>
+            <h3 className="font-display text-lg font-semibold text-stone-900">
+              Summary
+            </h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Items ({items.length})</span>
-                <span className="font-medium">
+                <span className="text-stone-500">Items ({items.length})</span>
+                <span className="font-medium tabular-nums">
                   ₹{subtotal.toLocaleString("en-IN")}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Discount</span>
+                <span className="text-stone-500">Discount</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">₹</span>
-                  <input
+                  <span className="text-stone-400">₹</span>
+                  <Input
                     type="number"
                     step="0.01"
                     min="0"
-                    className="input-field w-24 text-right text-sm py-1.5"
+                    className="!w-24 !text-right !text-sm !py-1.5"
                     value={discount}
                     onChange={(e) =>
                       setDiscount(Math.max(0, Number(e.target.value)))
@@ -361,9 +369,9 @@ export default function NewQuotePage() {
                   />
                 </div>
               </div>
-              <div className="border-t border-gray-100 pt-3 flex items-center justify-between">
-                <span className="font-semibold text-gray-900">Total</span>
-                <span className="text-xl font-bold text-brand-green-600">
+              <div className="border-t border-stone-100 pt-3 flex items-center justify-between">
+                <span className="font-semibold text-stone-900">Total</span>
+                <span className="font-display text-2xl font-bold text-lotus-emerald-700 tabular-nums">
                   ₹{total.toLocaleString("en-IN")}
                 </span>
               </div>
@@ -374,27 +382,27 @@ export default function NewQuotePage() {
                 type="button"
                 disabled={saving}
                 onClick={() => handleSave(false)}
-                className="btn-primary w-full justify-center"
+                className="btn-secondary w-full justify-center"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                Save as Draft
+                Save as draft
               </button>
               <button
                 type="button"
                 disabled={saving}
                 onClick={() => handleSave(true)}
-                className="btn-accent w-full justify-center"
+                className="btn-primary w-full justify-center"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                Save &amp; Send
+                Save &amp; send
               </button>
             </div>
           </div>

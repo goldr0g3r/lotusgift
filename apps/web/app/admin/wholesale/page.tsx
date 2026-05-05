@@ -4,15 +4,19 @@ import { useState, useEffect } from "react";
 import {
   Search,
   Package,
-  ArrowRight,
   Filter,
   Warehouse,
   Tag,
-  Loader2,
 } from "lucide-react";
 import type { Product } from "@/lib/api";
+import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
+import { productImage } from "@/lib/images";
+import { cn } from "@/lib/cn";
 
-const API = "http://localhost:3001/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 export default function WholesalePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,10 +25,10 @@ export default function WholesalePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
-    fetch(`${API}/products?isWholesale=true`)
+    fetch(`${API}/products?isWholesale=true`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => setProducts(Array.isArray(data) ? data : data.data || []))
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -51,92 +55,101 @@ export default function WholesalePage() {
     return pct > max ? pct : max;
   }, 0);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-green-500" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Wholesale Products
+          <span className="eyebrow">Marketing</span>
+          <div className="flex items-center gap-2 mt-2">
+            <h2 className="font-display text-2xl font-bold text-stone-900">
+              Wholesale products
             </h2>
-            <span className="badge-pink">
+            <Badge tone="gold">
               <Tag className="w-3 h-3 mr-1" />
-              Bulk Pricing
-            </span>
+              Bulk pricing
+            </Badge>
           </div>
-          <p className="text-gray-500 mt-1">
+          <p className="text-stone-500 mt-1 text-sm">
             Products available at wholesale pricing for bulk orders
           </p>
         </div>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
-        <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-brand-green-50 flex items-center justify-center">
-            <Warehouse className="w-5 h-5 text-brand-green-500" />
-          </div>
-          <div>
-            <div className="text-xl font-bold text-gray-900">
-              {products.length}
+        {[
+          {
+            icon: Warehouse,
+            value: products.length,
+            label: "Wholesale products",
+            tone: "emerald" as const,
+          },
+          {
+            icon: Tag,
+            value: maxSavings > 0 ? `Up to ${maxSavings}%` : "—",
+            label: "Max savings",
+            tone: "rose" as const,
+          },
+          {
+            icon: Package,
+            value: `${totalStock.toLocaleString()}+`,
+            label: "Items in stock",
+            tone: "gold" as const,
+          },
+        ].map((stat) => (
+          <div key={stat.label} className="card p-5 flex items-center gap-4">
+            <div
+              className={cn(
+                "h-11 w-11 rounded-xl flex items-center justify-center ring-1",
+                stat.tone === "emerald" &&
+                  "bg-lotus-emerald-50 ring-lotus-emerald-100",
+                stat.tone === "rose" &&
+                  "bg-lotus-rose-50 ring-lotus-rose-100",
+                stat.tone === "gold" &&
+                  "bg-lotus-gold-50 ring-lotus-gold-100",
+              )}
+            >
+              <stat.icon
+                className={cn(
+                  "h-5 w-5",
+                  stat.tone === "emerald" && "text-lotus-emerald-700",
+                  stat.tone === "rose" && "text-lotus-rose-700",
+                  stat.tone === "gold" && "text-lotus-gold-700",
+                )}
+              />
             </div>
-            <div className="text-xs text-gray-500">Wholesale Products</div>
-          </div>
-        </div>
-        <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-brand-pink-50 flex items-center justify-center">
-            <Tag className="w-5 h-5 text-brand-pink-500" />
-          </div>
-          <div>
-            <div className="text-xl font-bold text-gray-900">
-              {maxSavings > 0 ? `Up to ${maxSavings}%` : "N/A"}
+            <div>
+              <div className="text-xl font-bold text-stone-900">
+                {stat.value}
+              </div>
+              <div className="text-xs text-stone-500">{stat.label}</div>
             </div>
-            <div className="text-xs text-gray-500">Max Savings</div>
           </div>
-        </div>
-        <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Package className="w-5 h-5 text-amber-500" />
-          </div>
-          <div>
-            <div className="text-xl font-bold text-gray-900">
-              {totalStock.toLocaleString()}+
-            </div>
-            <div className="text-xs text-gray-500">Items in Stock</div>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="card p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <Input
               placeholder="Search wholesale products..."
-              className="input-field pl-10"
+              className="!pl-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <Filter className="w-4 h-4 text-stone-400 flex-shrink-0" />
             {categoryNames.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat!)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ring-1",
                   selectedCategory === cat
-                    ? "bg-brand-green-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                    ? "bg-lotus-emerald-700 text-white ring-lotus-emerald-700"
+                    : "bg-white text-stone-600 hover:bg-stone-50 ring-stone-200",
+                )}
               >
                 {cat}
               </button>
@@ -145,13 +158,19 @@ export default function WholesalePage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-[3/4]" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="card p-12 text-center">
-          <Package className="w-12 h-12 text-gray-200 mx-auto" />
-          <h3 className="mt-4 text-sm font-medium text-gray-900">
+          <Package className="w-10 h-10 text-stone-200 mx-auto" />
+          <h3 className="mt-3 text-sm font-semibold text-stone-900">
             No wholesale products found
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             {products.length === 0
               ? "No products have wholesale pricing enabled yet."
               : "Try adjusting your search or filter."}
@@ -172,46 +191,48 @@ export default function WholesalePage() {
             return (
               <div
                 key={product.id}
-                className="card overflow-hidden hover:shadow-md transition-all group"
+                className="card overflow-hidden hover:shadow-elevated hover:-translate-y-0.5 transition-all group"
               >
-                <div className="aspect-[4/3] bg-gradient-to-br from-brand-green-50 to-brand-pink-50 flex items-center justify-center relative">
-                  <Package className="w-10 h-10 text-brand-green-300" />
+                <div className="relative aspect-[4/3] bg-stone-100">
+                  <ImageWithFallback
+                    src={productImage(product).src}
+                    alt={product.name}
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                  />
                   {savings > 0 && (
-                    <span className="absolute top-3 right-3 bg-brand-pink-500 text-white text-xs font-bold px-2 py-1 rounded-md">
+                    <span className="absolute top-3 right-3 rounded-full bg-lotus-rose-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-warm">
                       Save {savings}%
                     </span>
                   )}
                 </div>
                 <div className="p-4">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-lotus-gold-700">
                     {product.category?.name}
                   </span>
-                  <h3 className="text-sm font-semibold text-gray-900 mt-1 group-hover:text-brand-green-600 transition-colors">
+                  <h3 className="text-sm font-semibold text-stone-900 mt-1 group-hover:text-lotus-emerald-700 transition-colors line-clamp-1">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-gray-400 font-mono mt-0.5">
+                  <p className="text-xs text-stone-400 font-mono mt-0.5">
                     {product.sku}
                   </p>
                   <div className="mt-3 flex items-end gap-2">
-                    <span className="text-lg font-bold text-brand-green-600">
+                    <span className="text-lg font-bold text-lotus-emerald-700">
                       ₹
-                      {(product.wholesalePrice ?? product.priceFrom).toLocaleString("en-IN")}
+                      {(
+                        product.wholesalePrice ?? product.priceFrom
+                      ).toLocaleString("en-IN")}
                     </span>
                     {product.wholesalePrice &&
                       product.wholesalePrice < product.priceFrom && (
-                        <span className="text-sm text-gray-400 line-through">
+                        <span className="text-sm text-stone-400 line-through">
                           ₹{product.priceFrom.toLocaleString("en-IN")}
                         </span>
                       )}
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                  <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
                     <span>Min: {product.wholesaleMinQty} pcs</span>
                     <span>{product.stock.toLocaleString()} in stock</span>
                   </div>
-                  <button className="mt-3 w-full text-sm font-medium text-brand-green-600 hover:text-brand-green-700 py-2 border border-brand-green-200 rounded-lg hover:bg-brand-green-50 transition-colors inline-flex items-center justify-center gap-1">
-                    Add to Quote
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </div>
             );

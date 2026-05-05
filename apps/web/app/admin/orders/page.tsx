@@ -1,24 +1,40 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import {
-  ShoppingCart, Search, ChevronDown, Eye, Clock, CheckCircle2,
-  Truck, Package as PackageIcon, XCircle, IndianRupee,
-} from "lucide-react";
+import { ShoppingCart, Search } from "lucide-react";
 import type { Order } from "@/lib/api";
 import { api } from "@/lib/api";
+import { Input, Select } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/components/ui/Toaster";
+import { cn } from "@/lib/cn";
 
-const STATUS_TABS = ["ALL", "PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
+const STATUS_TABS = [
+  "ALL",
+  "PENDING",
+  "CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+];
+const STATUS_OPTIONS = [
+  "PENDING",
+  "CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+];
 
-const STATUS_OPTIONS = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
-
-const statusConfig: Record<string, { class: string; icon: any }> = {
-  PENDING: { class: "badge-yellow", icon: Clock },
-  CONFIRMED: { class: "badge-green", icon: CheckCircle2 },
-  PROCESSING: { class: "badge-green", icon: PackageIcon },
-  SHIPPED: { class: "badge-green", icon: Truck },
-  DELIVERED: { class: "badge-green", icon: CheckCircle2 },
-  CANCELLED: { class: "badge-pink", icon: XCircle },
+const statusTone: Record<string, "yellow" | "emerald" | "rose" | "gray"> = {
+  PENDING: "yellow",
+  CONFIRMED: "emerald",
+  PROCESSING: "yellow",
+  SHIPPED: "emerald",
+  DELIVERED: "emerald",
+  CANCELLED: "rose",
 };
 
 export default function OrdersPage() {
@@ -29,9 +45,15 @@ export default function OrdersPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<Order[]>("/orders")
-      .then(data => setOrders(Array.isArray(data) ? data : data.data || []))
-      .catch(console.error)
+    api
+      .get<Order[]>("/orders")
+      .then((data) => {
+        const list = Array.isArray(data)
+          ? data
+          : ((data as { data?: Order[] } | null)?.data ?? []);
+        setOrders(list);
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -40,134 +62,177 @@ export default function OrdersPage() {
     try {
       const updateRes = await api.patch<Order>(`/orders/${orderId}`, { status });
       if (updateRes?.id) {
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
+        );
+        toast.success(`Order updated to ${status}`);
       }
     } catch (err) {
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to update");
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const filtered = orders.filter(o => {
+  const filtered = orders.filter((o) => {
     const matchTab = activeTab === "ALL" || o.status === activeTab;
-    const matchSearch = !search || o.orderNumber.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      !search || o.orderNumber.toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
   });
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-40 animate-pulse" />
-        <div className="flex gap-2">{[...Array(5)].map((_, i) => <div key={i} className="h-9 bg-gray-200 rounded-lg w-24 animate-pulse" />)}</div>
-        <div className="card divide-y divide-gray-50">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 px-5 py-4 animate-pulse">
-              <div className="flex-1 space-y-2"><div className="h-4 bg-gray-200 rounded w-32" /><div className="h-3 bg-gray-200 rounded w-48" /></div>
-              <div className="h-6 bg-gray-200 rounded w-20" />
-              <div className="h-6 bg-gray-200 rounded w-24" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Orders</h2>
-          <p className="text-gray-500 mt-1">{orders.length} total orders</p>
+          <span className="eyebrow">Operations</span>
+          <h2 className="mt-2 font-display text-2xl font-bold text-stone-900">
+            Orders
+          </h2>
+          <p className="text-stone-500 mt-1 text-sm">
+            {orders.length} total order{orders.length === 1 ? "" : "s"}
+          </p>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? "bg-brand-green-500 text-white" : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"}`}>
-            {tab === "ALL" ? "All" : tab.charAt(0) + tab.slice(1).toLowerCase()}
-            {tab !== "ALL" && (
-              <span className="ml-1.5 text-xs opacity-70">({orders.filter(o => o.status === tab).length})</span>
-            )}
-          </button>
-        ))}
+        {STATUS_TABS.map((tab) => {
+          const active = activeTab === tab;
+          const count =
+            tab === "ALL" ? orders.length : orders.filter((o) => o.status === tab).length;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ring-1",
+                active
+                  ? "bg-lotus-emerald-700 text-white ring-lotus-emerald-700"
+                  : "bg-white text-stone-600 hover:bg-stone-50 ring-stone-200",
+              )}
+            >
+              {tab === "ALL"
+                ? "All"
+                : tab.charAt(0) + tab.slice(1).toLowerCase()}
+              <span className="ml-1.5 text-xs opacity-70">({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="card p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search by order number..." className="input-field pl-10" value={search} onChange={e => setSearch(e.target.value)} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <Input
+            placeholder="Search by order number..."
+            className="!pl-10"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Order</th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Date</th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Items</th>
-                <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Total</th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Status</th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Payment</th>
-                <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Actions</th>
+              <tr className="border-b border-stone-100 bg-stone-50/60">
+                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Order
+                </th>
+                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Date
+                </th>
+                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Items
+                </th>
+                <th className="text-right text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Total
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Status
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Payment
+                </th>
+                <th className="text-right text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
+                  Update
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-5 py-12 text-center text-gray-400">
-                  <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-                  <p>No orders found</p>
-                </td></tr>
-              ) : filtered.map(order => {
-                const cfg = (statusConfig[order.status] ?? statusConfig.PENDING)!;
-                return (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm font-medium text-gray-900">{order.orderNumber}</span>
+            <tbody className="divide-y divide-stone-50">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td colSpan={7} className="px-5 py-3.5">
+                      <Skeleton className="h-9" />
                     </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString("en-IN")}</span>
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-12 text-center">
+                    <ShoppingCart className="w-10 h-10 mx-auto mb-2 text-stone-200" />
+                    <p className="text-stone-500">No orders found</p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-stone-50/60 transition-colors"
+                  >
+                    <td className="px-5 py-3.5 font-semibold text-stone-900">
+                      {order.orderNumber}
                     </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm text-gray-600">{order.items?.length || 0} items</span>
+                    <td className="px-5 py-3.5 text-stone-500">
+                      {new Date(order.createdAt).toLocaleDateString("en-IN")}
                     </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <span className="text-sm font-semibold text-gray-900">₹{order.total.toLocaleString("en-IN")}</span>
+                    <td className="px-5 py-3.5 text-stone-600">
+                      {order.items?.length || 0} items
+                    </td>
+                    <td className="px-5 py-3.5 text-right tabular-nums font-semibold text-stone-900">
+                      ₹{order.total.toLocaleString("en-IN")}
                     </td>
                     <td className="px-5 py-3.5 text-center">
-                      <span className={cfg.class}>{order.status}</span>
+                      <Badge tone={statusTone[order.status] ?? "gray"}>
+                        {order.status}
+                      </Badge>
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       {order.paidAt ? (
-                        <span className="badge-green">Paid</span>
+                        <Badge tone="emerald">Paid</Badge>
                       ) : (
-                        <span className="badge-yellow">Unpaid</span>
+                        <Badge tone="yellow">Unpaid</Badge>
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-2">
-                        <select
+                      <div className="flex items-center justify-end">
+                        <Select
                           value={order.status}
-                          onChange={e => updateStatus(order.id, e.target.value)}
+                          onChange={(e) => updateStatus(order.id, e.target.value)}
                           disabled={updatingId === order.id}
-                          className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-brand-green-500"
+                          className="!py-1.5 !px-2 !text-xs w-36"
                         >
-                          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </Select>
                       </div>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-sm text-gray-500">Showing {filtered.length} of {orders.length} orders</span>
-          <div className="text-sm font-medium text-gray-900">
+        <div className="px-5 py-3 border-t border-stone-100 flex items-center justify-between text-sm">
+          <span className="text-stone-500">
+            Showing {filtered.length} of {orders.length} orders
+          </span>
+          <div className="font-semibold text-stone-900 tabular-nums">
             Total: ₹{filtered.reduce((sum, o) => sum + o.total, 0).toLocaleString("en-IN")}
           </div>
         </div>

@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { Phone, Mail, MapPin, ArrowRight } from "lucide-react";
+import { Phone, Mail, MapPin, ArrowRight, Sparkles, ShieldCheck, Truck, Award } from "lucide-react";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -55,80 +54,111 @@ const socialLinks = [
   { name: "LinkedIn", icon: LinkedinIcon, href: "#" },
 ];
 
+const trustItems = [
+  { icon: ShieldCheck, label: "Secure payments", sub: "Razorpay protected" },
+  { icon: Truck, label: "3–5 day dispatch", sub: "Pan-India delivery" },
+  { icon: Award, label: "QC at every batch", sub: "Premium finish" },
+  { icon: Sparkles, label: "Custom branding", sub: "Free mockups" },
+];
+
 export default function Footer() {
   return (
-    <footer className="relative bg-gray-950 text-gray-400 overflow-hidden">
-      {/* Subtle gradient orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-green-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-brand-pink-500/5 rounded-full blur-3xl" />
+    <footer className="relative bg-stone-950 text-stone-400 overflow-hidden">
+      <div aria-hidden className="absolute top-0 left-1/4 w-96 h-96 bg-lotus-emerald-500/10 rounded-full blur-3xl" />
+      <div aria-hidden className="absolute bottom-0 right-1/4 w-80 h-80 bg-lotus-gold-500/10 rounded-full blur-3xl" />
 
-      {/* Newsletter CTA strip */}
-      <div className="relative border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-lg font-semibold text-white">
-                Stay updated with gifting trends
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Get seasonal ideas, new arrivals, and exclusive offers in your inbox.
-              </p>
-            </div>
-            <form
-              className="flex w-full md:w-auto gap-2"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 md:w-72 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-green-500/30 focus:border-brand-green-500/50 transition-all"
-              />
-              <button
-                type="submit"
-                className="px-5 py-2.5 rounded-xl bg-brand-green-500 text-white text-sm font-semibold hover:bg-brand-green-600 transition-colors inline-flex items-center gap-1.5 shadow-sm shadow-brand-green-500/20"
-              >
-                Subscribe
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </form>
+      <div className="relative border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {trustItems.map((t) => (
+              <div key={t.label} className="flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center">
+                  <t.icon className="h-4 w-4 text-lotus-gold-300" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">{t.label}</div>
+                  <div className="text-xs text-stone-500">{t.sub}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Main footer */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+      <div className="relative border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="rounded-3xl bg-gradient-to-br from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900 px-6 sm:px-10 py-8 ring-1 ring-white/10 shadow-elevated-lg">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="md:max-w-md">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-lotus-gold-200">
+                  <Sparkles className="h-3 w-3" />
+                  Newsletter
+                </div>
+                <h3 className="mt-3 font-display text-2xl font-bold text-white">
+                  Stay updated with gifting trends
+                </h3>
+                <p className="mt-2 text-sm text-stone-200/80">
+                  Get seasonal ideas, fresh launches, and exclusive wholesale deals — once a month, no spam.
+                </p>
+              </div>
+              <form
+                className="flex w-full md:w-auto gap-2"
+                onSubmit={(e) => e.preventDefault()}
+              >
+                <input
+                  type="email"
+                  placeholder="Enter your work email"
+                  className="flex-1 md:w-72 px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-lotus-gold-300/40 focus:border-lotus-gold-300/60 transition-all"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-3 rounded-xl bg-lotus-gold-500 text-stone-900 text-sm font-bold hover:bg-lotus-gold-400 transition-colors inline-flex items-center gap-1.5"
+                >
+                  Subscribe
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
-          {/* Brand column */}
           <div className="lg:col-span-4">
-            <Image
-              src="/logo.png"
-              alt="Lotus Gift"
-              width={140}
-              height={32}
-              className="object-contain brightness-0 invert opacity-90"
-            />
-            <p className="mt-5 text-sm leading-relaxed text-gray-500 max-w-xs">
-              Your trusted partner for premium promotional products and
-              corporate gifts. Helping businesses make lasting impressions since
-              day one.
+            <div className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-lotus-emerald-700 to-lotus-emerald-900 ring-1 ring-white/10 flex items-center justify-center shadow-warm">
+                <span className="font-display text-lg font-bold text-white">L</span>
+              </div>
+              <div className="leading-none">
+                <span className="block font-display text-xl font-bold tracking-tight text-white">
+                  Lotus Gift
+                </span>
+                <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.18em] text-lotus-gold-300">
+                  Wholesale Gifting
+                </span>
+              </div>
+            </div>
+            <p className="mt-5 text-sm leading-relaxed text-stone-400 max-w-xs">
+              Your trusted partner for premium promotional products and corporate gifts.
+              Helping businesses make lasting impressions since day one.
             </p>
-            <div className="flex items-center gap-2.5 mt-7">
+            <div className="flex items-center gap-2.5 mt-6">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
                   aria-label={social.name}
-                  className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 hover:bg-brand-green-500 hover:border-brand-green-500 flex items-center justify-center transition-all duration-200 group"
+                  className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 hover:bg-lotus-gold-500 hover:border-lotus-gold-500 flex items-center justify-center transition-all duration-200 group"
                 >
-                  <social.icon className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                  <social.icon className="w-4 h-4 text-stone-400 group-hover:text-stone-900 transition-colors" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Products */}
           <div className="lg:col-span-3">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-5">
+            <h4 className="text-xs font-semibold text-white uppercase tracking-[0.18em] mb-5">
               Products
             </h4>
             <ul className="space-y-3 text-sm">
@@ -136,7 +166,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-gray-500 hover:text-brand-green-400 transition-colors"
+                    className="text-stone-400 hover:text-lotus-gold-300 transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -145,9 +175,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Quick Links */}
           <div className="lg:col-span-2">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-5">
+            <h4 className="text-xs font-semibold text-white uppercase tracking-[0.18em] mb-5">
               Company
             </h4>
             <ul className="space-y-3 text-sm">
@@ -155,7 +184,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-gray-500 hover:text-brand-green-400 transition-colors"
+                    className="text-stone-400 hover:text-lotus-gold-300 transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -164,19 +193,18 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
           <div className="lg:col-span-3">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-5">
-              Contact Us
+            <h4 className="text-xs font-semibold text-white uppercase tracking-[0.18em] mb-5">
+              Contact
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <a
                   href="tel:+919876543210"
-                  className="flex items-center gap-3 text-gray-500 hover:text-brand-green-400 transition-colors group"
+                  className="flex items-center gap-3 text-stone-400 hover:text-lotus-gold-300 transition-colors group"
                 >
-                  <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-green-500/10 transition-colors">
-                    <Phone className="w-3.5 h-3.5 text-brand-green-400" />
+                  <span className="w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-lotus-gold-500/10 transition-colors">
+                    <Phone className="w-4 h-4 text-lotus-gold-300" />
                   </span>
                   +91 98765 43210
                 </a>
@@ -184,19 +212,19 @@ export default function Footer() {
               <li>
                 <a
                   href="mailto:info@lotusgift.com"
-                  className="flex items-center gap-3 text-gray-500 hover:text-brand-green-400 transition-colors group"
+                  className="flex items-center gap-3 text-stone-400 hover:text-lotus-gold-300 transition-colors group"
                 >
-                  <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-green-500/10 transition-colors">
-                    <Mail className="w-3.5 h-3.5 text-brand-green-400" />
+                  <span className="w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-lotus-gold-500/10 transition-colors">
+                    <Mail className="w-4 h-4 text-lotus-gold-300" />
                   </span>
                   info@lotusgift.com
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <MapPin className="w-3.5 h-3.5 text-brand-green-400" />
+                <span className="w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MapPin className="w-4 h-4 text-lotus-gold-300" />
                 </span>
-                <span className="text-gray-500">
+                <span className="text-stone-400">
                   123 Business Park, Coimbatore,
                   <br />
                   Tamil Nadu 641001
@@ -205,25 +233,29 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+
+        <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 items-center gap-4 opacity-70">
+          {["VISA", "Mastercard", "RuPay", "UPI", "NetBanking", "Razorpay"].map((m) => (
+            <div
+              key={m}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold tracking-wide text-stone-300"
+            >
+              {m}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="relative border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
+      <div className="relative border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
           <span>
             &copy; {new Date().getFullYear()} Lotus Gift. All rights reserved.
           </span>
           <div className="flex gap-6">
-            <Link
-              href="/privacy"
-              className="hover:text-gray-400 transition-colors"
-            >
+            <Link href="/privacy" className="hover:text-stone-300 transition-colors">
               Privacy Policy
             </Link>
-            <Link
-              href="/terms"
-              className="hover:text-gray-400 transition-colors"
-            >
+            <Link href="/terms" className="hover:text-stone-300 transition-colors">
               Terms of Service
             </Link>
           </div>

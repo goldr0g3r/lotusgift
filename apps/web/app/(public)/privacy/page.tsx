@@ -42,63 +42,54 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <div className="bg-white">
-      <div className="bg-gradient-to-br from-brand-green-500 to-brand-green-700 text-white">
+    <div className="bg-white min-h-screen">
+      <section className="bg-lotus-cream border-b border-stone-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold">Privacy Policy</h1>
-          <p className="mt-4 text-brand-green-100 text-lg">
+          <span className="eyebrow">Legal</span>
+          <h1 className="mt-3 h1-display !text-4xl">Privacy Policy</h1>
+          <p className="mt-4 text-stone-500 text-base max-w-xl mx-auto">
             How we collect, use, and protect your information
           </p>
-          <p className="mt-2 text-sm text-brand-green-200">
-            Last updated: April 2026
-          </p>
+          <p className="mt-2 text-xs text-stone-400">Last updated: April 2026</p>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="prose prose-gray max-w-none">
-          <p className="text-gray-600 leading-relaxed">
-            Lotus Gift (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is
-            committed to protecting your privacy. This policy describes how we
-            handle your personal information when you use our website, place
-            orders, or interact with our services.
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <p className="text-stone-600 leading-relaxed">
+          Lotus Gift (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed
+          to protecting your privacy. This policy describes how we handle your personal
+          information when you use our website, place orders, or interact with our services.
+        </p>
+
+        <div className="mt-10 space-y-10">
+          {sections.map((section, index) => (
+            <section key={section.title}>
+              <h2 className="font-display text-xl font-bold text-stone-900 flex items-baseline gap-3">
+                <span className="text-sm font-bold text-lotus-gold-700 tabular-nums">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                {section.title}
+              </h2>
+              <p className="mt-3 text-stone-600 leading-relaxed">{section.content}</p>
+            </section>
+          ))}
+        </div>
+
+        <div className="mt-12 card p-6 bg-lotus-cream border-lotus-gold-100">
+          <h2 className="font-display text-lg font-bold text-stone-900">
+            Questions or concerns?
+          </h2>
+          <p className="mt-2 text-sm text-stone-600">
+            If you have questions about this privacy policy or how we handle your data,
+            please reach out.
           </p>
-
-          <div className="mt-10 space-y-10">
-            {sections.map((section, index) => (
-              <section key={section.title}>
-                <h2 className="text-xl font-semibold text-gray-900 flex items-baseline gap-3">
-                  <span className="text-sm font-bold text-brand-green-500">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {section.title}
-                </h2>
-                <p className="mt-3 text-gray-600 leading-relaxed">
-                  {section.content}
-                </p>
-              </section>
-            ))}
-          </div>
-
-          <div className="mt-12 p-6 bg-brand-green-50 rounded-xl">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Questions or Concerns?
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              If you have questions about this privacy policy or how we handle
-              your data, please reach out to us.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-4">
-              <Link href="/contact" className="btn-primary text-sm">
-                Contact Us
-              </Link>
-              <a
-                href="mailto:privacy@lotusgift.com"
-                className="btn-secondary text-sm"
-              >
-                privacy@lotusgift.com
-              </a>
-            </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/contact" className="btn-primary text-sm">
+              Contact us
+            </Link>
+            <a href="mailto:privacy@lotusgift.com" className="btn-secondary text-sm">
+              privacy@lotusgift.com
+            </a>
           </div>
         </div>
       </div>
