@@ -17,9 +17,9 @@ export class CreateQuoteItemDto {
   @Min(1)
   quantity: number;
 
-  @IsNumber()
-  @Min(0)
-  unitPrice: number;
+  // unitPrice and total are intentionally omitted: the server is the
+  // authoritative source for price (resolved from Product + wholesale tier)
+  // and tax (resolved from SiteSetting `tax_rate`).
 }
 
 export class CreateQuoteDto {

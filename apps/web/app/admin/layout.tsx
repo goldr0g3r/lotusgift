@@ -75,11 +75,21 @@ export default function AdminLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: sessionData, isPending } = useSession();
   const user = sessionData?.user ?? null;
+  const role = (user as { role?: string } | null)?.role;
 
   useEffect(() => {
     if (pathname === "/admin/login") return;
-    if (!isPending && !user) router.push("/admin/login");
-  }, [pathname, isPending, user, router]);
+    if (isPending) return;
+    if (!user) {
+      router.push("/admin/login");
+      return;
+    }
+    // Defense-in-depth: API guards already enforce admin-only on writes, but
+    // we should not render the admin chrome to non-admins either.
+    if (role && role !== "admin") {
+      router.push("/portal");
+    }
+  }, [pathname, isPending, user, role, router]);
 
   const handleLogout = async () => {
     await signOut({
@@ -89,7 +99,7 @@ export default function AdminLayout({
 
   if (pathname === "/admin/login") return <>{children}</>;
 
-  if (isPending) {
+  if (isPending || !user || (role && role !== "admin")) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-lotus-emerald-700 border-t-transparent" />

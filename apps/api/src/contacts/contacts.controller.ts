@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiQuery } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { ContactsService } from './contacts.service';
@@ -25,6 +26,7 @@ export class ContactsController {
   }
 
   @Public()
+  @Throttle({ public: { limit: 5, ttl: 60_000 } })
   @Post()
   create(@Body() dto: CreateContactDto) {
     return this.contactsService.create(dto);

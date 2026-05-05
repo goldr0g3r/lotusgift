@@ -26,8 +26,10 @@ export class OrdersController {
   @Get(':id')
   async findOne(@Param('id') id: string, @Session('user') user: { id: string; role?: string }) {
     const order = await this.ordersService.findOne(id);
-    if (user.role !== 'admin' && order.userId && order.userId !== user.id) {
-      throw new ForbiddenException('You can only access your own orders');
+    if (user.role !== 'admin') {
+      if (!order.userId || order.userId !== user.id) {
+        throw new ForbiddenException('You can only access your own orders');
+      }
     }
     return order;
   }

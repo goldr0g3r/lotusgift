@@ -39,6 +39,12 @@ export class ProductsController {
     return this.productsService.findAllAdmin({ search, categoryId });
   }
 
+  @Get('admin/:id')
+  @Roles('admin')
+  findOneAdmin(@Param('id') id: string) {
+    return this.productsService.findOneAdmin(id);
+  }
+
   @Public()
   @Get('slug/:slug')
   findBySlug(@Param('slug') slug: string) {

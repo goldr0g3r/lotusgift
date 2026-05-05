@@ -63,7 +63,11 @@ export class CategoriesService {
   async findOne(id: string): Promise<any> {
     const category = await this.categoryModel.findById(id).lean();
     if (!category) throw new NotFoundException(`Category #${id} not found`);
-    const products = await this.productModel.find({ categoryId: id }).lean();
+    // Mirror findBySlug: only active products are exposed via public id lookup.
+    const products = await this.productModel
+      .find({ categoryId: id, isActive: true })
+      .sort({ createdAt: -1 })
+      .lean();
     return { ...category, id: category._id, products };
   }
 

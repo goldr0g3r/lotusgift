@@ -22,7 +22,11 @@ export class ContactsService {
   }
 
   async create(dto: CreateContactDto) {
-    return this.contactModel.create(dto);
+    // Strip the honeypot off before persisting; class-validator already enforced
+    // it must be empty so this is just hygiene.
+    const { website, ...payload } = dto;
+    void website;
+    return this.contactModel.create(payload);
   }
 
   async update(id: string, dto: UpdateContactDto) {

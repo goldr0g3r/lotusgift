@@ -59,15 +59,33 @@ export class ProductsService {
     return this.attachCategories(products);
   }
 
+  /**
+   * Public detail lookup. Inactive products are hidden so guessing an id can
+   * never leak unpublished SKUs. Admins should use {@link findOneAdmin}.
+   */
   async findOne(id: string) {
+    const product = await this.productModel
+      .findOne({ _id: id, isActive: true })
+      .lean();
+    if (!product) throw new NotFoundException(`Product #${id} not found`);
+    const [results] = await this.attachCategoriesAndImages([product]);
+    return results;
+  }
+
+  async findOneAdmin(id: string) {
     const product = await this.productModel.findById(id).lean();
     if (!product) throw new NotFoundException(`Product #${id} not found`);
     const [results] = await this.attachCategoriesAndImages([product]);
     return results;
   }
 
+  /**
+   * Public slug lookup. Inactive products are hidden.
+   */
   async findBySlug(slug: string) {
-    const product = await this.productModel.findOne({ slug }).lean();
+    const product = await this.productModel
+      .findOne({ slug, isActive: true })
+      .lean();
     if (!product) throw new NotFoundException('Product not found');
     const [result] = await this.attachCategoriesAndImages([product]);
     return result;
@@ -80,14 +98,14 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto): Promise<any> {
-    await this.findOne(id);
+    await this.findOneAdmin(id);
     const product = await this.productModel.findByIdAndUpdate(id, dto, { new: true }).lean();
     const category = await this.categoryModel.findById(product!.categoryId).lean();
     return { ...product, id: product!._id, category };
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    await this.findOneAdmin(id);
     return this.productModel.findByIdAndDelete(id);
   }
 

@@ -86,10 +86,6 @@ export class OrdersService {
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.shippingAddress !== undefined) data.shippingAddress = dto.shippingAddress;
     if (dto.notes !== undefined) data.notes = dto.notes;
-    if (dto.razorpayPaymentId !== undefined) {
-      data.razorpayPaymentId = dto.razorpayPaymentId;
-      data.paidAt = new Date();
-    }
     await this.orderModel.findByIdAndUpdate(id, data);
     return this.findOne(id);
   }

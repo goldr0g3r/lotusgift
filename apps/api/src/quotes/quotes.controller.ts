@@ -24,8 +24,10 @@ export class QuotesController {
   @Get(':id')
   async findOne(@Param('id') id: string, @Session('user') user: { id: string; role?: string }) {
     const quote = await this.quotesService.findOne(id);
-    if (user.role !== 'admin' && quote.userId && quote.userId !== user.id) {
-      throw new ForbiddenException('You can only access your own quotes');
+    if (user.role !== 'admin') {
+      if (!quote.userId || quote.userId !== user.id) {
+        throw new ForbiddenException('You can only access your own quotes');
+      }
     }
     return quote;
   }

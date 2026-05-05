@@ -9,17 +9,22 @@ export enum OrderStatusEnum {
   CANCELLED = 'CANCELLED',
 }
 
+/**
+ * Admin-facing order patch. Payment fields (`razorpayPaymentId`, `paidAt`,
+ * `subtotal`, `tax`, `total`) are intentionally excluded — those are mutated
+ * only by the payment service via `/payments/verify` or the Razorpay webhook
+ * to prevent admins from forging a paid status.
+ */
 export class UpdateOrderDto {
   @IsOptional()
   @IsEnum(OrderStatusEnum)
   status?: OrderStatusEnum;
+
   @IsOptional()
   @IsString()
   shippingAddress?: string;
+
   @IsOptional()
   @IsString()
   notes?: string;
-  @IsOptional()
-  @IsString()
-  razorpayPaymentId?: string;
 }

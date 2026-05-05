@@ -38,11 +38,21 @@ export default function PortalLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: sessionData, isPending } = useSession();
   const user = sessionData?.user ?? null;
+  const role = (user as { role?: string } | null)?.role;
 
   useEffect(() => {
     if (publicPaths.includes(pathname)) return;
-    if (!isPending && !user) router.push("/portal/login");
-  }, [pathname, isPending, user, router]);
+    if (isPending) return;
+    if (!user) {
+      router.push("/portal/login");
+      return;
+    }
+    // Send admins to the admin dashboard so they don't accidentally read the
+    // portal as if they were a client.
+    if (role === "admin") {
+      router.push("/admin");
+    }
+  }, [pathname, isPending, user, role, router]);
 
   const handleLogout = async () => {
     await signOut({
@@ -54,7 +64,7 @@ export default function PortalLayout({
 
   if (publicPaths.includes(pathname)) return <>{children}</>;
 
-  if (isPending) {
+  if (isPending || !user || role === "admin") {
     return (
       <div className="min-h-screen bg-lotus-cream flex items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-lotus-emerald-700 border-t-transparent" />
