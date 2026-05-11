@@ -1,321 +1,161 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  MessageSquare,
-  Search,
-  Mail,
-  Phone,
-  Building2,
-  Clock,
-  CheckCircle2,
-  Reply,
-} from "lucide-react";
-import { api, type ContactInquiry } from "@/lib/api";
-import { Input, Label, Textarea } from "@/components/ui/Input";
+import { useState } from "react";
+import { Mail, Phone, Reply } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Dialog, DialogFooter } from "@/components/ui/Dialog";
+import { Sheet } from "@/components/ui/Sheet";
+import { Textarea } from "@/components/ui/Input";
+import { mockInquiries } from "@/lib/mock-data";
 import { toast } from "@/components/ui/Toaster";
+import type { ContactInquiry, InquiryStatus } from "@/lib/api-types";
 import { cn } from "@/lib/cn";
 
-const STATUS_TABS = ["ALL", "NEW", "READ", "REPLIED", "CLOSED"];
-
-const statusTone: Record<string, "yellow" | "gray" | "emerald"> = {
-  NEW: "yellow",
-  READ: "gray",
-  REPLIED: "emerald",
-  CLOSED: "gray",
+const tone: Record<InquiryStatus, "neutral" | "warning" | "green" | "danger"> = {
+  NEW: "warning",
+  IN_PROGRESS: "neutral",
+  REPLIED: "green",
+  CLOSED: "neutral",
 };
 
-export default function InquiriesPage() {
-  const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
+const filters = ["all", "NEW", "IN_PROGRESS", "REPLIED", "CLOSED"] as const;
+
+export default function AdminInquiriesPage() {
+  const [filter, setFilter] = useState<(typeof filters)[number]>("all");
   const [selected, setSelected] = useState<ContactInquiry | null>(null);
-  const [adminNote, setAdminNote] = useState("");
-  const [updating, setUpdating] = useState(false);
-
-  useEffect(() => {
-    api
-      .get<ContactInquiry[]>("/contacts")
-      .then((data) => {
-        const list = Array.isArray(data)
-          ? data
-          : ((data as { data?: ContactInquiry[] } | null)?.data ?? []);
-        setInquiries(list);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const updateStatus = async (id: string, status: string, note?: string) => {
-    setUpdating(true);
-    try {
-      const body: Record<string, unknown> = { status };
-      if (note !== undefined) body.adminNote = note;
-      const updated = await api.patch<ContactInquiry>(`/contacts/${id}`, body);
-      if (updated?.id) {
-        setInquiries((prev) =>
-          prev.map((i) => (i.id === id ? { ...i, ...updated } : i)),
-        );
-        if (selected?.id === id) {
-          setSelected((prev) => (prev ? { ...prev, ...updated } : null));
-        }
-        toast.success(`Inquiry ${status.toLowerCase()}`);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const openDetail = (inquiry: ContactInquiry) => {
-    setSelected(inquiry);
-    setAdminNote(inquiry.adminNote || "");
-    if (inquiry.status === "NEW") {
-      void updateStatus(inquiry.id, "READ");
-    }
-  };
-
-  const filtered = inquiries.filter((i) => {
-    const matchTab = activeTab === "ALL" || i.status === activeTab;
-    const matchSearch =
-      !search ||
-      i.name.toLowerCase().includes(search.toLowerCase()) ||
-      i.email.toLowerCase().includes(search.toLowerCase()) ||
-      i.subject?.toLowerCase().includes(search.toLowerCase());
-    return matchTab && matchSearch;
-  });
+  const list =
+    filter === "all"
+      ? mockInquiries
+      : mockInquiries.filter((i) => i.status === filter);
 
   return (
     <div className="space-y-6">
       <div>
         <span className="eyebrow">Sales</span>
-        <h2 className="mt-2 font-display text-2xl font-bold text-stone-900">
-          Contact inquiries
-        </h2>
+        <h2 className="mt-3 h2-display">Inquiries</h2>
         <p className="text-stone-500 mt-1 text-sm">
-          {inquiries.filter((i) => i.status === "NEW").length} new inquir
-          {inquiries.filter((i) => i.status === "NEW").length === 1 ? "y" : "ies"}
+          Inbound leads, sorted by status. Reply directly from the side panel.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => {
-          const active = activeTab === tab;
-          const count =
-            tab === "ALL"
-              ? inquiries.length
-              : inquiries.filter((i) => i.status === tab).length;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ring-1",
-                active
-                  ? "bg-lotus-emerald-700 text-white ring-lotus-emerald-700"
-                  : "bg-white text-stone-600 hover:bg-stone-50 ring-stone-200",
-              )}
-            >
-              {tab === "ALL"
-                ? "All"
-                : tab.charAt(0) + tab.slice(1).toLowerCase()}
-              <span className="ml-1.5 text-xs opacity-70">({count})</span>
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center gap-2">
+        {filters.map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => setFilter(f)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+              filter === f
+                ? "bg-brand-ink-900 text-white"
+                : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200",
+            )}
+          >
+            {f === "all" ? "All" : f.replace("_", " ")}
+          </button>
+        ))}
       </div>
 
-      <div className="card p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-          <Input
-            placeholder="Search by name, email, or subject..."
-            className="!pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="card divide-y divide-stone-100">
-        {loading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="p-5">
-              <Skeleton className="h-12" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {list.map((inq) => (
+          <button
+            type="button"
+            key={inq.id}
+            onClick={() => setSelected(inq)}
+            className="text-left rounded-3xl bg-white border border-stone-100 p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <Badge tone={tone[inq.status]} size="sm">
+                {inq.status.replace("_", " ")}
+              </Badge>
+              <span className="text-[11px] text-stone-400">
+                {new Date(inq.createdAt).toLocaleDateString()}
+              </span>
             </div>
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            <MessageSquare className="w-10 h-10 mx-auto mb-2 text-stone-200" />
-            <p className="text-stone-500">No inquiries found</p>
-          </div>
-        ) : (
-          filtered.map((inquiry) => (
-            <button
-              key={inquiry.id}
-              onClick={() => openDetail(inquiry)}
-              className={cn(
-                "flex items-start gap-4 px-5 py-4 hover:bg-stone-50/60 transition-colors w-full text-left",
-                inquiry.status === "NEW" && "bg-lotus-gold-50/40",
-              )}
-            >
-              <div
-                className={cn(
-                  "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0",
-                  inquiry.status === "NEW"
-                    ? "bg-lotus-gold-100 ring-1 ring-lotus-gold-200"
-                    : "bg-stone-100",
-                )}
-              >
-                <span
-                  className={cn(
-                    "text-sm font-bold",
-                    inquiry.status === "NEW"
-                      ? "text-lotus-gold-700"
-                      : "text-stone-500",
-                  )}
-                >
-                  {inquiry.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-stone-900">
-                    {inquiry.name}
-                  </span>
-                  <Badge tone={statusTone[inquiry.status] ?? "gray"}>
-                    {inquiry.status}
-                  </Badge>
-                  {inquiry.status === "NEW" && (
-                    <span className="w-2 h-2 bg-lotus-rose-500 rounded-full animate-pulse-soft" />
-                  )}
-                </div>
-                {inquiry.subject && (
-                  <p className="text-sm font-medium text-stone-700 mt-0.5">
-                    {inquiry.subject}
-                  </p>
-                )}
-                <p className="text-sm text-stone-500 mt-0.5 line-clamp-1">
-                  {inquiry.message}
-                </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-stone-400">
-                  <span>{inquiry.email}</span>
-                  {inquiry.company && <span>• {inquiry.company}</span>}
-                  <span>
-                    • {new Date(inquiry.createdAt).toLocaleDateString("en-IN")}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))
-        )}
+            <p className="mt-4 text-base font-bold text-brand-ink-900 line-clamp-1">
+              {inq.subject ?? "(No subject)"}
+            </p>
+            <p className="text-xs text-stone-500 mt-0.5">
+              {inq.name}
+              {inq.company ? ` · ${inq.company}` : ""}
+            </p>
+            <p className="mt-3 text-sm text-stone-600 line-clamp-3">{inq.message}</p>
+          </button>
+        ))}
       </div>
 
-      <Dialog
+      <Sheet
         open={!!selected}
         onClose={() => setSelected(null)}
-        title="Inquiry details"
-        size="md"
+        size="lg"
+        title={selected?.subject ?? "Inquiry"}
       >
         {selected && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100 flex items-center justify-center">
-                <span className="text-lg font-bold text-lotus-emerald-700">
-                  {selected.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <h4 className="font-semibold text-stone-900">{selected.name}</h4>
-                <div className="flex items-center gap-1.5 text-sm text-stone-500">
-                  <Mail className="w-3.5 h-3.5" /> {selected.email}
-                </div>
-              </div>
+          <div className="px-6 py-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <Badge tone={tone[selected.status]}>
+                {selected.status.replace("_", " ")}
+              </Badge>
+              <span className="text-xs text-stone-500">
+                {new Date(selected.createdAt).toLocaleString()}
+              </span>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {selected.phone && (
-                <div className="flex items-center gap-2 text-stone-600">
-                  <Phone className="w-3.5 h-3.5 text-stone-400" /> {selected.phone}
-                </div>
-              )}
-              {selected.company && (
-                <div className="flex items-center gap-2 text-stone-600">
-                  <Building2 className="w-3.5 h-3.5 text-stone-400" />{" "}
-                  {selected.company}
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-stone-600 col-span-2">
-                <Clock className="w-3.5 h-3.5 text-stone-400" />{" "}
-                {new Date(selected.createdAt).toLocaleString("en-IN")}
-              </div>
-            </div>
-
-            {selected.subject && (
-              <div>
-                <Label>Subject</Label>
-                <p className="text-sm text-stone-900 font-medium">
-                  {selected.subject}
-                </p>
-              </div>
-            )}
-
             <div>
-              <Label>Message</Label>
-              <div className="p-3 bg-stone-50 ring-1 ring-stone-200 rounded-xl text-sm text-stone-700 whitespace-pre-wrap">
+              <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                From
+              </p>
+              <p className="mt-1 text-base font-bold text-brand-ink-900">
+                {selected.name}
+              </p>
+              <p className="text-xs text-stone-500">{selected.company}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                <a
+                  href={`mailto:${selected.email}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5 hover:bg-stone-200"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  {selected.email}
+                </a>
+                {selected.phone && (
+                  <a
+                    href={`tel:${selected.phone}`}
+                    className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5 hover:bg-stone-200"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    {selected.phone}
+                  </a>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                Message
+              </p>
+              <p className="mt-2 text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">
                 {selected.message}
-              </div>
+              </p>
             </div>
-
             <div>
-              <Label>Admin note</Label>
-              <Textarea
-                rows={3}
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                placeholder="Add an internal note..."
-              />
+              <p className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+                Reply
+              </p>
+              <Textarea rows={4} placeholder="Type your reply…" />
+              <button
+                type="button"
+                onClick={() => {
+                  toast.success("Reply sent");
+                  setSelected(null);
+                }}
+                className="btn-primary btn-lg mt-3"
+              >
+                <span className="btn-disc">
+                  <Reply className="h-4 w-4" />
+                </span>
+                Send reply
+              </button>
             </div>
           </div>
         )}
-        <DialogFooter>
-          <div className="flex flex-1 flex-wrap items-center justify-between gap-2">
-            <div className="flex gap-2">
-              {selected && selected.status !== "REPLIED" && (
-                <button
-                  onClick={() =>
-                    updateStatus(selected.id, "REPLIED", adminNote)
-                  }
-                  disabled={updating}
-                  className="btn-primary text-sm"
-                >
-                  <Reply className="w-4 h-4" /> Mark replied
-                </button>
-              )}
-              {selected && selected.status !== "CLOSED" && (
-                <button
-                  onClick={() => updateStatus(selected.id, "CLOSED", adminNote)}
-                  disabled={updating}
-                  className="btn-ghost text-sm"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Close
-                </button>
-              )}
-            </div>
-            <button
-              onClick={() => setSelected(null)}
-              className="btn-ghost text-sm"
-            >
-              Done
-            </button>
-          </div>
-        </DialogFooter>
-      </Dialog>
+      </Sheet>
     </div>
   );
 }

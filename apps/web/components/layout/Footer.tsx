@@ -1,7 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Phone, Mail, MapPin, ArrowRight, Sparkles, ShieldCheck, Truck, Award } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  Truck,
+  Award,
+} from "lucide-react";
+import Logo from "@/components/Logo";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -13,7 +23,15 @@ function FacebookIcon({ className }: { className?: string }) {
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
       <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
@@ -48,12 +66,6 @@ const quickLinks = [
   { name: "Client Portal", href: "/portal/login" },
 ];
 
-const socialLinks = [
-  { name: "Facebook", icon: FacebookIcon, href: "#" },
-  { name: "Instagram", icon: InstagramIcon, href: "#" },
-  { name: "LinkedIn", icon: LinkedinIcon, href: "#" },
-];
-
 const trustItems = [
   { icon: ShieldCheck, label: "Secure payments", sub: "Razorpay protected" },
   { icon: Truck, label: "3–5 day dispatch", sub: "Pan-India delivery" },
@@ -61,23 +73,35 @@ const trustItems = [
   { icon: Sparkles, label: "Custom branding", sub: "Free mockups" },
 ];
 
+const socialLinks = [
+  { name: "Facebook", icon: FacebookIcon, href: "#" },
+  { name: "Instagram", icon: InstagramIcon, href: "#" },
+  { name: "LinkedIn", icon: LinkedinIcon, href: "#" },
+];
+
 export default function Footer() {
   return (
-    <footer className="relative bg-stone-950 text-stone-400 overflow-hidden">
-      <div aria-hidden className="absolute top-0 left-1/4 w-96 h-96 bg-lotus-emerald-500/10 rounded-full blur-3xl" />
-      <div aria-hidden className="absolute bottom-0 right-1/4 w-80 h-80 bg-lotus-gold-500/10 rounded-full blur-3xl" />
+    <footer className="relative bg-brand-ink-900 text-stone-300 overflow-hidden">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-1/4 w-96 h-96 bg-brand-green-500/10 rounded-full blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 right-1/4 w-80 h-80 bg-brand-pink-500/10 rounded-full blur-3xl"
+      />
 
       <div className="relative border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {trustItems.map((t) => (
               <div key={t.label} className="flex items-center gap-3">
-                <div className="h-10 w-10 shrink-0 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center">
-                  <t.icon className="h-4 w-4 text-lotus-gold-300" />
+                <div className="h-11 w-11 shrink-0 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center">
+                  <t.icon className="h-4 w-4 text-brand-pink-300" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-white">{t.label}</div>
-                  <div className="text-xs text-stone-500">{t.sub}</div>
+                  <div className="text-xs text-stone-400">{t.sub}</div>
                 </div>
               </div>
             ))}
@@ -86,33 +110,37 @@ export default function Footer() {
       </div>
 
       <div className="relative border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="rounded-3xl bg-gradient-to-br from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900 px-6 sm:px-10 py-8 ring-1 ring-white/10 shadow-elevated-lg">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-12">
+          <div className="rounded-3xl bg-gradient-to-br from-brand-green-600 via-brand-green-700 to-brand-ink-900 px-6 sm:px-10 py-9 ring-1 ring-white/10 shadow-elevated-lg overflow-hidden relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-20 -right-16 h-72 w-72 rounded-full bg-brand-pink-500/30 blur-3xl"
+            />
+            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="md:max-w-md">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-lotus-gold-200">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-brand-pink-200">
                   <Sparkles className="h-3 w-3" />
                   Newsletter
                 </div>
-                <h3 className="mt-3 font-display text-2xl font-bold text-white">
+                <h3 className="mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
                   Stay updated with gifting trends
                 </h3>
                 <p className="mt-2 text-sm text-stone-200/80">
-                  Get seasonal ideas, fresh launches, and exclusive wholesale deals — once a month, no spam.
+                  Seasonal ideas, fresh launches, and exclusive wholesale deals — once a month, no spam.
                 </p>
               </div>
               <form
-                className="flex w-full md:w-auto gap-2"
+                className="flex w-full md:w-auto items-center gap-2 rounded-full bg-white/10 ring-1 ring-white/20 p-1.5"
                 onSubmit={(e) => e.preventDefault()}
               >
                 <input
                   type="email"
                   placeholder="Enter your work email"
-                  className="flex-1 md:w-72 px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-lotus-gold-300/40 focus:border-lotus-gold-300/60 transition-all"
+                  className="flex-1 md:w-72 bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-stone-300 focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="px-5 py-3 rounded-xl bg-lotus-gold-500 text-stone-900 text-sm font-bold hover:bg-lotus-gold-400 transition-colors inline-flex items-center gap-1.5"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-pink-500 px-5 py-2.5 text-sm font-bold text-white shadow-pill hover:bg-brand-pink-600 transition-colors"
                 >
                   Subscribe
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -123,25 +151,13 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-10 py-14">
         <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           <div className="lg:col-span-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-lotus-emerald-700 to-lotus-emerald-900 ring-1 ring-white/10 flex items-center justify-center shadow-warm">
-                <span className="font-display text-lg font-bold text-white">L</span>
-              </div>
-              <div className="leading-none">
-                <span className="block font-display text-xl font-bold tracking-tight text-white">
-                  Lotus Gift
-                </span>
-                <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.18em] text-lotus-gold-300">
-                  Wholesale Gifting
-                </span>
-              </div>
-            </div>
-            <p className="mt-5 text-sm leading-relaxed text-stone-400 max-w-xs">
-              Your trusted partner for premium promotional products and corporate gifts.
-              Helping businesses make lasting impressions since day one.
+            <Logo size="md" variant="mono-white" />
+            <p className="mt-5 text-sm leading-relaxed text-stone-400 max-w-sm">
+              Your trusted partner for premium promotional products and corporate
+              gifts. Helping brands make lasting impressions at every touchpoint.
             </p>
             <div className="flex items-center gap-2.5 mt-6">
               {socialLinks.map((social) => (
@@ -149,9 +165,9 @@ export default function Footer() {
                   key={social.name}
                   href={social.href}
                   aria-label={social.name}
-                  className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 hover:bg-lotus-gold-500 hover:border-lotus-gold-500 flex items-center justify-center transition-all duration-200 group"
+                  className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-brand-pink-500 hover:border-brand-pink-500 flex items-center justify-center transition-all duration-200 group"
                 >
-                  <social.icon className="w-4 h-4 text-stone-400 group-hover:text-stone-900 transition-colors" />
+                  <social.icon className="w-4 h-4 text-stone-300 group-hover:text-white" />
                 </a>
               ))}
             </div>
@@ -166,7 +182,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-stone-400 hover:text-lotus-gold-300 transition-colors"
+                    className="text-stone-400 hover:text-brand-pink-300 transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -184,7 +200,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-stone-400 hover:text-lotus-gold-300 transition-colors"
+                    className="text-stone-400 hover:text-brand-pink-300 transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -201,10 +217,10 @@ export default function Footer() {
               <li>
                 <a
                   href="tel:+919876543210"
-                  className="flex items-center gap-3 text-stone-400 hover:text-lotus-gold-300 transition-colors group"
+                  className="flex items-center gap-3 text-stone-400 hover:text-brand-pink-300 transition-colors group"
                 >
-                  <span className="w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-lotus-gold-500/10 transition-colors">
-                    <Phone className="w-4 h-4 text-lotus-gold-300" />
+                  <span className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-pink-500/10">
+                    <Phone className="w-4 h-4 text-brand-pink-300" />
                   </span>
                   +91 98765 43210
                 </a>
@@ -212,17 +228,17 @@ export default function Footer() {
               <li>
                 <a
                   href="mailto:info@lotusgift.com"
-                  className="flex items-center gap-3 text-stone-400 hover:text-lotus-gold-300 transition-colors group"
+                  className="flex items-center gap-3 text-stone-400 hover:text-brand-pink-300 transition-colors group"
                 >
-                  <span className="w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-lotus-gold-500/10 transition-colors">
-                    <Mail className="w-4 h-4 text-lotus-gold-300" />
+                  <span className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-pink-500/10">
+                    <Mail className="w-4 h-4 text-brand-pink-300" />
                   </span>
                   info@lotusgift.com
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <MapPin className="w-4 h-4 text-lotus-gold-300" />
+                <span className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MapPin className="w-4 h-4 text-brand-pink-300" />
                 </span>
                 <span className="text-stone-400">
                   123 Business Park, Coimbatore,
@@ -234,28 +250,28 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 items-center gap-4 opacity-70">
-          {["VISA", "Mastercard", "RuPay", "UPI", "NetBanking", "Razorpay"].map((m) => (
-            <div
-              key={m}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold tracking-wide text-stone-300"
-            >
-              {m}
-            </div>
-          ))}
+        <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 items-center gap-3 opacity-70">
+          {["VISA", "Mastercard", "RuPay", "UPI", "NetBanking", "Razorpay"].map(
+            (m) => (
+              <div
+                key={m}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold tracking-wide text-stone-300"
+              >
+                {m}
+              </div>
+            ),
+          )}
         </div>
       </div>
 
       <div className="relative border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <span>
-            &copy; {new Date().getFullYear()} Lotus Gift. All rights reserved.
-          </span>
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+          <span>&copy; {new Date().getFullYear()} Lotus Gift. All rights reserved.</span>
           <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-stone-300 transition-colors">
+            <Link href="/privacy" className="hover:text-stone-300">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="hover:text-stone-300 transition-colors">
+            <Link href="/terms" className="hover:text-stone-300">
               Terms of Service
             </Link>
           </div>

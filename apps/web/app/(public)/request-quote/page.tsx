@@ -1,722 +1,540 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Plus,
-  Minus,
-  Trash2,
-  Send,
-  Package,
-  CheckCircle,
-  ArrowRight,
   ArrowLeft,
-  Search,
-  ShoppingBag,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  FileText,
+  Mail,
   Sparkles,
+  Trash2,
+  Wand2,
 } from "lucide-react";
-import type { Product } from "@/lib/api";
-import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Input, Label, Textarea } from "@/components/ui/Input";
+import { Input, Label, Textarea, Select } from "@/components/ui/Input";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import { formatInr } from "@/components/ui/PriceTag";
+import {
+  useQuoteBag,
+  submitQuoteRequest,
+  type BagLine,
+} from "@/lib/store";
+import { useSession } from "@/lib/auth-client";
+import { mockProducts } from "@/lib/mock-data";
 import { toast } from "@/components/ui/Toaster";
-import { productImage } from "@/lib/images";
 import { cn } from "@/lib/cn";
+import type { Quote } from "@/lib/api-types";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-type Step = 1 | 2 | 3;
-
-type LineItem = {
-  productId: string;
-  product: Product;
-  quantity: number;
-  customization: string;
-};
-
-const STORAGE_KEY = "lotus.quote.cart.v1";
-
-function loadCart(): LineItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as LineItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCart(items: LineItem[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // ignore quota
-  }
-}
-
-function StepIndicator({ step }: { step: Step }) {
-  const labels = ["Your Details", "Choose Products", "Review & Submit"];
-  return (
-    <ol className="grid grid-cols-3 gap-2 text-xs sm:text-sm">
-      {labels.map((label, i) => {
-        const idx = (i + 1) as Step;
-        const active = step === idx;
-        const done = step > idx;
-        return (
-          <li key={label} className="flex items-center gap-3">
-            <span
-              className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-semibold",
-                done
-                  ? "bg-lotus-emerald-700 text-white"
-                  : active
-                    ? "bg-lotus-emerald-50 text-lotus-emerald-800 ring-2 ring-lotus-emerald-700"
-                    : "bg-stone-100 text-stone-400",
-              )}
-            >
-              {done ? <CheckCircle className="h-4 w-4" /> : idx}
-            </span>
-            <span
-              className={cn(
-                "font-medium",
-                active ? "text-stone-900" : done ? "text-stone-700" : "text-stone-400",
-              )}
-            >
-              {label}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
+const steps = ["Contact", "Items", "Branding", "Timeline", "Review"] as const;
+type StepName = (typeof steps)[number];
 
 export default function RequestQuotePage() {
   const params = useSearchParams();
-  const initialProductSlug = params?.get("product");
-  const initialQty = Number(params?.get("qty") ?? "0");
+  const fromBag = params.get("from") === "bag";
+  const productSlug = params.get("product");
+  const bag = useQuoteBag();
+  const { data: session } = useSession();
+  const [step, setStep] = useState<number>(0);
+  const [submitted, setSubmitted] = useState<Quote | null>(null);
+  const [items, setItems] = useState<BagLine[]>([]);
 
-  const [step, setStep] = useState<Step>(1);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [productSearch, setProductSearch] = useState("");
-
-  const [contact, setContact] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
+  const [form, setForm] = useState({
+    contactName: session?.user?.name ?? "",
+    email: session?.user?.email ?? "",
+    phone: session?.user?.phone ?? "",
+    company: session?.user?.company ?? "",
+    cityList: "",
+    timeline: "2-4 weeks",
+    eventDate: "",
+    budget: "",
+    branding: "",
+    notes: "",
   });
-  const [notes, setNotes] = useState("");
 
-  const [items, setItems] = useState<LineItem[]>(() => loadCart());
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
-
+  // Seed items from quote bag, or from ?product=<slug>
   useEffect(() => {
-    fetch(`${API}/products`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        const list: Product[] = Array.isArray(data) ? data : data.data ?? [];
-        setProducts(list);
-        if (initialProductSlug) {
-          const p = list.find((x) => x.slug === initialProductSlug);
-          if (p) {
-            setItems((cur) =>
-              cur.some((i) => i.productId === p.id)
-                ? cur.map((i) =>
-                    i.productId === p.id
-                      ? {
-                          ...i,
-                          quantity:
-                            initialQty > 0
-                              ? initialQty
-                              : Math.max(p.minOrderQty || 1, i.quantity),
-                        }
-                      : i,
-                  )
-                : [
-                    ...cur,
-                    {
-                      productId: p.id,
-                      product: p,
-                      quantity: initialQty > 0 ? initialQty : p.minOrderQty || 1,
-                      customization: "",
-                    },
-                  ],
-            );
-          }
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingProducts(false));
-  }, [initialProductSlug, initialQty]);
-
-  useEffect(() => {
-    saveCart(items);
-  }, [items]);
-
-  const addProduct = (p: Product) => {
-    setItems((cur) =>
-      cur.some((i) => i.productId === p.id)
-        ? cur
-        : [
-            ...cur,
-            {
-              productId: p.id,
-              product: p,
-              quantity: p.minOrderQty || 1,
-              customization: "",
-            },
-          ],
-    );
-  };
-
-  const updateQty = (id: string, delta: number) =>
-    setItems((cur) =>
-      cur.map((i) =>
-        i.productId === id
-          ? { ...i, quantity: Math.max(1, i.quantity + delta) }
-          : i,
-      ),
-    );
-
-  const setQtyDirect = (id: string, qty: number) =>
-    setItems((cur) =>
-      cur.map((i) => (i.productId === id ? { ...i, quantity: Math.max(1, qty) } : i)),
-    );
-
-  const updateCustomization = (id: string, value: string) =>
-    setItems((cur) =>
-      cur.map((i) => (i.productId === id ? { ...i, customization: value } : i)),
-    );
-
-  const removeProduct = (id: string) =>
-    setItems((cur) => cur.filter((i) => i.productId !== id));
-
-  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setContact((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const filteredProducts = useMemo(() => {
-    const q = productSearch.toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category?.name?.toLowerCase().includes(q),
-    );
-  }, [productSearch, products]);
+    if (items.length > 0) return;
+    if (fromBag && bag.items.length > 0) {
+      setItems(bag.items);
+      return;
+    }
+    if (productSlug) {
+      const p = mockProducts.find((x) => x.slug === productSlug);
+      if (p)
+        setItems([
+          {
+            productId: p.id,
+            slug: p.slug,
+            name: p.name,
+            imageUrl: p.imageUrl,
+            unitPrice: p.wholesalePrice ?? p.priceFrom,
+            qty: p.minOrderQty,
+            minOrderQty: p.minOrderQty,
+            category: p.category.name,
+          },
+        ]);
+    }
+  }, [fromBag, productSlug, bag.items, items.length]);
 
   const subtotal = useMemo(
-    () => items.reduce((sum, i) => sum + i.quantity * i.product.priceFrom, 0),
+    () => items.reduce((s, it) => s + it.qty * it.unitPrice, 0),
     [items],
   );
 
-  const canStep1 = contact.name.trim() && contact.email.trim();
-  const canStep2 = items.length > 0;
+  const updateItem = (productId: string, qty: number) =>
+    setItems((arr) =>
+      arr.map((it) => (it.productId === productId ? { ...it, qty } : it)),
+    );
+  const removeItem = (productId: string) =>
+    setItems((arr) => arr.filter((it) => it.productId !== productId));
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!canStep1 || !canStep2) {
-      setError("Please complete all steps before submitting.");
+  const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
+  const back = () => setStep((s) => Math.max(s - 1, 0));
+
+  const submit = () => {
+    if (items.length === 0) {
+      toast.error("Add at least one product to your quote");
+      setStep(1);
       return;
     }
-    setSubmitting(true);
-    setError("");
-    try {
-      const res = await fetch(`${API}/quotes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contactName: contact.name,
-          contactEmail: contact.email,
-          contactPhone: contact.phone,
-          companyName: contact.company,
-          notes,
-          items: items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-            customization: i.customization || undefined,
-          })),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(data.message || "Failed to submit quote");
-      }
-      setSubmitted(true);
-      setItems([]);
-      saveCart([]);
-      toast.success("Quote request submitted");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  }
+    const q = submitQuoteRequest(items, {
+      contactName: form.contactName,
+      email: form.email,
+      phone: form.phone,
+      company: form.company,
+      notes: [
+        form.branding && `Branding: ${form.branding}`,
+        form.cityList && `Cities: ${form.cityList}`,
+        form.timeline && `Timeline: ${form.timeline}`,
+        form.eventDate && `Event date: ${form.eventDate}`,
+        form.budget && `Budget: ${form.budget}`,
+        form.notes,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
+    bag.clear();
+    setSubmitted(q);
+    toast.success(`Quote request ${q.quoteNumber} submitted`);
+  };
 
   if (submitted) {
     return (
-      <div className="min-h-screen">
-        <section className="bg-gradient-to-br from-lotus-emerald-700 to-lotus-emerald-900 py-20" />
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-16 relative z-10 pb-20">
-          <div className="card p-10 text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100">
-              <CheckCircle className="h-8 w-8 text-lotus-emerald-700" />
-            </div>
-            <h2 className="font-display text-2xl font-bold text-stone-900 mb-2">
-              Quote request submitted!
-            </h2>
-            <p className="text-stone-500 max-w-md mx-auto">
-              Thank you, {contact.name}! Our team will review your request and get back
-              to you within 24 hours with a detailed quote.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/products" className="btn-secondary">
-                Continue browsing
-              </Link>
-              <Link href="/" className="btn-primary">
-                Back to home
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
+      <div className="px-4 sm:px-6 lg:px-10 py-12 sm:py-16">
+        <div className="mx-auto max-w-3xl rounded-4xl bg-white border border-stone-100 p-10 sm:p-14 text-center shadow-soft">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-green-50 text-brand-green-600">
+            <CheckCircle2 className="h-8 w-8" />
+          </div>
+          <h1 className="mt-5 h2-display">We&apos;ve got your quote request</h1>
+          <p className="mt-3 text-stone-500">
+            A coordinator will reach out within 24 hours with options and a
+            formal quote. We sent a copy to{" "}
+            <span className="font-semibold text-brand-ink-800">{form.email}</span>.
+          </p>
+          <div className="mt-6 inline-block rounded-full bg-stone-100 px-5 py-2 text-sm font-semibold text-brand-ink-800">
+            Quote #{submitted.quoteNumber}
+          </div>
+          <div className="mt-7 grid grid-cols-2 gap-3 max-w-xs mx-auto">
+            <Link href="/portal/quotes" className="btn-primary btn-sm w-full">
+              View my quotes
+            </Link>
+            <Link href="/products" className="btn-outline rounded-full text-sm w-full">
+              Browse more
+            </Link>
           </div>
         </div>
       </div>
     );
   }
 
+  const currentStep: StepName = steps[step] ?? "Contact";
+
   return (
-    <div className="min-h-screen pb-20">
-      <section className="bg-lotus-cream border-b border-stone-200">
-        <div className="absolute inset-0 lotus-pattern opacity-70" aria-hidden />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-          <span className="eyebrow">Wholesale enquiry</span>
-          <h1 className="mt-3 h1-display !text-4xl sm:!text-5xl">
-            Request a Quote
-          </h1>
-          <p className="mt-3 max-w-xl text-base text-stone-500">
-            Tell us your timeline and quantities — we&apos;ll come back with options,
-            mockups and pricing within 24 hours.
-          </p>
-          <div className="mt-8 max-w-3xl">
-            <StepIndicator step={step} />
+    <div className="px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex items-end justify-between">
+          <div>
+            <span className="eyebrow">Request quote</span>
+            <h1 className="mt-3 h2-display">Tell us about your campaign</h1>
+            <p className="mt-2 text-stone-500 text-sm sm:text-base max-w-2xl">
+              Five quick steps. We&apos;ll respond with options, indicative pricing and visual mockups within 48 hours.
+            </p>
           </div>
         </div>
-      </section>
 
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-        <form onSubmit={handleSubmit}>
-          {step === 1 && (
-            <div className="card p-6 sm:p-8 animate-fade-in">
-              <h2 className="font-display text-xl font-bold text-stone-900">
-                Your details
-              </h2>
-              <p className="mt-1 text-sm text-stone-500">
-                We&apos;ll use these to send your quote and confirm timelines.
-              </p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="name">
-                    Full name <span className="text-lotus-rose-600">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    required
-                    value={contact.name}
-                    onChange={handleContactChange}
-                    placeholder="Jane Doe"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">
-                    Email <span className="text-lotus-rose-600">*</span>
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={contact.email}
-                    onChange={handleContactChange}
-                    placeholder="jane@company.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={contact.phone}
-                    onChange={handleContactChange}
-                    placeholder="+91 98765 43210"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    name="company"
-                    value={contact.company}
-                    onChange={handleContactChange}
-                    placeholder="Acme Inc."
-                  />
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end gap-2">
-                <button
-                  type="button"
-                  disabled={!canStep1}
-                  onClick={() => setStep(2)}
-                  className="btn-primary disabled:opacity-50"
-                >
-                  Continue
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="grid gap-6 lg:grid-cols-5 animate-fade-in">
-              <div className="lg:col-span-3 card p-6">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <h2 className="font-display text-xl font-bold text-stone-900">
-                    Add products
-                  </h2>
-                  <span className="text-xs text-stone-400">
-                    {items.length} selected
-                  </span>
-                </div>
-
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-                  <Input
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder="Search the catalog..."
-                    className="!pl-9"
-                  />
-                </div>
-
-                {loadingProducts ? (
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} className="h-20 rounded-xl" />
-                    ))}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          <div className="lg:col-span-8">
+            <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8">
+              <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
+                {steps.map((s, i) => (
+                  <div key={s} className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={cn(
+                        "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                        step >= i
+                          ? "bg-brand-ink-900 text-white"
+                          : "bg-stone-100 text-stone-500",
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs font-semibold whitespace-nowrap",
+                        step >= i ? "text-brand-ink-900" : "text-stone-400",
+                      )}
+                    >
+                      {s}
+                    </span>
+                    {i < steps.length - 1 && (
+                      <span className="h-px w-6 bg-stone-200" />
+                    )}
                   </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-stone-200 p-8 text-center">
-                    <Package className="mx-auto mb-2 h-10 w-10 text-stone-200" />
-                    <p className="text-sm text-stone-500">No products found</p>
+                ))}
+              </div>
+
+              <div className="mt-7 animate-fade-in">
+                {currentStep === "Contact" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Contact name</Label>
+                      <Input
+                        value={form.contactName}
+                        onChange={(e) =>
+                          setForm({ ...form, contactName: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Company</Label>
+                      <Input
+                        value={form.company}
+                        onChange={(e) =>
+                          setForm({ ...form, company: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Work email</Label>
+                      <Input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm({ ...form, email: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Phone</Label>
+                      <Input
+                        value={form.phone}
+                        onChange={(e) =>
+                          setForm({ ...form, phone: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <div className="grid sm:grid-cols-2 gap-3 max-h-[520px] overflow-y-auto pr-1">
-                    {filteredProducts.map((p) => {
-                      const added = items.some((i) => i.productId === p.id);
-                      const img = productImage(p);
-                      return (
+                )}
+
+                {currentStep === "Items" && (
+                  <div className="space-y-3">
+                    {items.length === 0 ? (
+                      <div className="rounded-2xl bg-stone-50 p-6 text-center">
+                        <p className="text-sm text-stone-500">
+                          No items yet. Browse the catalog and tap{" "}
+                          <span className="font-semibold text-brand-ink-800">
+                            Add to quote bag
+                          </span>{" "}
+                          on any product.
+                        </p>
+                        <Link href="/products" className="btn-primary btn-sm mt-4 mx-auto">
+                          Browse catalog
+                        </Link>
+                      </div>
+                    ) : (
+                      items.map((it) => (
                         <div
-                          key={p.id}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl border p-3 transition-all",
-                            added
-                              ? "border-lotus-emerald-200 bg-lotus-emerald-50/40"
-                              : "border-stone-200 hover:bg-stone-50",
-                          )}
+                          key={it.productId}
+                          className="rounded-2xl border border-stone-100 p-4 flex items-center gap-3"
                         >
-                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-1 ring-stone-200">
-                            <ImageWithFallback src={img.src} alt={p.name} sizes="56px" />
-                          </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-stone-900">
-                              {p.name}
+                            <p className="text-sm font-semibold text-brand-ink-900 truncate">
+                              {it.name}
                             </p>
-                            <p className="text-[11px] text-stone-400">
-                              ₹{p.priceFrom.toLocaleString("en-IN")} · MOQ {p.minOrderQty}
+                            <p className="text-xs text-stone-500">
+                              {it.category} · MOQ {it.minOrderQty}
                             </p>
                           </div>
+                          <QuantityStepper
+                            value={it.qty}
+                            onChange={(q) => updateItem(it.productId, q)}
+                            min={it.minOrderQty}
+                          />
                           <button
                             type="button"
-                            onClick={() => addProduct(p)}
-                            disabled={added}
-                            className={cn(
-                              "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                              added
-                                ? "bg-lotus-emerald-700 text-white cursor-default"
-                                : "border border-stone-200 text-stone-500 hover:border-lotus-emerald-400 hover:text-lotus-emerald-700",
-                            )}
+                            onClick={() => removeItem(it.productId)}
+                            className="inline-flex items-center justify-center h-9 w-9 rounded-full text-rose-600 hover:bg-rose-50"
+                            aria-label="Remove"
                           >
-                            {added ? (
-                              <CheckCircle className="h-4 w-4" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                      );
-                    })}
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {currentStep === "Branding" && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Branding requirements</Label>
+                      <Textarea
+                        placeholder="Logo placement, embroidery vs print, Pantone match, packaging treatment…"
+                        value={form.branding}
+                        onChange={(e) =>
+                          setForm({ ...form, branding: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        "Embroidered logo",
+                        "UV print",
+                        "Laser engraving",
+                        "Custom packaging",
+                        "Insert card",
+                        "Pantone match",
+                      ].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() =>
+                            setForm((f) => ({
+                              ...f,
+                              branding: f.branding
+                                ? `${f.branding}, ${c}`
+                                : c,
+                            }))
+                          }
+                          className="rounded-full bg-stone-100 px-4 py-2 text-xs font-semibold text-brand-ink-700 hover:bg-stone-200 text-left"
+                        >
+                          + {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === "Timeline" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Timeline</Label>
+                      <Select
+                        value={form.timeline}
+                        onChange={(e) =>
+                          setForm({ ...form, timeline: e.target.value })
+                        }
+                      >
+                        <option>Less than 1 week</option>
+                        <option>1-2 weeks</option>
+                        <option>2-4 weeks</option>
+                        <option>1-2 months</option>
+                        <option>Flexible</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Event / launch date (optional)</Label>
+                      <Input
+                        type="date"
+                        value={form.eventDate}
+                        onChange={(e) =>
+                          setForm({ ...form, eventDate: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Indicative budget</Label>
+                      <Input
+                        value={form.budget}
+                        onChange={(e) =>
+                          setForm({ ...form, budget: e.target.value })
+                        }
+                        placeholder="e.g. ₹3,00,000"
+                      />
+                    </div>
+                    <div>
+                      <Label>Delivery cities</Label>
+                      <Input
+                        value={form.cityList}
+                        onChange={(e) =>
+                          setForm({ ...form, cityList: e.target.value })
+                        }
+                        placeholder="Bengaluru, Mumbai, Hyderabad…"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Additional notes</Label>
+                      <Textarea
+                        value={form.notes}
+                        onChange={(e) =>
+                          setForm({ ...form, notes: e.target.value })
+                        }
+                        placeholder="Anything else our team should know"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === "Review" && (
+                  <div className="space-y-5 text-sm">
+                    <div className="rounded-2xl border border-stone-100 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                        Contact
+                      </p>
+                      <p className="mt-2 text-brand-ink-900 font-semibold">
+                        {form.contactName} · {form.company}
+                      </p>
+                      <p className="text-stone-500">{form.email} · {form.phone}</p>
+                    </div>
+                    <div className="rounded-2xl border border-stone-100 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                        Items
+                      </p>
+                      <ul className="mt-2 divide-y divide-stone-100">
+                        {items.map((it) => (
+                          <li
+                            key={it.productId}
+                            className="py-2 flex items-center justify-between gap-3 text-sm"
+                          >
+                            <span className="font-semibold text-brand-ink-900">
+                              {it.name}
+                            </span>
+                            <span className="text-stone-500">× {it.qty}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-3 text-xs text-stone-500">
+                        Indicative subtotal:{" "}
+                        <span className="font-semibold text-brand-ink-900">
+                          {formatInr(subtotal)}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-stone-100 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                        Timeline & branding
+                      </p>
+                      <p className="mt-2 text-brand-ink-900">
+                        {form.timeline}
+                        {form.eventDate && ` · ${form.eventDate}`}
+                      </p>
+                      {form.branding && (
+                        <p className="text-stone-500 mt-1">{form.branding}</p>
+                      )}
+                      {form.notes && (
+                        <p className="text-stone-500 mt-2 italic">{form.notes}</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="lg:col-span-2">
-                <div className="card p-6 sticky top-28">
-                  <h3 className="font-display text-lg font-bold text-stone-900">
-                    Selected ({items.length})
-                  </h3>
-                  {items.length === 0 ? (
-                    <div className="mt-5 rounded-xl border border-dashed border-stone-200 p-6 text-center text-sm text-stone-500">
-                      <ShoppingBag className="mx-auto mb-2 h-8 w-8 text-stone-300" />
-                      Pick a few products to start your quote.
-                    </div>
-                  ) : (
-                    <ul className="mt-4 space-y-3 max-h-[340px] overflow-y-auto pr-1">
-                      {items.map((item) => (
-                        <li
-                          key={item.productId}
-                          className="rounded-xl border border-stone-200 bg-white p-3"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg ring-1 ring-stone-200">
-                              <ImageWithFallback
-                                src={productImage(item.product).src}
-                                alt={item.product.name}
-                                sizes="48px"
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-stone-900">
-                                {item.product.name}
-                              </p>
-                              <p className="text-[11px] text-stone-400">
-                                ₹{item.product.priceFrom.toLocaleString("en-IN")} · MOQ{" "}
-                                {item.product.minOrderQty}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeProduct(item.productId)}
-                              className="text-stone-400 hover:text-lotus-rose-600"
-                              aria-label="Remove"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <div className="mt-3 flex items-center justify-between gap-2">
-                            <div className="inline-flex items-center rounded-lg border border-stone-200 bg-white">
-                              <button
-                                type="button"
-                                onClick={() => updateQty(item.productId, -1)}
-                                className="px-2 py-1 text-stone-500 hover:text-stone-900"
-                              >
-                                <Minus className="h-3.5 w-3.5" />
-                              </button>
-                              <input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) =>
-                                  setQtyDirect(
-                                    item.productId,
-                                    Number(e.target.value || 1),
-                                  )
-                                }
-                                className="w-12 border-0 bg-transparent text-center text-xs font-semibold focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => updateQty(item.productId, 1)}
-                                className="px-2 py-1 text-stone-500 hover:text-stone-900"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              value={item.customization}
-                              onChange={(e) =>
-                                updateCustomization(item.productId, e.target.value)
-                              }
-                              placeholder="Branding notes"
-                              className="flex-1 rounded-lg border border-stone-200 px-2 py-1 text-xs focus:outline-none focus:border-lotus-emerald-500 focus:ring-2 focus:ring-lotus-emerald-500/20"
-                            />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-sm">
-                    <span className="text-stone-500">Indicative subtotal</span>
-                    <span className="font-bold text-stone-900">
-                      ₹{subtotal.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-5 flex justify-between">
+              <div className="mt-8 flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
-                  className="btn-ghost"
+                  onClick={back}
+                  disabled={step === 0}
+                  className="btn-ghost disabled:opacity-40"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back
                 </button>
-                <button
-                  type="button"
-                  disabled={!canStep2}
-                  onClick={() => setStep(3)}
-                  className="btn-primary disabled:opacity-50"
-                >
-                  Review
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="grid gap-6 lg:grid-cols-3 animate-fade-in">
-              <div className="lg:col-span-2 card p-6 space-y-6">
-                <div>
-                  <h2 className="font-display text-xl font-bold text-stone-900">
-                    Review your request
-                  </h2>
-                  <p className="text-sm text-stone-500">
-                    Confirm everything looks good and add any final notes.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-stone-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400 mb-2">
-                    Contact
-                  </p>
-                  <p className="text-sm font-medium text-stone-900">{contact.name}</p>
-                  <p className="text-sm text-stone-500">{contact.email}</p>
-                  {contact.phone && (
-                    <p className="text-sm text-stone-500">{contact.phone}</p>
-                  )}
-                  {contact.company && (
-                    <p className="text-sm text-stone-500">{contact.company}</p>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border border-stone-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400 mb-3">
-                    Items ({items.length})
-                  </p>
-                  <ul className="divide-y divide-stone-100">
-                    {items.map((item) => (
-                      <li key={item.productId} className="py-3 flex items-center gap-3">
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg ring-1 ring-stone-200">
-                          <ImageWithFallback
-                            src={productImage(item.product).src}
-                            alt={item.product.name}
-                            sizes="48px"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-stone-900">
-                            {item.product.name}
-                          </p>
-                          <p className="text-[11px] text-stone-400">
-                            Qty {item.quantity} · ₹
-                            {item.product.priceFrom.toLocaleString("en-IN")} each
-                          </p>
-                          {item.customization && (
-                            <p className="mt-1 text-[11px] text-lotus-gold-700">
-                              <Sparkles className="mr-1 inline h-3 w-3" />
-                              {item.customization}
-                            </p>
-                          )}
-                        </div>
-                        <p className="text-sm font-semibold text-stone-900 tabular-nums">
-                          ₹
-                          {(item.quantity * item.product.priceFrom).toLocaleString(
-                            "en-IN",
-                          )}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <Label htmlFor="notes">Anything else we should know?</Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Timelines, delivery cities, target budget, branding requirements..."
-                  />
-                </div>
-              </div>
-
-              <div className="lg:col-span-1 card p-6 sticky top-28 self-start">
-                <h3 className="font-display text-lg font-bold text-stone-900">
-                  Summary
-                </h3>
-                <div className="mt-4 space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Items</span>
-                    <span className="font-medium text-stone-900">{items.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Total units</span>
-                    <span className="font-medium text-stone-900">
-                      {items.reduce((s, i) => s + i.quantity, 0)}
+                {step < steps.length - 1 ? (
+                  <button type="button" onClick={next} className="btn-primary btn-lg">
+                    <span className="btn-disc">
+                      <ArrowRight className="h-4 w-4" />
                     </span>
-                  </div>
-                  <div className="flex justify-between border-t border-stone-100 pt-3">
-                    <span className="text-stone-500">Indicative subtotal</span>
-                    <span className="font-bold text-stone-900">
-                      ₹{subtotal.toLocaleString("en-IN")}
+                    Continue
+                  </button>
+                ) : (
+                  <button type="button" onClick={submit} className="btn-pink btn-lg">
+                    <span className="btn-disc">
+                      <Wand2 className="h-4 w-4" />
                     </span>
-                  </div>
-                </div>
-                <p className="mt-4 text-xs text-stone-400">
-                  Final pricing depends on branding, packaging and volume tier.
-                </p>
-                {error && (
-                  <p className="mt-3 rounded-lg bg-lotus-rose-50 px-3 py-2 text-sm text-lotus-rose-700 ring-1 ring-lotus-rose-100">
-                    {error}
-                  </p>
+                    Submit quote request
+                  </button>
                 )}
-                <button
-                  type="submit"
-                  disabled={submitting || !canStep1 || !canStep2}
-                  className="btn-primary mt-5 w-full justify-center disabled:opacity-60"
-                >
-                  {submitting ? (
-                    "Submitting..."
-                  ) : (
-                    <>
-                      Submit request
-                      <Send className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="btn-ghost mt-2 w-full justify-center"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Edit items
-                </button>
               </div>
             </div>
-          )}
-        </form>
-      </section>
+          </div>
+
+          <aside className="lg:col-span-4">
+            <div className="sticky top-6 rounded-3xl bg-brand-ink-900 text-white p-6 shadow-elevated relative overflow-hidden">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand-pink-500/30 blur-3xl"
+              />
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-brand-pink-200">
+                <Sparkles className="h-3 w-3" />
+                What happens next
+              </span>
+              <h3 className="mt-3 font-display text-2xl font-extrabold">
+                A real human picks this up
+              </h3>
+              <ol className="mt-5 space-y-4 text-sm">
+                <li className="flex gap-3">
+                  <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-pink-500 text-white text-xs font-bold">
+                    1
+                  </span>
+                  <p className="text-white/85">
+                    A coordinator confirms scope within{" "}
+                    <span className="font-semibold">24 hours</span>.
+                  </p>
+                </li>
+                <li className="flex gap-3">
+                  <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-pink-500 text-white text-xs font-bold">
+                    2
+                  </span>
+                  <p className="text-white/85">
+                    Mockups + tiered pricing shared within{" "}
+                    <span className="font-semibold">48 hours</span>.
+                  </p>
+                </li>
+                <li className="flex gap-3">
+                  <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-pink-500 text-white text-xs font-bold">
+                    3
+                  </span>
+                  <p className="text-white/85">
+                    Approve, pay 50% advance, production locks.
+                  </p>
+                </li>
+              </ol>
+
+              <div className="mt-7 grid grid-cols-2 gap-3 text-xs text-white/80">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-brand-pink-300" />
+                  5d dispatch SLA
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-brand-pink-300" />
+                  GST-compliant
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-brand-pink-300" />
+                  Email confirmations
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-brand-pink-300" />
+                  Free mockups
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }

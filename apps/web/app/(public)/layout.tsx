@@ -8,11 +8,11 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <Header />
-      <main className="min-h-screen pt-[105px]">{children}</main>
+      <main className="relative">{children}</main>
       <Footer />
       <WhatsAppButton />
-    </>
+    </div>
   );
 }

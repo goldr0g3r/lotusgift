@@ -1,316 +1,241 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import {
-  Search,
-  Clock,
-  Send,
+  ArrowRight,
   CheckCircle2,
-  AlertCircle,
+  ChevronRight,
+  Clock,
   FileText,
-  ChevronDown,
-  ChevronUp,
-  Package,
+  Send,
+  X,
 } from "lucide-react";
-import { api } from "@/lib/api";
-import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { productImage } from "@/lib/images";
+import { formatInr } from "@/components/ui/PriceTag";
+import { useUserQuotes } from "@/lib/store";
 import { cn } from "@/lib/cn";
+import type { Quote } from "@/lib/api-types";
 
-type QuoteItem = {
-  id: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-  customization?: string | null;
-  product: {
-    id: string;
-    name: string;
-    sku: string;
-    slug?: string;
-    imageUrl?: string | null;
-    category?: { slug?: string } | null;
-  };
-};
+const statusFilters = [
+  { id: "all", label: "All" },
+  { id: "SENT", label: "Sent" },
+  { id: "ACCEPTED", label: "Accepted" },
+  { id: "DRAFT", label: "Draft" },
+  { id: "REJECTED", label: "Rejected" },
+  { id: "EXPIRED", label: "Expired" },
+] as const;
 
-type Quote = {
-  id: string;
-  quoteNumber: string;
-  status: string;
-  subtotal: number;
-  discount: number;
-  total: number;
-  notes?: string | null;
-  validUntil?: string | null;
-  createdAt: string;
-  items: QuoteItem[];
-};
-
-const statusMap: Record<
+const statusTone: Record<
   string,
-  { label: string; tone: "gray" | "yellow" | "emerald" | "rose"; icon: typeof Clock }
+  { tone: "neutral" | "warning" | "green" | "danger"; icon: typeof Clock; label: string }
 > = {
-  DRAFT: { label: "Draft", tone: "gray", icon: Clock },
-  SENT: { label: "Sent", tone: "yellow", icon: Send },
-  ACCEPTED: { label: "Accepted", tone: "emerald", icon: CheckCircle2 },
-  REJECTED: { label: "Rejected", tone: "rose", icon: AlertCircle },
-  EXPIRED: { label: "Expired", tone: "gray", icon: AlertCircle },
+  DRAFT: { tone: "neutral", icon: Clock, label: "Draft" },
+  SENT: { tone: "warning", icon: Send, label: "Sent" },
+  ACCEPTED: { tone: "green", icon: CheckCircle2, label: "Accepted" },
+  REJECTED: { tone: "danger", icon: X, label: "Rejected" },
+  EXPIRED: { tone: "neutral", icon: Clock, label: "Expired" },
 };
-
-const statusTabs = [
-  { label: "All", value: "all" },
-  { label: "Sent", value: "SENT" },
-  { label: "Accepted", value: "ACCEPTED" },
-  { label: "Rejected", value: "REJECTED" },
-  { label: "Draft", value: "DRAFT" },
-];
 
 export default function PortalQuotesPage() {
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const quotes = useUserQuotes();
+  const [filter, setFilter] = useState<(typeof statusFilters)[number]["id"]>("all");
+  const [selected, setSelected] = useState<Quote | null>(null);
 
-  useEffect(() => {
-    api
-      .get<Quote[]>("/quotes")
-      .then((data) => setQuotes(Array.isArray(data) ? data : []))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = quotes.filter((q) => {
-    const matchSearch = q.quoteNumber.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = activeTab === "all" || q.status === activeTab;
-    return matchSearch && matchStatus;
-  });
-
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 rounded-2xl" />
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="card p-12 text-center">
-        <AlertCircle className="w-12 h-12 text-lotus-rose-300 mx-auto" />
-        <h3 className="mt-4 font-semibold text-stone-900">Error loading quotes</h3>
-        <p className="text-sm text-stone-500 mt-1">{error}</p>
-      </div>
-    );
-  }
+  const filtered =
+    filter === "all" ? quotes : quotes.filter((q) => q.status === filter);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-display text-2xl font-bold text-stone-900">My quotes</h2>
-        <p className="text-stone-500 mt-1 text-sm">
-          View and track all your quotation requests.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <span className="eyebrow">My quotes</span>
+          <h2 className="mt-3 h2-display">Your quote pipeline</h2>
+          <p className="mt-2 text-sm text-stone-500">
+            Track every quote we&apos;ve sent — accept, follow up, or duplicate
+            for the next campaign.
+          </p>
+        </div>
+        <Link href="/request-quote" className="btn-primary btn-lg">
+          <span className="btn-disc">
+            <ArrowRight className="h-4 w-4" />
+          </span>
+          New quote
+        </Link>
       </div>
 
-      <div className="card">
-        <div className="flex items-center gap-1 px-4 pt-3 overflow-x-auto">
-          {statusTabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className={cn(
-                "px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap",
-                activeTab === tab.value
-                  ? "border-lotus-emerald-700 text-lotus-emerald-800"
-                  : "border-transparent text-stone-500 hover:text-stone-800",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="p-4 border-t border-stone-100">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-            <Input
-              type="text"
-              placeholder="Search by quote number..."
-              className="!pl-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {statusFilters.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setFilter(f.id)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+              filter === f.id
+                ? "bg-brand-ink-900 text-white"
+                : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200",
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
-      <div className="space-y-3">
-        {filtered.map((quote) => {
-          const cfg = statusMap[quote.status] || statusMap.DRAFT!;
-          const Icon = cfg.icon;
-          const expanded = expandedId === quote.id;
-          const firstItem = quote.items[0];
-
-          return (
-            <div key={quote.id} className="card overflow-hidden">
-              <button
-                onClick={() => setExpandedId(expanded ? null : quote.id)}
-                className="w-full p-5 text-left hover:bg-stone-50/40 transition-colors"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {firstItem ? (
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl ring-1 ring-stone-200">
-                        <ImageWithFallback
-                          src={productImage(firstItem.product).src}
-                          alt={firstItem.product.name}
-                          sizes="48px"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-stone-50 ring-1 ring-stone-200">
-                        <FileText className="h-5 w-5 text-stone-400" />
-                      </div>
-                    )}
-                    <div className="min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-7 space-y-3">
+          {filtered.length === 0 ? (
+            <div className="rounded-3xl bg-white border border-stone-100 p-10 text-center">
+              <FileText className="w-10 h-10 text-stone-200 mx-auto" />
+              <p className="text-sm text-stone-500 mt-3">No quotes in this view</p>
+            </div>
+          ) : (
+            filtered.map((q) => {
+              const cfg = statusTone[q.status]!;
+              const Icon = cfg.icon;
+              const active = selected?.id === q.id;
+              return (
+                <button
+                  type="button"
+                  key={q.id}
+                  onClick={() => setSelected(q)}
+                  className={cn(
+                    "w-full rounded-3xl border p-5 sm:p-6 text-left transition-all",
+                    active
+                      ? "bg-brand-green-50/40 border-brand-green-200 shadow-elevated"
+                      : "bg-white border-stone-100 hover:-translate-y-0.5 hover:shadow-elevated",
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100">
+                      <FileText className="h-5 w-5 text-stone-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-semibold text-stone-900">
-                          {quote.quoteNumber}
-                        </h3>
+                        <p className="text-sm font-bold text-brand-ink-900">
+                          {q.quoteNumber}
+                        </p>
                         <Badge tone={cfg.tone}>
                           <Icon className="w-3 h-3" />
                           {cfg.label}
                         </Badge>
                       </div>
-                      <p className="text-sm text-stone-500 mt-0.5">
-                        {quote.items.length} items ·{" "}
-                        {new Date(quote.createdAt).toLocaleDateString()}
-                        {quote.validUntil &&
-                          ` · Valid until ${new Date(quote.validUntil).toLocaleDateString()}`}
+                      <p className="text-xs text-stone-500 mt-1">
+                        {q.items.length} items · Created{" "}
+                        {new Date(q.createdAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        Valid until{" "}
+                        {q.validUntil
+                          ? new Date(q.validUntil).toLocaleDateString()
+                          : "—"}
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-6 flex-shrink-0">
                     <div className="text-right">
-                      {quote.discount > 0 && (
-                        <span className="text-xs text-lotus-rose-600 font-medium">
-                          -₹{quote.discount.toLocaleString("en-IN")} off
-                        </span>
-                      )}
-                      <div className="text-lg font-bold text-stone-900 tabular-nums">
-                        ₹{quote.total.toLocaleString("en-IN")}
-                      </div>
+                      <p className="text-lg font-extrabold text-brand-ink-900 tabular-nums">
+                        {formatInr(q.total)}
+                      </p>
+                      <ChevronRight className="h-4 w-4 text-stone-300 ml-auto mt-1" />
                     </div>
-                    {expanded ? (
-                      <ChevronUp className="w-5 h-5 text-stone-400" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-stone-400" />
-                    )}
                   </div>
-                </div>
-              </button>
-
-              {expanded && (
-                <div className="border-t border-stone-100 p-5 animate-slide-down">
-                  {quote.items.length === 0 ? (
-                    <p className="text-sm text-stone-400 text-center py-4">
-                      No items in this quote
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      <h4 className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.18em]">
-                        Quote items
-                      </h4>
-                      {quote.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-4 rounded-xl bg-stone-50 p-3"
-                        >
-                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg ring-1 ring-stone-200">
-                            <ImageWithFallback
-                              src={productImage(item.product).src}
-                              alt={item.product.name}
-                              sizes="48px"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-stone-900 truncate">
-                              {item.product.name}
-                            </p>
-                            <p className="text-xs text-stone-500">
-                              SKU: {item.product.sku}
-                              {item.customization && ` · Custom: ${item.customization}`}
-                            </p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-sm font-semibold text-stone-900 tabular-nums">
-                              ₹{item.total.toLocaleString("en-IN")}
-                            </p>
-                            <p className="text-xs text-stone-500 tabular-nums">
-                              {item.quantity} × ₹{item.unitPrice.toLocaleString("en-IN")}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="flex justify-end pt-3 border-t border-stone-100">
-                        <div className="text-right space-y-1 text-sm tabular-nums">
-                          <div className="flex items-center gap-6">
-                            <span className="text-stone-500">Subtotal</span>
-                            <span className="font-medium text-stone-900">
-                              ₹{quote.subtotal.toLocaleString("en-IN")}
-                            </span>
-                          </div>
-                          {quote.discount > 0 && (
-                            <div className="flex items-center gap-6">
-                              <span className="text-stone-500">Discount</span>
-                              <span className="font-medium text-lotus-rose-600">
-                                -₹{quote.discount.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-6 font-bold">
-                            <span className="text-stone-700">Total</span>
-                            <span className="text-stone-900">
-                              ₹{quote.total.toLocaleString("en-IN")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      {quote.notes && (
-                        <div className="mt-3 rounded-xl bg-lotus-gold-50 p-3 ring-1 ring-lotus-gold-100">
-                          <p className="text-xs font-semibold text-lotus-gold-800">Notes</p>
-                          <p className="mt-1 text-sm text-lotus-gold-900/85">
-                            {quote.notes}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="card p-12 text-center">
-          <Package className="w-12 h-12 text-stone-200 mx-auto" />
-          <h3 className="mt-4 font-semibold text-stone-900">No quotes found</h3>
-          <p className="text-sm text-stone-500 mt-1">
-            {quotes.length === 0
-              ? "You don't have any quotes yet."
-              : "Try adjusting your search or filter."}
-          </p>
+                </button>
+              );
+            })
+          )}
         </div>
-      )}
+
+        <aside className="lg:col-span-5">
+          <div className="sticky top-3 rounded-3xl bg-white border border-stone-100 p-6">
+            {selected ? (
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-stone-500">Quote number</p>
+                    <p className="text-lg font-extrabold text-brand-ink-900">
+                      {selected.quoteNumber}
+                    </p>
+                  </div>
+                  <Badge tone={statusTone[selected.status]?.tone ?? "neutral"}>
+                    {selected.status}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-xs text-stone-500">
+                  Created {new Date(selected.createdAt).toLocaleDateString()} ·{" "}
+                  Valid until{" "}
+                  {selected.validUntil
+                    ? new Date(selected.validUntil).toLocaleDateString()
+                    : "—"}
+                </p>
+
+                <div className="mt-5 divide-y divide-stone-100 border-y border-stone-100">
+                  {selected.items.map((it) => (
+                    <div key={it.id} className="py-3 flex items-center justify-between gap-3 text-sm">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-brand-ink-900 truncate">
+                          {it.product.name}
+                        </p>
+                        <p className="text-xs text-stone-500">
+                          {it.quantity} × {formatInr(it.unitPrice)}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-brand-ink-900 tabular-nums">
+                        {formatInr(it.total)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <dl className="mt-5 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-stone-500">Subtotal</dt>
+                    <dd className="font-semibold tabular-nums">{formatInr(selected.subtotal)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-stone-500">Discount</dt>
+                    <dd className="font-semibold tabular-nums text-brand-green-700">
+                      − {formatInr(selected.discount)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-stone-500">GST</dt>
+                    <dd className="font-semibold tabular-nums">
+                      {formatInr(selected.tax)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between border-t border-stone-100 pt-2">
+                    <dt className="text-sm font-bold text-brand-ink-900">Total</dt>
+                    <dd className="text-xl font-extrabold tabular-nums">
+                      {formatInr(selected.total)}
+                    </dd>
+                  </div>
+                </dl>
+
+                {selected.notes && (
+                  <div className="mt-5 rounded-2xl bg-stone-50 p-4 text-xs text-stone-600 italic">
+                    “{selected.notes}”
+                  </div>
+                )}
+
+                <div className="mt-6 flex gap-3">
+                  <button type="button" className="btn-pink flex-1">
+                    Accept
+                  </button>
+                  <button type="button" className="btn-outline flex-1 rounded-full">
+                    Negotiate
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <FileText className="w-10 h-10 text-stone-200 mx-auto" />
+                <p className="text-sm text-stone-500 mt-3">
+                  Select a quote to view details
+                </p>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

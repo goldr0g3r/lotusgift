@@ -1,42 +1,44 @@
 import type { Config } from "tailwindcss";
 
-const emerald = {
-  50: "#ECFDF5",
-  100: "#D1FAE5",
-  200: "#A7F3D0",
-  300: "#6EE7B7",
-  400: "#34D399",
-  500: "#10B981",
-  600: "#059669",
-  700: "#047857",
-  800: "#065F46",
-  900: "#064E3B",
+const green = {
+  50: "#E6F4ED",
+  100: "#C2E3CF",
+  200: "#8FC8A9",
+  300: "#5BAD83",
+  400: "#2F955F",
+  500: "#02783C",
+  600: "#026B36",
+  700: "#02592D",
+  800: "#014424",
+  900: "#01331B",
+  950: "#012113",
 };
 
-const gold = {
-  50: "#FFFBEB",
-  100: "#FEF3C7",
-  200: "#FDE68A",
-  300: "#FCD34D",
-  400: "#FBBF24",
-  500: "#F59E0B",
-  600: "#D97706",
-  700: "#B45309",
-  800: "#92400E",
-  900: "#78350F",
+const pink = {
+  50: "#FEE8F2",
+  100: "#FECDDF",
+  200: "#FBA6C7",
+  300: "#F87FAF",
+  400: "#F45298",
+  500: "#F01282",
+  600: "#D40D74",
+  700: "#A40B5C",
+  800: "#75083F",
+  900: "#4A052B",
+  950: "#2B0319",
 };
 
-const rose = {
-  50: "#FFF1F2",
-  100: "#FFE4E6",
-  200: "#FECDD3",
-  300: "#FDA4AF",
-  400: "#FB7185",
-  500: "#F43F5E",
-  600: "#E11D48",
-  700: "#BE123C",
-  800: "#9F1239",
-  900: "#881337",
+const ink = {
+  50: "#F7F7F8",
+  100: "#EDEDF0",
+  200: "#D6D6DD",
+  300: "#B5B5BF",
+  400: "#888896",
+  500: "#5E5E6B",
+  600: "#444450",
+  700: "#2F2F38",
+  800: "#1D1D24",
+  900: "#0E0E13",
 };
 
 const config: Config = {
@@ -48,31 +50,39 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        lotus: {
-          emerald,
-          gold,
-          rose,
-          cream: "#FAF7F2",
-          ivory: "#FFFBF5",
-          ink: "#1F2937",
-        },
-        // Re-pointed brand aliases so existing class names stay on-brand mid-migration.
         brand: {
-          green: emerald,
-          pink: rose,
-          gold,
+          green,
+          pink,
+          ink,
+        },
+        // Back-compat aliases so any stragglers still resolve mid-migration.
+        lotus: {
+          emerald: green,
+          gold: pink,
+          rose: pink,
+          cream: "#FFFBF5",
+          ivory: "#FFFBF5",
+          ink: ink[700],
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        sans: [
+          "var(--font-jakarta)",
+          "var(--font-geist-sans)",
+          "system-ui",
+          "sans-serif",
+        ],
         mono: ["var(--font-geist-mono)", "monospace"],
         display: [
-          "var(--font-display)",
+          "var(--font-jakarta)",
           "var(--font-geist-sans)",
-          "ui-serif",
-          "Georgia",
-          "serif",
+          "system-ui",
+          "sans-serif",
         ],
+      },
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
       },
       keyframes: {
         "fade-in-up": {
@@ -109,15 +119,15 @@ const config: Config = {
         },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
-        "gradient-shift": {
-          "0%, 100%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
         },
         "pulse-soft": {
           "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.7" },
+          "50%": { opacity: "0.65" },
         },
         marquee: {
           "0%": { transform: "translateX(0)" },
@@ -125,7 +135,7 @@ const config: Config = {
         },
         "ken-burns": {
           "0%": { transform: "scale(1) translate(0, 0)" },
-          "100%": { transform: "scale(1.1) translate(-1%, -1%)" },
+          "100%": { transform: "scale(1.08) translate(-1%, -1%)" },
         },
       },
       animation: {
@@ -137,28 +147,28 @@ const config: Config = {
         "slide-in-left": "slide-in-left 0.3s ease-out forwards",
         "scale-in": "scale-in 0.2s ease-out forwards",
         shimmer: "shimmer 2s ease-in-out infinite",
-        float: "float 3s ease-in-out infinite",
-        "gradient-shift": "gradient-shift 6s ease-in-out infinite",
+        float: "float 4s ease-in-out infinite",
+        "spin-slow": "spin-slow 18s linear infinite",
         "pulse-soft": "pulse-soft 2.4s ease-in-out infinite",
         marquee: "marquee 28s linear infinite",
         "ken-burns": "ken-burns 14s ease-out forwards",
       },
       boxShadow: {
-        glow: "0 0 24px rgba(16, 185, 129, 0.18)",
-        "glow-gold": "0 0 24px rgba(217, 119, 6, 0.18)",
-        "glow-rose": "0 0 24px rgba(225, 29, 72, 0.18)",
-        soft: "0 2px 16px rgba(15, 23, 42, 0.04), 0 1px 4px rgba(15, 23, 42, 0.04)",
+        panel:
+          "0 24px 64px -16px rgba(15, 23, 42, 0.12), 0 8px 24px -8px rgba(15, 23, 42, 0.08)",
+        pill: "0 4px 14px -4px rgba(15, 23, 42, 0.10), 0 1px 2px rgba(15, 23, 42, 0.04)",
+        soft: "0 2px 16px rgba(15, 23, 42, 0.05), 0 1px 4px rgba(15, 23, 42, 0.04)",
         elevated:
-          "0 8px 32px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)",
+          "0 10px 30px -10px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.05)",
         "elevated-lg":
-          "0 16px 48px rgba(15, 23, 42, 0.10), 0 4px 16px rgba(15, 23, 42, 0.06)",
-        warm: "0 8px 28px rgba(217, 119, 6, 0.12), 0 2px 6px rgba(0,0,0,0.04)",
+          "0 24px 56px -16px rgba(15, 23, 42, 0.18), 0 4px 16px rgba(15, 23, 42, 0.06)",
+        glow: "0 0 32px rgba(2, 120, 60, 0.18)",
+        "glow-pink": "0 0 32px rgba(240, 18, 130, 0.22)",
       },
       backgroundImage: {
-        "noise":
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        noise:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
       },
-      typography: () => ({}),
     },
   },
   plugins: [],

@@ -1,383 +1,262 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Upload, Save, Loader2 } from "lucide-react";
-import type { Category } from "@/lib/api";
-import { Input, Label, Select, Textarea } from "@/components/ui/Input";
-import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, ImagePlus, Save } from "lucide-react";
+import { Input, Label, Textarea, Select } from "@/components/ui/Input";
+import { mockCategories } from "@/lib/mock-data";
 import { toast } from "@/components/ui/Toaster";
-import { cn } from "@/lib/cn";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
-}
 
 export default function NewProductPage() {
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingCats, setLoadingCats] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    sku: "",
+    slug: "",
+    categoryId: mockCategories[0]?.id ?? "",
+    shortDesc: "",
+    description: "",
+    priceFrom: "",
+    wholesalePrice: "",
+    moq: "25",
+    wholesaleMoq: "100",
+    stock: "0",
+    customization: "",
+    featured: false,
+    wholesale: true,
+  });
+  const update = (k: keyof typeof form, v: typeof form[keyof typeof form]) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [sku, setSku] = useState("");
-  const [description, setDescription] = useState("");
-  const [shortDesc, setShortDesc] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
-  const [stock, setStock] = useState("");
-  const [minOrderQty, setMinOrderQty] = useState("1");
-  const [imageUrl, setImageUrl] = useState("");
-  const [isFeatured, setIsFeatured] = useState(false);
-  const [isWholesale, setIsWholesale] = useState(false);
-  const [wholesalePrice, setWholesalePrice] = useState("");
-  const [wholesaleMinQty, setWholesaleMinQty] = useState("");
-
-  useEffect(() => {
-    fetch(`${API}/categories`)
-      .then((r) => r.json())
-      .then((data: any) =>
-        setCategories(Array.isArray(data) ? data : data.data || []),
-      )
-      .catch(() => toast.error("Failed to load categories"))
-      .finally(() => setLoadingCats(false));
-  }, []);
-
-  const handleNameChange = (value: string) => {
-    setName(value);
-    setSlug(slugify(value));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const save = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!name || !sku || !description || !categoryId || !priceFrom) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setSaving(true);
-    const token = localStorage.getItem("token");
-
-    try {
-      const body: Record<string, unknown> = {
-        name,
-        slug: slug || slugify(name),
-        sku,
-        description,
-        categoryId,
-        priceFrom: Number(priceFrom),
-        isActive: true,
-        isFeatured,
-        isWholesale,
-      };
-      if (shortDesc) body.shortDesc = shortDesc;
-      if (priceTo) body.priceTo = Number(priceTo);
-      if (stock) body.stock = Number(stock);
-      if (minOrderQty) body.minOrderQty = Number(minOrderQty);
-      if (imageUrl) body.imageUrl = imageUrl;
-      if (isWholesale && wholesalePrice)
-        body.wholesalePrice = Number(wholesalePrice);
-      if (isWholesale && wholesaleMinQty)
-        body.wholesaleMinQty = Number(wholesaleMinQty);
-
-      const res = await fetch(`${API}/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Failed to create product");
-      }
-
-      toast.success("Product created");
-      router.push("/admin/products");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create");
-    } finally {
-      setSaving(false);
-    }
+    toast.success(`Product "${form.name}" saved (stub)`);
+    router.push("/admin/products");
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/products"
-          className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <span className="eyebrow">Catalog</span>
-          <h2 className="mt-1 font-display text-2xl font-bold text-stone-900">
-            Add new product
-          </h2>
-          <p className="text-stone-500 mt-1 text-sm">
-            Add a new product to your catalog
-          </p>
-        </div>
+    <div className="space-y-6">
+      <Link
+        href="/admin/products"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-500 hover:text-brand-ink-900"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to products
+      </Link>
+      <div>
+        <span className="eyebrow">New product</span>
+        <h2 className="mt-3 h2-display">Add a product to the catalog</h2>
+        <p className="text-stone-500 mt-1 text-sm">
+          Save now and publish from the listing page.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="card p-6 space-y-5">
-          <h3 className="font-display text-lg font-semibold text-stone-900">
-            Basic information
-          </h3>
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div className="sm:col-span-2">
-              <Label>Product name *</Label>
-              <Input
-                placeholder="e.g., Custom branded pens"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label>Slug</Label>
-              <Input
-                className="font-mono text-sm"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder="auto-generated"
-              />
-            </div>
-            <div>
-              <Label>SKU *</Label>
-              <Input
-                placeholder="e.g., PEN-001"
-                className="font-mono"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label>Category *</Label>
-              {loadingCats ? (
-                <div className="flex items-center gap-2 text-stone-400 px-4 py-2.5 rounded-xl ring-1 ring-stone-200 bg-stone-50">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Loading...
-                </div>
-              ) : (
-                <Select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
+      <form onSubmit={save} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-5">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-7">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
+              Basic info
+            </h3>
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <Label>Name</Label>
+                <Input
                   required
+                  value={form.name}
+                  onChange={(e) => update("name", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>SKU</Label>
+                <Input
+                  value={form.sku}
+                  onChange={(e) => update("sku", e.target.value)}
+                  placeholder="LG-XXX-001"
+                />
+              </div>
+              <div>
+                <Label>Slug</Label>
+                <Input
+                  value={form.slug}
+                  onChange={(e) => update("slug", e.target.value)}
+                  placeholder="auto-generated"
+                />
+              </div>
+              <div>
+                <Label>Category</Label>
+                <Select
+                  value={form.categoryId}
+                  onChange={(e) => update("categoryId", e.target.value)}
                 >
-                  <option value="" disabled>
-                    Select a category
-                  </option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                  {mockCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </Select>
-              )}
+              </div>
+              <div>
+                <Label>Stock on hand</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.stock}
+                  onChange={(e) => update("stock", e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Short description</Label>
+                <Input
+                  value={form.shortDesc}
+                  onChange={(e) => update("shortDesc", e.target.value)}
+                  placeholder="One-liner for cards and listings"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Full description</Label>
+                <Textarea
+                  rows={5}
+                  value={form.description}
+                  onChange={(e) => update("description", e.target.value)}
+                />
+              </div>
             </div>
-            <div>
-              <Label>Min order qty</Label>
-              <Input
-                type="number"
-                min="1"
-                placeholder="1"
-                value={minOrderQty}
-                onChange={(e) => setMinOrderQty(e.target.value)}
-              />
+          </div>
+
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-7">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
+              Pricing
+            </h3>
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>List price (from)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.priceFrom}
+                  onChange={(e) => update("priceFrom", e.target.value)}
+                  placeholder="₹"
+                />
+              </div>
+              <div>
+                <Label>Wholesale unit price</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.wholesalePrice}
+                  onChange={(e) => update("wholesalePrice", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>MOQ</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.moq}
+                  onChange={(e) => update("moq", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Wholesale MOQ</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.wholesaleMoq}
+                  onChange={(e) => update("wholesaleMoq", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="sm:col-span-2">
-              <Label>Short description</Label>
-              <Input
-                placeholder="Brief one-liner for listings"
-                value={shortDesc}
-                onChange={(e) => setShortDesc(e.target.value)}
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Description *</Label>
-              <Textarea
-                rows={4}
-                placeholder="Describe the product, materials, customization options..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-            </div>
+          </div>
+
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-7">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
+              Customisation options
+            </h3>
+            <Textarea
+              className="mt-5"
+              rows={3}
+              value={form.customization}
+              onChange={(e) => update("customization", e.target.value)}
+              placeholder="Comma separated, e.g. Logo printing, Custom box, Engraved tag"
+            />
           </div>
         </div>
 
-        <div className="card p-6 space-y-5">
-          <h3 className="font-display text-lg font-semibold text-stone-900">
-            Pricing
-          </h3>
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div>
-              <Label>Price from (₹) *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={priceFrom}
-                onChange={(e) => setPriceFrom(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label>Price to (₹)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={priceTo}
-                onChange={(e) => setPriceTo(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Stock quantity</Label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="border-t border-stone-100 pt-5 flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 rounded border-stone-300 text-lotus-emerald-700 focus:ring-lotus-emerald-500"
-              />
-              <span className="text-sm text-stone-700">Featured product</span>
-            </label>
-          </div>
-
-          <div className="border-t border-stone-100 pt-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-stone-900">
-                  Wholesale pricing
-                </h4>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  Enable wholesale pricing for bulk buyers
-                </p>
-              </div>
+        <aside className="lg:col-span-4 space-y-5">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
+              Images
+            </h3>
+            <div className="mt-4 aspect-square rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-400">
+              <ImagePlus className="h-6 w-6" />
+              <p className="mt-2 text-xs text-center px-4">
+                Drop product images, PNG or JPG, up to 4MB each.
+              </p>
               <button
                 type="button"
-                onClick={() => setIsWholesale(!isWholesale)}
-                className={cn(
-                  "relative w-11 h-6 rounded-full transition-colors",
-                  isWholesale ? "bg-lotus-emerald-700" : "bg-stone-300",
-                )}
-                aria-label="Toggle wholesale"
+                className="btn-outline btn-sm mt-4"
+                onClick={() => toast.success("File picker would open here")}
               >
-                <span
-                  className={cn(
-                    "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform",
-                    isWholesale && "translate-x-5",
-                  )}
-                />
+                Upload images
               </button>
             </div>
-            {isWholesale && (
-              <div className="grid sm:grid-cols-2 gap-5 mt-5">
-                <div>
-                  <Label>Wholesale price (₹)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={wholesalePrice}
-                    onChange={(e) => setWholesalePrice(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Minimum quantity</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="e.g., 100"
-                    value={wholesaleMinQty}
-                    onChange={(e) => setWholesaleMinQty(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
           </div>
-        </div>
 
-        <div className="card p-6 space-y-5">
-          <h3 className="font-display text-lg font-semibold text-stone-900">
-            Product image
-          </h3>
-          <div className="grid sm:grid-cols-[1fr_220px] gap-5">
-            <div>
-              <Label>Image URL</Label>
-              <Input
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-              />
-              <p className="text-xs text-stone-400 mt-2">
-                Paste a public image URL. Cloudinary upload coming soon.
-              </p>
-            </div>
-            <div className="relative aspect-square rounded-xl overflow-hidden bg-stone-100 ring-1 ring-stone-200">
-              {imageUrl ? (
-                <ImageWithFallback
-                  src={imageUrl}
-                  alt="Product preview"
-                  sizes="220px"
+          <div className="rounded-3xl bg-white border border-stone-100 p-6">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
+              Status
+            </h3>
+            <div className="mt-4 space-y-3">
+              <label className="flex items-center justify-between rounded-2xl bg-stone-50 px-4 py-3 cursor-pointer">
+                <div>
+                  <p className="text-sm font-semibold text-brand-ink-900">
+                    Featured
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Show on the home carousel
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(e) => update("featured", e.target.checked)}
+                  className="h-4 w-4 accent-brand-green-500"
                 />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-stone-400">
-                  <Upload className="w-7 h-7" />
-                  <span className="mt-2 text-xs">Preview</span>
+              </label>
+              <label className="flex items-center justify-between rounded-2xl bg-stone-50 px-4 py-3 cursor-pointer">
+                <div>
+                  <p className="text-sm font-semibold text-brand-ink-900">
+                    Wholesale
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Eligible for tiered pricing
+                  </p>
                 </div>
-              )}
+                <input
+                  type="checkbox"
+                  checked={form.wholesale}
+                  onChange={(e) => update("wholesale", e.target.checked)}
+                  className="h-4 w-4 accent-brand-green-500"
+                />
+              </label>
             </div>
+            <button type="submit" className="btn-primary btn-lg w-full mt-6">
+              <span className="btn-disc">
+                <Save className="h-4 w-4" />
+              </span>
+              Save product
+            </button>
+            <button
+              type="button"
+              className="btn-outline rounded-full w-full mt-3"
+              onClick={() => toast.success("Saved as draft")}
+            >
+              Save as draft
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link href="/admin/products" className="btn-ghost">
-            Cancel
-          </Link>
-          <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {saving ? "Saving..." : "Save product"}
-          </button>
-        </div>
+        </aside>
       </form>
     </div>
   );

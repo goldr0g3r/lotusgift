@@ -1,33 +1,60 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import {
-  Phone,
+  ArrowRight,
+  Clock,
   Mail,
   MapPin,
-  Clock,
-  Send,
   MessageCircle,
-  CheckCircle,
-  ArrowRight,
+  Phone,
+  Send,
+  Sparkles,
 } from "lucide-react";
 import { Input, Label, Textarea } from "@/components/ui/Input";
-import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { contactImage } from "@/lib/images";
+import { Accordion, AccordionItem } from "@/components/ui/Accordion";
 import { toast } from "@/components/ui/Toaster";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-const contactInfo = [
-  { icon: Phone, label: "Phone", value: "+91 98765 43210", href: "tel:+919876543210" },
-  { icon: Mail, label: "Email", value: "info@lotusgift.com", href: "mailto:info@lotusgift.com" },
+const departments = [
   {
-    icon: MapPin,
-    label: "Address",
-    value: "123 Business Avenue, Mumbai, Maharashtra 400001",
-    href: null,
+    name: "Sales & Quotes",
+    detail: "For new campaigns, RFPs and tiered pricing.",
+    email: "quotes@lotusgift.com",
   },
-  { icon: Clock, label: "Hours", value: "Mon – Sat: 9 AM – 6 PM IST", href: null },
+  {
+    name: "Wholesale & Procurement",
+    detail: "Volume contracts, GST-compliant invoicing.",
+    email: "wholesale@lotusgift.com",
+  },
+  {
+    name: "Design & Customisation",
+    detail: "Mockups, branding files, packaging requests.",
+    email: "design@lotusgift.com",
+  },
+  {
+    name: "Existing Orders",
+    detail: "Tracking, dispatch updates, post-delivery support.",
+    email: "support@lotusgift.com",
+  },
+];
+
+const faqs = [
+  {
+    q: "What is your typical lead time?",
+    a: "10–14 days from artwork approval for most orders. Tighter timelines can be accommodated for in-stock items with simpler branding.",
+  },
+  {
+    q: "Do you ship pan-India?",
+    a: "Yes. We dispatch from Coimbatore and split shipments across multiple cities when needed. Most metros receive within 3–5 days.",
+  },
+  {
+    q: "What's the minimum order quantity?",
+    a: "MOQs vary by product, typically starting at 25–100 units. Bulk tiers (500+) unlock significant savings.",
+  },
+  {
+    q: "Can you handle custom packaging?",
+    a: "Absolutely. We design and produce custom boxes, sleeves, ribbon tags and inserts in-house.",
+  },
 ];
 
 export default function ContactPage() {
@@ -40,242 +67,267 @@ export default function ContactPage() {
     message: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  }
-
-  async function handleSubmit(e: FormEvent) {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError("");
-
-    try {
-      const res = await fetch(`${API}/contacts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(data.message || "Something went wrong");
-      }
-      setSubmitted(true);
-      toast.success("Thanks! We'll get back to you within 24 hours.");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to send. Please try again.";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  }
+    await new Promise((r) => setTimeout(r, 480));
+    toast.success("Message sent — we'll get back within 24 hours");
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      subject: "",
+      message: "",
+    });
+    setSubmitting(false);
+  };
 
   return (
-    <div className="min-h-screen">
-      <section className="relative overflow-hidden">
-        <div className="grid lg:grid-cols-2">
-          <div className="relative bg-gradient-to-br from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900 px-6 py-16 sm:px-10 lg:px-14 lg:py-24 text-white">
-            <div className="pointer-events-none absolute inset-0 lotus-pattern opacity-25" aria-hidden />
-            <div className="relative max-w-lg">
-              <span className="eyebrow !bg-white/10 !text-lotus-gold-200 !ring-white/15">
-                Talk to us
-              </span>
-              <h1 className="mt-4 font-display text-4xl sm:text-5xl font-bold leading-tight">
-                Let&apos;s build something memorable together
-              </h1>
-              <p className="mt-4 text-stone-100/85">
-                Tell us about your campaign — quantities, timelines, branding —
-                and we&apos;ll come back with options and visuals within 24 hours.
-              </p>
-              <ul className="mt-8 grid gap-3">
-                {contactInfo.map((item) => (
-                  <li key={item.label} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                      <item.icon className="h-4 w-4 text-lotus-gold-300" />
-                    </span>
-                    <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-300">
-                        {item.label}
-                      </div>
-                      {item.href ? (
-                        <a
-                          href={item.href}
-                          className="text-sm font-medium hover:text-lotus-gold-200"
-                        >
-                          {item.value}
-                        </a>
-                      ) : (
-                        <p className="text-sm font-medium">{item.value}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="https://wa.me/919876543210"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 inline-flex items-center gap-2.5 rounded-xl bg-lotus-gold-500 px-5 py-3 text-sm font-bold text-stone-900 shadow-elevated hover:bg-lotus-gold-400 transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Chat on WhatsApp
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-          <div className="relative h-[320px] lg:h-auto">
-            <ImageWithFallback
-              src={contactImage.src}
-              alt={contactImage.alt}
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
+    <div>
+      <section className="px-4 sm:px-6 lg:px-10 py-12 sm:py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="eyebrow">Get in touch</span>
+            <h1 className="mt-4 h1-display">Talk to a real human</h1>
+            <p className="mt-4 text-base sm:text-lg text-stone-500">
+              Tell us about your campaign, audience and timeline. We respond to every message within 24 hours.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="py-16 lg:py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          {submitted ? (
-            <div className="card p-10 text-center max-w-2xl mx-auto">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-lotus-emerald-50 ring-1 ring-lotus-emerald-100">
-                <CheckCircle className="h-8 w-8 text-lotus-emerald-700" />
-              </div>
-              <h2 className="font-display text-2xl font-bold text-stone-900">
-                Message sent!
-              </h2>
-              <p className="mt-2 text-stone-500 max-w-md mx-auto">
-                Thanks for reaching out — our team will get back to you within 24 hours.
-              </p>
-              <button
-                onClick={() => {
-                  setSubmitted(false);
-                  setForm({
-                    name: "",
-                    email: "",
-                    phone: "",
-                    company: "",
-                    subject: "",
-                    message: "",
-                  });
-                }}
-                className="btn-secondary mt-6"
-              >
-                Send another message
-              </button>
-            </div>
-          ) : (
-            <div className="card p-6 sm:p-10">
-              <h2 className="font-display text-2xl font-bold text-stone-900">
+      <section className="px-4 sm:px-6 lg:px-10 pb-12 sm:pb-16">
+        <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-7">
+            <form
+              onSubmit={onSubmit}
+              className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8 shadow-soft"
+            >
+              <h2 className="font-display text-xl font-bold text-brand-ink-900">
                 Send us a message
               </h2>
               <p className="mt-1 text-sm text-stone-500">
-                Required fields marked with <span className="text-lotus-rose-600">*</span>.
+                The more context you share, the better our first response will be.
               </p>
-              <form onSubmit={handleSubmit} className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">
-                    Full name <span className="text-lotus-rose-600">*</span>
-                  </Label>
+                  <Label>Name</Label>
                   <Input
-                    id="name"
-                    name="name"
                     required
                     value={form.name}
-                    onChange={handleChange}
-                    placeholder="Jane Doe"
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">
-                    Email <span className="text-lotus-rose-600">*</span>
-                  </Label>
+                  <Label>Email</Label>
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
                     required
+                    type="email"
                     value={form.email}
-                    onChange={handleChange}
-                    placeholder="jane@company.com"
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label>Phone</Label>
                   <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
                     value={form.phone}
-                    onChange={handleChange}
-                    placeholder="+91 98765 43210"
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="company">Company</Label>
+                  <Label>Company</Label>
                   <Input
-                    id="company"
-                    name="company"
                     value={form.company}
-                    onChange={handleChange}
-                    placeholder="Acme Inc."
+                    onChange={(e) => setForm({ ...form, company: e.target.value })}
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label htmlFor="subject">Subject</Label>
+                  <Label>Subject</Label>
                   <Input
-                    id="subject"
-                    name="subject"
                     value={form.subject}
-                    onChange={handleChange}
-                    placeholder="How can we help?"
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    placeholder="e.g. Welcome kits for 250 hires"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label htmlFor="message">
-                    Message <span className="text-lotus-rose-600">*</span>
-                  </Label>
+                  <Label>Message</Label>
                   <Textarea
-                    id="message"
-                    name="message"
                     required
                     rows={5}
                     value={form.message}
-                    onChange={handleChange}
-                    placeholder="Tell us about your campaign — audience, quantities, timeline..."
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    placeholder="Tell us about your campaign, timeline and any branding preferences."
                   />
                 </div>
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn-pink btn-lg mt-6"
+              >
+                <span className="btn-disc">
+                  <Send className="h-4 w-4" />
+                </span>
+                {submitting ? "Sending…" : "Send message"}
+              </button>
+            </form>
+          </div>
 
-                {error && (
-                  <p className="sm:col-span-2 rounded-lg bg-lotus-rose-50 px-4 py-2 text-sm text-lotus-rose-700 ring-1 ring-lotus-rose-100">
-                    {error}
-                  </p>
-                )}
-
-                <div className="sm:col-span-2 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="btn-primary disabled:opacity-60"
-                  >
-                    {submitting ? (
-                      "Sending..."
-                    ) : (
-                      <>
-                        Send message
-                        <Send className="h-4 w-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+          <aside className="lg:col-span-5 space-y-4">
+            <div className="rounded-3xl bg-white border border-stone-100 p-6">
+              <h3 className="font-display text-lg font-bold text-brand-ink-900">
+                Office & support
+              </h3>
+              <ul className="mt-5 space-y-4 text-sm">
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 h-10 w-10 rounded-full bg-brand-green-50 text-brand-green-600 inline-flex items-center justify-center">
+                    <MapPin className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-brand-ink-900">
+                      Headquarters
+                    </p>
+                    <p className="text-stone-500">
+                      123 Business Park, Coimbatore, Tamil Nadu 641001
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 h-10 w-10 rounded-full bg-brand-pink-50 text-brand-pink-600 inline-flex items-center justify-center">
+                    <Phone className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-brand-ink-900">Call us</p>
+                    <a
+                      href="tel:+919876543210"
+                      className="text-stone-500 hover:text-brand-ink-800"
+                    >
+                      +91 98765 43210
+                    </a>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 h-10 w-10 rounded-full bg-brand-green-50 text-brand-green-600 inline-flex items-center justify-center">
+                    <Mail className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-brand-ink-900">Email us</p>
+                    <a
+                      href="mailto:hello@lotusgift.com"
+                      className="text-stone-500 hover:text-brand-ink-800"
+                    >
+                      hello@lotusgift.com
+                    </a>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 h-10 w-10 rounded-full bg-brand-pink-50 text-brand-pink-600 inline-flex items-center justify-center">
+                    <Clock className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-brand-ink-900">Hours</p>
+                    <p className="text-stone-500">
+                      Mon – Sat · 9:30 AM to 7:00 PM IST
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 h-10 w-10 rounded-full bg-brand-green-50 text-brand-green-600 inline-flex items-center justify-center">
+                    <MessageCircle className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-brand-ink-900">WhatsApp</p>
+                    <a
+                      href="https://wa.me/919876543210"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-stone-500 hover:text-brand-ink-800"
+                    >
+                      Chat with the team
+                    </a>
+                  </div>
+                </li>
+              </ul>
             </div>
-          )}
+
+            <div className="rounded-3xl overflow-hidden ring-1 ring-stone-100 relative aspect-[16/10]">
+              <iframe
+                title="Lotus Gift location"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=76.85,10.95,77.05,11.10&layer=mapnik"
+                className="w-full h-full"
+                loading="lazy"
+              />
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section className="px-4 sm:px-6 lg:px-10 pb-16">
+        <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <span className="eyebrow-pink">Departments</span>
+            <h2 className="mt-3 h2-display">Reach the right team faster</h2>
+            <p className="mt-3 text-stone-500 max-w-md">
+              Drop us a note at the right inbox so the right specialist picks it up.
+            </p>
+            <div className="mt-6 space-y-3">
+              {departments.map((d) => (
+                <a
+                  key={d.email}
+                  href={`mailto:${d.email}`}
+                  className="block rounded-3xl bg-white border border-stone-100 p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-brand-ink-900">
+                        {d.name}
+                      </p>
+                      <p className="text-xs text-stone-500">{d.detail}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-stone-400" />
+                  </div>
+                  <p className="mt-2 text-xs font-semibold text-brand-green-600">
+                    {d.email}
+                  </p>
+                </a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="eyebrow">FAQ</span>
+            <h2 className="mt-3 h2-display">Common questions</h2>
+            <p className="mt-3 text-stone-500 max-w-md">
+              Quick answers to what most teams ask us before sending a brief.
+            </p>
+            <div className="mt-6">
+              <Accordion>
+                {faqs.map((f) => (
+                  <AccordionItem key={f.q} value={f.q} trigger={f.q}>
+                    <p>{f.a}</p>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+            <div className="mt-6 rounded-3xl bg-brand-green-50 ring-1 ring-brand-green-100 p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-brand-green-800 inline-flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Still have questions?
+                </p>
+                <p className="text-xs text-brand-green-700/80 mt-0.5">
+                  We&apos;re happy to hop on a 15-minute discovery call.
+                </p>
+              </div>
+              <a
+                href="tel:+919876543210"
+                className="btn-primary btn-sm shrink-0"
+              >
+                Book a call
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </div>

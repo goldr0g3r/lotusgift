@@ -118,7 +118,7 @@ export function CarouselSlide({ className, basis = "100%", ...props }: CarouselS
 }
 
 const navBase =
-  "flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-elevated ring-1 ring-stone-200 transition-all hover:bg-white hover:text-lotus-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed";
+  "flex h-11 w-11 items-center justify-center rounded-full bg-white text-brand-ink-800 shadow-pill ring-1 ring-stone-200 transition-all hover:bg-brand-ink-900 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed";
 
 export function CarouselPrev({
   className,
@@ -170,7 +170,9 @@ export function CarouselDots({ className }: { className?: string }) {
           onClick={() => scrollTo(i)}
           className={cn(
             "h-1.5 rounded-full transition-all duration-300",
-            i === selected ? "w-8 bg-lotus-emerald-700" : "w-3 bg-stone-300 hover:bg-stone-400",
+            i === selected
+              ? "w-8 bg-brand-ink-900"
+              : "w-3 bg-stone-300 hover:bg-stone-400",
           )}
         />
       ))}

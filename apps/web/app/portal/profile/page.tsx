@@ -1,249 +1,292 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  Building2,
-  Loader2,
-  AlertCircle,
-  Save,
-} from "lucide-react";
-import { api } from "@/lib/api";
-import { Input, Label } from "@/components/ui/Input";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { useState } from "react";
+import { Bell, Building2, Key, MapPin, User, Users } from "lucide-react";
+import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { useSession } from "@/lib/auth-client";
 import { toast } from "@/components/ui/Toaster";
 
-type UserProfile = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  company: string | null;
-  role: string;
-  createdAt: string;
-};
-
 export default function PortalProfilePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "" });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [editing, setEditing] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user;
+  const [profile, setProfile] = useState({
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    phone: user?.phone ?? "",
+    company: user?.company ?? "",
+    role: "Procurement Lead",
+    bio: "",
+  });
+  const [notifications, setNotifications] = useState({
+    quotes: true,
+    orders: true,
+    promos: false,
+    digest: true,
+  });
 
-  useEffect(() => {
-    api
-      .get<UserProfile>("/auth/me")
-      .then((data) => {
-        setProfile(data);
-        setForm({
-          name: data.name || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          company: data.company || "",
-        });
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const update = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
-
-  const handleCancel = () => {
-    if (profile) {
-      setForm({
-        name: profile.name || "",
-        email: profile.email || "",
-        phone: profile.phone || "",
-        company: profile.company || "",
-      });
-    }
-    setEditing(false);
-    setError("");
+  const save = () => {
+    toast.success("Changes saved");
   };
-
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSaving(true);
-    try {
-      const updated = await api.patch<UserProfile>("/auth/me", {
-        name: form.name,
-        phone: form.phone || null,
-        company: form.company || null,
-      });
-      setProfile(updated);
-      setEditing(false);
-      toast.success("Profile updated");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Update failed";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-4 max-w-3xl">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-64" />
-      </div>
-    );
-  }
-
-  if (!profile && error) {
-    return (
-      <div className="card p-12 text-center">
-        <AlertCircle className="w-12 h-12 text-lotus-rose-300 mx-auto" />
-        <h3 className="mt-4 font-semibold text-stone-900">Error loading profile</h3>
-        <p className="text-sm text-stone-500 mt-1">{error}</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div className="card overflow-hidden">
-        <div className="relative h-28 bg-gradient-to-r from-lotus-emerald-700 via-lotus-emerald-800 to-stone-900">
-          <div className="pointer-events-none absolute inset-0 lotus-pattern opacity-30" />
-        </div>
-        <div className="px-6 pb-6 -mt-10 flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-bold text-lotus-emerald-800 ring-4 ring-white shadow-soft">
-            {profile?.name?.charAt(0).toUpperCase() || "?"}
-          </div>
-          <div className="flex-1">
-            <h2 className="font-display text-2xl font-bold text-stone-900">
-              {profile?.name}
-            </h2>
-            <p className="text-sm text-stone-500">{profile?.email}</p>
-          </div>
-          {!editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="btn-secondary text-sm self-start sm:self-auto"
-            >
-              Edit profile
-            </button>
-          )}
-        </div>
+    <div className="space-y-6">
+      <div>
+        <span className="eyebrow">Account</span>
+        <h2 className="mt-3 h2-display">Profile & preferences</h2>
+        <p className="mt-2 text-sm text-stone-500">
+          Manage your contact details, shipping addresses and notification
+          preferences.
+        </p>
       </div>
 
-      {error && editing && (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-lotus-rose-50 text-lotus-rose-700 text-sm ring-1 ring-lotus-rose-100">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <Tabs defaultValue="info">
-        <TabsList>
-          <TabsTrigger value="info">Personal info</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
+      <Tabs defaultValue="profile">
+        <TabsList className="!flex flex-wrap !rounded-full">
+          <TabsTrigger value="profile">
+            <User className="h-4 w-4" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="addresses">
+            <MapPin className="h-4 w-4" />
+            Addresses
+          </TabsTrigger>
+          <TabsTrigger value="team">
+            <Users className="h-4 w-4" />
+            Team
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            <Bell className="h-4 w-4" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="security">
+            <Key className="h-4 w-4" />
+            Security
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="info">
-          <form onSubmit={handleSave} className="card p-6 space-y-5">
-            <div className="grid sm:grid-cols-2 gap-5">
+
+        <TabsContent value="profile">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">
-                  <User className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
-                  Full name
-                </Label>
+                <Label>Full name</Label>
                 <Input
-                  id="name"
-                  type="text"
-                  required
-                  disabled={!editing}
-                  value={form.name}
-                  onChange={(e) => update("name", e.target.value)}
+                  value={profile.name}
+                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                 />
               </div>
               <div>
-                <Label htmlFor="email">
-                  <Mail className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
-                  Email
-                </Label>
-                <Input id="email" type="email" disabled value={form.email} />
-                {editing && (
-                  <p className="text-xs text-stone-400 mt-1">
-                    Email cannot be changed
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="phone">
-                  <Phone className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
-                  Phone number
-                </Label>
+                <Label>Role / title</Label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  disabled={!editing}
-                  placeholder="Not provided"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
+                  value={profile.role}
+                  onChange={(e) => setProfile({ ...profile, role: e.target.value })}
                 />
               </div>
               <div>
-                <Label htmlFor="company">
-                  <Building2 className="w-3.5 h-3.5 inline mr-1.5 text-stone-400" />
-                  Company
-                </Label>
+                <Label>Email</Label>
                 <Input
-                  id="company"
-                  type="text"
-                  disabled={!editing}
-                  placeholder="Not provided"
-                  value={form.company}
-                  onChange={(e) => update("company", e.target.value)}
+                  type="email"
+                  value={profile.email}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Phone</Label>
+                <Input
+                  value={profile.phone}
+                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Company</Label>
+                <Input
+                  value={profile.company}
+                  onChange={(e) => setProfile({ ...profile, company: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Short bio (optional)</Label>
+                <Textarea
+                  rows={4}
+                  value={profile.bio}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 />
               </div>
             </div>
-
-            {editing && (
-              <div className="flex items-center gap-3 pt-2">
-                <button type="submit" disabled={saving} className="btn-primary">
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  {saving ? "Saving..." : "Save changes"}
-                </button>
-                <button type="button" onClick={handleCancel} className="btn-ghost">
-                  Cancel
-                </button>
-              </div>
-            )}
-          </form>
+            <button type="button" onClick={save} className="btn-primary btn-lg mt-6">
+              Save changes
+            </button>
+          </div>
         </TabsContent>
-        <TabsContent value="account">
-          <div className="card p-6">
-            <h3 className="font-display text-lg font-bold text-stone-900">
-              Account details
+
+        <TabsContent value="addresses">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
+              Saved addresses
             </h3>
-            <div className="mt-4 grid sm:grid-cols-2 gap-4 text-sm">
-              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-200">
-                <span className="text-xs text-stone-500">Account type</span>
-                <p className="font-medium text-stone-900 mt-0.5">
-                  {profile?.role === "CLIENT" ? "Client" : profile?.role}
-                </p>
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  title: "HQ — Brightline Logistics",
+                  body: "12 Industrial Estate, Bengaluru, KA 560058",
+                },
+                {
+                  title: "Mumbai office",
+                  body: "Aurelia Tower, Block C, Mumbai, MH 400070",
+                },
+              ].map((a) => (
+                <div
+                  key={a.title}
+                  className="rounded-2xl border border-stone-100 p-5"
+                >
+                  <p className="text-sm font-bold text-brand-ink-900">{a.title}</p>
+                  <p className="text-xs text-stone-500 mt-1">{a.body}</p>
+                  <div className="mt-3 flex gap-2">
+                    <button className="text-xs font-semibold text-brand-green-700 hover:underline">
+                      Edit
+                    </button>
+                    <button className="text-xs font-semibold text-rose-600 hover:underline">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => toast.success("Address form would open here")}
+                className="rounded-2xl border-2 border-dashed border-stone-200 p-5 text-sm font-semibold text-stone-500 hover:text-brand-ink-900 hover:border-brand-ink-300"
+              >
+                + Add address
+              </button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="team">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-lg font-bold text-brand-ink-900">
+                Team members
+              </h3>
+              <button
+                type="button"
+                onClick={() => toast.success("Invite sent")}
+                className="btn-primary btn-sm"
+              >
+                + Invite member
+              </button>
+            </div>
+            <div className="mt-5 divide-y divide-stone-100 border-y border-stone-100">
+              {[
+                {
+                  name: "Aanya Krishnan",
+                  role: "Owner",
+                  email: "aanya@brightline.in",
+                },
+                {
+                  name: "Karthik R",
+                  role: "Procurement",
+                  email: "karthik@brightline.in",
+                },
+                {
+                  name: "Smita Joshi",
+                  role: "Marketing",
+                  email: "smita@brightline.in",
+                },
+              ].map((m) => (
+                <div
+                  key={m.email}
+                  className="py-3 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-green-500 to-brand-green-700 text-white text-xs font-bold">
+                      {m.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-brand-ink-900">
+                        {m.name}
+                      </p>
+                      <p className="text-xs text-stone-500">{m.email}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-brand-ink-700 bg-stone-100 rounded-full px-3 py-1">
+                    {m.role}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8 space-y-3">
+            {[
+              { id: "quotes", label: "Quote updates", desc: "When admins respond or send new quotes." },
+              { id: "orders", label: "Order updates", desc: "Status changes, dispatch and delivery." },
+              { id: "promos", label: "Promotions", desc: "Seasonal launches and curated picks." },
+              { id: "digest", label: "Monthly digest", desc: "A roundup of activity and analytics." },
+            ].map((row) => (
+              <div
+                key={row.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-stone-50 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-brand-ink-900">
+                    {row.label}
+                  </p>
+                  <p className="text-xs text-stone-500">{row.desc}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNotifications((n) => ({
+                      ...n,
+                      [row.id as keyof typeof n]: !n[row.id as keyof typeof n],
+                    }))
+                  }
+                  className={`inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${
+                    notifications[row.id as keyof typeof notifications]
+                      ? "bg-brand-green-500"
+                      : "bg-stone-300"
+                  }`}
+                >
+                  <span
+                    className={`h-5 w-5 rounded-full bg-white transition-transform ${
+                      notifications[row.id as keyof typeof notifications]
+                        ? "translate-x-5"
+                        : ""
+                    }`}
+                  />
+                </button>
               </div>
-              <div className="rounded-xl bg-stone-50 p-3 ring-1 ring-stone-200">
-                <span className="text-xs text-stone-500">Member since</span>
-                <p className="font-medium text-stone-900 mt-0.5">
-                  {profile?.createdAt
-                    ? new Date(profile.createdAt).toLocaleDateString("en-IN", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "—"}
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="security">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8 space-y-5">
+            <div>
+              <h3 className="font-display text-lg font-bold text-brand-ink-900">
+                Password
+              </h3>
+              <p className="text-xs text-stone-500 mt-1">
+                Use a strong, unique password — minimum 12 characters.
+              </p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input type="password" placeholder="Current password" />
+                <Input type="password" placeholder="New password" />
+              </div>
+              <button type="button" onClick={save} className="btn-primary btn-sm mt-4">
+                Update password
+              </button>
+            </div>
+            <div className="rounded-2xl bg-brand-pink-50 border border-brand-pink-100 p-4 flex items-center gap-3">
+              <Building2 className="h-5 w-5 text-brand-pink-600" />
+              <div>
+                <p className="text-sm font-semibold text-brand-pink-800">
+                  Two-factor authentication
+                </p>
+                <p className="text-xs text-brand-pink-700/80">
+                  Coming soon — protect your account with SMS or authenticator.
                 </p>
               </div>
             </div>

@@ -6,10 +6,12 @@ import Script from "next/script";
 
 const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
 
+type Fbq = (event: string, ...args: unknown[]) => void;
+
 declare global {
   interface Window {
-    fbq: (...args: any[]) => void;
-    _fbq: any;
+    fbq: Fbq;
+    _fbq: unknown;
   }
 }
 
@@ -42,6 +44,7 @@ export default function FacebookPixel() {
         `}
       </Script>
       <noscript>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           height="1"
           width="1"

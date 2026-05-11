@@ -1,95 +1,124 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  Search,
-  ChevronRight,
-  Filter,
-  SlidersHorizontal,
-  Package,
-  Sparkles,
-} from "lucide-react";
-import type { Product, Category } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
+import { ChevronRight, Filter, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { Sheet } from "@/components/ui/Sheet";
-import { Select } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
+import { SearchPill, Select } from "@/components/ui/Input";
+import { Pill } from "@/components/ui/Pill";
+import { mockCategories, mockProducts } from "@/lib/mock-data";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+type SortKey = "featured" | "price-asc" | "price-desc" | "newest" | "rating";
 
-type SortKey = "featured" | "price-asc" | "price-desc" | "newest";
+export default function ProductsPage() {
+  const params = useSearchParams();
+  const initialCategory = params.get("category") ?? "";
+  const initialWholesale = params.get("wholesale") === "true";
+  const initialSearch = params.get("search") ?? "";
 
-function FiltersPanel({
-  categories,
-  activeCategory,
-  setActiveCategory,
-  wholesaleOnly,
-  setWholesaleOnly,
-  inStockOnly,
-  setInStockOnly,
-  priceMin,
-  priceMax,
-  setPriceMin,
-  setPriceMax,
-  onClose,
-}: {
-  categories: Category[];
-  activeCategory: string;
-  setActiveCategory: (s: string) => void;
-  wholesaleOnly: boolean;
-  setWholesaleOnly: (v: boolean) => void;
-  inStockOnly: boolean;
-  setInStockOnly: (v: boolean) => void;
-  priceMin: string;
-  priceMax: string;
-  setPriceMin: (v: string) => void;
-  setPriceMax: (v: string) => void;
-  onClose?: () => void;
-}) {
-  return (
+  const [search, setSearch] = useState(initialSearch);
+  const [category, setCategory] = useState(initialCategory);
+  const [wholesaleOnly, setWholesaleOnly] = useState(initialWholesale);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [ecoOnly, setEcoOnly] = useState(false);
+  const [priceTier, setPriceTier] = useState<"all" | "under-500" | "500-1500" | "above-1500">(
+    "all",
+  );
+  const [sort, setSort] = useState<SortKey>("featured");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return mockProducts
+      .filter((p) => {
+        if (category && p.category.slug !== category) return false;
+        if (wholesaleOnly && !p.isWholesale) return false;
+        if (inStockOnly && p.stock <= 0) return false;
+        if (ecoOnly && p.category.slug !== "eco-friendly") return false;
+        if (priceTier === "under-500" && p.priceFrom >= 500) return false;
+        if (priceTier === "500-1500" && (p.priceFrom < 500 || p.priceFrom > 1500))
+          return false;
+        if (priceTier === "above-1500" && p.priceFrom <= 1500) return false;
+        if (q) {
+          const hay = `${p.name} ${p.shortDesc ?? ""} ${p.category.name}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sort === "price-asc") return a.priceFrom - b.priceFrom;
+        if (sort === "price-desc") return b.priceFrom - a.priceFrom;
+        if (sort === "newest")
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+        return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
+      });
+  }, [category, wholesaleOnly, inStockOnly, ecoOnly, priceTier, search, sort]);
+
+  const activeChips: { label: string; clear: () => void }[] = [];
+  if (category)
+    activeChips.push({
+      label: `Category: ${mockCategories.find((c) => c.slug === category)?.name ?? category}`,
+      clear: () => setCategory(""),
+    });
+  if (wholesaleOnly) activeChips.push({ label: "Wholesale", clear: () => setWholesaleOnly(false) });
+  if (inStockOnly) activeChips.push({ label: "In stock", clear: () => setInStockOnly(false) });
+  if (ecoOnly) activeChips.push({ label: "Eco-friendly", clear: () => setEcoOnly(false) });
+  if (priceTier !== "all")
+    activeChips.push({
+      label:
+        priceTier === "under-500"
+          ? "Under ₹500"
+          : priceTier === "500-1500"
+            ? "₹500 – ₹1500"
+            : "Above ₹1500",
+      clear: () => setPriceTier("all"),
+    });
+
+  const clearAll = () => {
+    setCategory("");
+    setWholesaleOnly(false);
+    setInStockOnly(false);
+    setEcoOnly(false);
+    setPriceTier("all");
+    setSearch("");
+  };
+
+  const filters = (
     <div className="space-y-7">
       <div>
-        <div className="mb-3 flex items-center gap-2 text-stone-700">
-          <Filter className="h-4 w-4 text-lotus-emerald-700" />
+        <div className="mb-3 flex items-center gap-2 text-brand-ink-800">
+          <Filter className="h-4 w-4 text-brand-green-600" />
           <h3 className="text-sm font-semibold">Categories</h3>
         </div>
         <ul className="space-y-1">
           <li>
             <button
-              onClick={() => {
-                setActiveCategory("");
-                onClose?.();
-              }}
-              className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-colors ${
-                activeCategory === ""
-                  ? "bg-lotus-emerald-50 text-lotus-emerald-800 font-semibold"
-                  : "text-stone-600 hover:bg-stone-50"
+              type="button"
+              onClick={() => setCategory("")}
+              className={`w-full text-left text-sm px-3 py-2 rounded-full transition-colors ${
+                category === ""
+                  ? "bg-brand-ink-900 text-white"
+                  : "text-stone-600 hover:bg-stone-100"
               }`}
             >
-              All Products
+              All products
             </button>
           </li>
-          {categories.map((cat) => (
-            <li key={cat.id}>
+          {mockCategories.map((c) => (
+            <li key={c.id}>
               <button
-                onClick={() => {
-                  setActiveCategory(cat.slug);
-                  onClose?.();
-                }}
-                className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-colors flex justify-between items-center ${
-                  activeCategory === cat.slug
-                    ? "bg-lotus-emerald-50 text-lotus-emerald-800 font-semibold"
-                    : "text-stone-600 hover:bg-stone-50"
+                type="button"
+                onClick={() => setCategory(c.slug)}
+                className={`w-full text-left text-sm px-3 py-2 rounded-full transition-colors ${
+                  category === c.slug
+                    ? "bg-brand-ink-900 text-white"
+                    : "text-stone-600 hover:bg-stone-100"
                 }`}
               >
-                <span>{cat.name}</span>
-                {cat._count?.products != null && (
-                  <span className="text-[11px] text-stone-400">
-                    {cat._count.products}
-                  </span>
-                )}
+                {c.name}
               </button>
             </li>
           ))}
@@ -97,306 +126,194 @@ function FiltersPanel({
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-stone-700">Price (₹)</h3>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            min={0}
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-            placeholder="Min"
-            className="input-field !py-2"
-          />
-          <input
-            type="number"
-            min={0}
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-            placeholder="Max"
-            className="input-field !py-2"
-          />
+        <div className="mb-3 flex items-center gap-2 text-brand-ink-800">
+          <Sparkles className="h-4 w-4 text-brand-pink-500" />
+          <h3 className="text-sm font-semibold">Quick filters</h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setWholesaleOnly(!wholesaleOnly)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
+              wholesaleOnly
+                ? "bg-brand-green-500 text-white"
+                : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200"
+            }`}
+          >
+            Wholesale
+          </button>
+          <button
+            type="button"
+            onClick={() => setInStockOnly(!inStockOnly)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
+              inStockOnly
+                ? "bg-brand-green-500 text-white"
+                : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200"
+            }`}
+          >
+            In stock
+          </button>
+          <button
+            type="button"
+            onClick={() => setEcoOnly(!ecoOnly)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
+              ecoOnly
+                ? "bg-brand-green-500 text-white"
+                : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200"
+            }`}
+          >
+            Eco-friendly
+          </button>
         </div>
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-stone-700">Options</h3>
-        <label className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50 cursor-pointer">
-          <span>Wholesale only</span>
-          <input
-            type="checkbox"
-            checked={wholesaleOnly}
-            onChange={(e) => setWholesaleOnly(e.target.checked)}
-            className="h-4 w-4 accent-lotus-emerald-700"
-          />
-        </label>
-        <label className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50 cursor-pointer">
-          <span>In stock</span>
-          <input
-            type="checkbox"
-            checked={inStockOnly}
-            onChange={(e) => setInStockOnly(e.target.checked)}
-            className="h-4 w-4 accent-lotus-emerald-700"
-          />
-        </label>
+        <h3 className="mb-3 text-sm font-semibold text-brand-ink-800">Price range</h3>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { v: "all", label: "All" },
+            { v: "under-500", label: "Under ₹500" },
+            { v: "500-1500", label: "₹500 – 1500" },
+            { v: "above-1500", label: "Above ₹1500" },
+          ].map((p) => (
+            <button
+              type="button"
+              key={p.v}
+              onClick={() => setPriceTier(p.v as typeof priceTier)}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
+                priceTier === p.v
+                  ? "bg-brand-ink-900 text-white"
+                  : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
-}
-
-export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("");
-  const [wholesaleOnly, setWholesaleOnly] = useState(false);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
-  const [sort, setSort] = useState<SortKey>("featured");
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  useEffect(() => {
-    fetch(`${API}/categories`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setCategories(Array.isArray(data) ? data : data.data ?? []))
-      .catch(() => {});
-  }, []);
-
-  const fetchProducts = useCallback(() => {
-    setLoading(true);
-    setError("");
-    const params = new URLSearchParams();
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    if (activeCategory) params.set("categorySlug", activeCategory);
-    const qs = params.toString();
-    fetch(`${API}/products${qs ? `?${qs}` : ""}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load products");
-        return res.json();
-      })
-      .then((data) => setProducts(Array.isArray(data) ? data : data.data ?? []))
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load products"),
-      )
-      .finally(() => setLoading(false));
-  }, [debouncedSearch, activeCategory]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const filteredAndSorted = useMemo(() => {
-    let list = products.slice();
-    if (wholesaleOnly) list = list.filter((p) => p.isWholesale);
-    if (inStockOnly) list = list.filter((p) => p.stock > 0);
-    const min = priceMin ? Number(priceMin) : null;
-    const max = priceMax ? Number(priceMax) : null;
-    if (min != null && !Number.isNaN(min)) list = list.filter((p) => p.priceFrom >= min);
-    if (max != null && !Number.isNaN(max)) list = list.filter((p) => p.priceFrom <= max);
-    switch (sort) {
-      case "price-asc":
-        list.sort((a, b) => a.priceFrom - b.priceFrom);
-        break;
-      case "price-desc":
-        list.sort((a, b) => b.priceFrom - a.priceFrom);
-        break;
-      case "newest":
-        list.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-        break;
-      default:
-        list.sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
-    }
-    return list;
-  }, [products, wholesaleOnly, inStockOnly, priceMin, priceMax, sort]);
-
-  const activeCategoryName =
-    categories.find((c) => c.slug === activeCategory)?.name ?? "All Products";
-
-  const filtersProps = {
-    categories,
-    activeCategory,
-    setActiveCategory,
-    wholesaleOnly,
-    setWholesaleOnly,
-    inStockOnly,
-    setInStockOnly,
-    priceMin,
-    priceMax,
-    setPriceMin,
-    setPriceMax,
-  };
 
   return (
-    <div className="min-h-screen">
-      <section className="relative overflow-hidden bg-lotus-cream border-b border-stone-200">
-        <div className="absolute inset-0 lotus-pattern opacity-70" aria-hidden />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-          <nav className="flex items-center gap-1.5 text-xs text-stone-500 mb-3">
-            <Link href="/" className="hover:text-lotus-emerald-800">Home</Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-stone-700 font-medium">Products</span>
-          </nav>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <span className="eyebrow">Catalog</span>
-              <h1 className="mt-3 h1-display !text-4xl sm:!text-5xl">
-                Premium gifting catalog
-              </h1>
-              <p className="mt-3 text-base text-stone-500 max-w-xl">
-                Browse 500+ curated promotional products, hampers, apparel and tech for every program.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search the catalog..."
-                  className="input-field !pl-9 sm:w-80"
-                />
-              </div>
-              <Link
-                href="/request-quote"
-                className="btn-primary !py-2.5"
-              >
-                <Sparkles className="h-4 w-4" />
-                Request a Quote
-              </Link>
-            </div>
+    <div className="px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
+      <div className="mx-auto max-w-7xl">
+        <nav className="text-xs text-stone-500 flex items-center gap-1.5 mb-4">
+          <Link href="/" className="hover:text-brand-ink-800">
+            Home
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-brand-ink-800 font-semibold">Products</span>
+        </nav>
+
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
+          <div>
+            <span className="eyebrow">Catalog</span>
+            <h1 className="mt-3 h2-display">Browse our products</h1>
+            <p className="mt-2 text-stone-500 text-sm sm:text-base max-w-2xl">
+              Filter by category, price tier or campaign type. Add to cart for
+              instant orders or to the quote bag for custom-branded volumes.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <SearchPill
+              placeholder="Search products"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-80"
+            />
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="!py-3 min-w-[160px]"
+            >
+              <option value="featured">Featured</option>
+              <option value="rating">Best rated</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="newest">Newest first</option>
+            </Select>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="lg:hidden btn-ghost"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </button>
           </div>
         </div>
-      </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-        <div className="flex gap-8">
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="card p-5 sticky top-28">
-              <FiltersPanel {...filtersProps} />
+        {(activeChips.length > 0 || filtered.length !== mockProducts.length) && (
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-stone-500">
+              {filtered.length} product{filtered.length === 1 ? "" : "s"}
+            </span>
+            {activeChips.map((c) => (
+              <Pill
+                key={c.label}
+                tone="green"
+                size="sm"
+                onClick={c.clear}
+                className="cursor-pointer hover:bg-brand-green-100"
+              >
+                {c.label}
+                <X className="h-3 w-3" />
+              </Pill>
+            ))}
+            {activeChips.length > 0 && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-xs font-semibold text-brand-ink-700 hover:underline"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="mt-8 grid grid-cols-12 gap-6 lg:gap-8">
+          <aside className="hidden lg:block col-span-3">
+            <div className="sticky top-6 rounded-3xl bg-white border border-stone-100 p-6">
+              {filters}
             </div>
           </aside>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-3 mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-stone-900">{activeCategoryName}</h2>
-                {!loading && (
-                  <p className="text-xs text-stone-400 mt-0.5">
-                    {filteredAndSorted.length} product{filteredAndSorted.length !== 1 ? "s" : ""}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setMobileFiltersOpen(true)}
-                  className="lg:hidden inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filters
-                </button>
-                <Select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="!py-2 !pr-9 sm:w-44"
-                >
-                  <option value="featured">Featured</option>
-                  <option value="newest">Newest</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                </Select>
-              </div>
-            </div>
-
-            {(wholesaleOnly || inStockOnly || priceMin || priceMax) && (
-              <div className="mb-5 flex flex-wrap items-center gap-2">
-                {wholesaleOnly && (
-                  <Badge tone="gold" className="cursor-pointer" onClick={() => setWholesaleOnly(false)}>
-                    Wholesale only ×
-                  </Badge>
-                )}
-                {inStockOnly && (
-                  <Badge tone="emerald" className="cursor-pointer" onClick={() => setInStockOnly(false)}>
-                    In stock ×
-                  </Badge>
-                )}
-                {(priceMin || priceMax) && (
-                  <Badge
-                    tone="gray"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setPriceMin("");
-                      setPriceMax("");
-                    }}
-                  >
-                    Price {priceMin || 0}–{priceMax || "∞"} ×
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {error && (
-              <div className="card p-8 text-center">
-                <p className="text-sm text-lotus-rose-700 mb-4">{error}</p>
-                <button onClick={fetchProducts} className="btn-secondary text-sm">
-                  Try Again
-                </button>
-              </div>
-            )}
-
-            {loading ? (
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="card overflow-hidden">
-                    <Skeleton className="aspect-[4/5] rounded-none" />
-                    <div className="p-5 space-y-3">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                      <Skeleton className="h-9 w-full" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : !error && filteredAndSorted.length === 0 ? (
-              <div className="card p-12 text-center">
-                <Package className="w-12 h-12 text-stone-200 mx-auto mb-4" />
-                <p className="font-medium text-stone-700">No products found</p>
-                <p className="text-sm text-stone-400 mt-1">
-                  Try adjusting your search or filters.
+          <div className="col-span-12 lg:col-span-9">
+            {filtered.length === 0 ? (
+              <div className="rounded-3xl bg-white border border-stone-100 p-12 text-center">
+                <p className="text-base font-semibold text-brand-ink-900">
+                  No products match those filters
                 </p>
+                <p className="mt-2 text-sm text-stone-500">
+                  Try clearing a filter or widening the price range.
+                </p>
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="btn-primary btn-sm mt-5 mx-auto"
+                >
+                  Clear filters
+                </button>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredAndSorted.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filtered.map((p) => (
+                  <ProductCard key={p.id} product={p} />
                 ))}
               </div>
             )}
           </div>
         </div>
-      </section>
+      </div>
 
       <Sheet
-        open={mobileFiltersOpen}
-        onClose={() => setMobileFiltersOpen(false)}
-        side="left"
-        size="md"
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        side="bottom"
+        size="xl"
         title="Filters"
       >
-        <div className="px-5 py-5">
-          <FiltersPanel {...filtersProps} onClose={() => setMobileFiltersOpen(false)} />
-        </div>
+        <div className="p-6">{filters}</div>
       </Sheet>
     </div>
   );

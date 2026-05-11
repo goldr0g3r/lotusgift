@@ -1,322 +1,272 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ArrowLeft,
-  Package,
-  ShoppingBag,
-  Star,
-  Check,
+  ArrowRight,
   ChevronRight,
-  Truck,
+  ShoppingCart,
+  FileText,
+  Heart,
   ShieldCheck,
+  Truck,
   Award,
   Sparkles,
-  Plus,
-  Minus,
 } from "lucide-react";
-import type { Product } from "@/lib/api";
 import { ProductGallery } from "@/components/ui/ProductGallery";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { StarRating } from "@/components/ui/StarRating";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { categoryImageMap, productImage } from "@/lib/images";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-const formatInr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+import { formatInr } from "@/components/ui/PriceTag";
+import { useCart, useQuoteBag, useWishlist } from "@/lib/store";
+import { mockProducts } from "@/lib/mock-data";
+import { toast } from "@/components/ui/Toaster";
+import { cn } from "@/lib/cn";
 
 export default function ProductDetailPage() {
-  const { slug } = useParams<{ slug: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [related, setRelated] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [qty, setQty] = useState(1);
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const product = useMemo(
+    () => mockProducts.find((p) => p.slug === slug),
+    [slug],
+  );
 
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    setError("");
-    fetch(`${API}/products/slug/${slug}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Product not found");
-        return res.json();
-      })
-      .then((data: Product) => {
-        setProduct(data);
-        setQty(data.minOrderQty || 1);
-        if (data.category?.slug) {
-          return fetch(`${API}/products?categorySlug=${data.category.slug}`)
-            .then((res) => (res.ok ? res.json() : []))
-            .then((list) => {
-              const items: Product[] = Array.isArray(list)
-                ? list
-                : list.data ?? [];
-              setRelated(items.filter((p) => p.id !== data.id).slice(0, 4));
-            });
-        }
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load product"),
-      )
-      .finally(() => setLoading(false));
-  }, [slug]);
+  const cart = useCart();
+  const bag = useQuoteBag();
+  const wish = useWishlist();
+  const [qty, setQty] = useState(product?.minOrderQty ?? 25);
+  const [customisation, setCustomisation] = useState<string[]>([]);
 
-  if (loading) {
+  if (!product) {
     return (
-      <div className="min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid lg:grid-cols-2 gap-10">
-            <Skeleton className="aspect-square rounded-2xl" />
-            <div className="space-y-4">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-20" />
-              <Skeleton className="h-12 w-48" />
-            </div>
-          </div>
-        </div>
+      <div className="px-4 sm:px-6 lg:px-10 py-16 text-center">
+        <h1 className="h2-display">Product not found</h1>
+        <p className="mt-3 text-stone-500">The product you were looking for is unavailable.</p>
+        <Link href="/products" className="btn-primary btn-sm mt-6 mx-auto">
+          Back to catalog
+        </Link>
       </div>
     );
   }
 
-  if (error || !product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-6">
-        <div className="text-center">
-          <Package className="w-14 h-14 text-stone-200 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-stone-900 mb-2">
-            {error || "Product not found"}
-          </h2>
-          <Link href="/products" className="btn-secondary mt-4">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Products
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const isWish = wish.has(product.id);
 
-  const customizationOptions: string[] = product.customizationOptions
-    ? product.customizationOptions
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-    : [];
+  const tier = product.tieredPricing ?? [];
+  const currentUnit =
+    [...tier].reverse().find((t) => qty >= t.qty)?.unitPrice ?? product.priceFrom;
+  const lineTotal = currentUnit * qty;
 
-  const galleryImages = [
-    productImage(product),
-    ...(product.category?.slug && categoryImageMap[product.category.slug]
-      ? [categoryImageMap[product.category.slug]!]
-      : []),
-  ].filter(Boolean) as Array<{ src: string; alt: string }>;
+  const customOptions = (product.customizationOptions ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-  // Ensure gallery has at least 1 image
-  const images =
-    galleryImages.length > 0
-      ? galleryImages
-      : [{ src: productImage(product).src, alt: product.name }];
+  const related = mockProducts
+    .filter((p) => p.id !== product.id && p.category.id === product.category.id)
+    .slice(0, 4);
 
-  const tieredPricing: Array<{ qty: string; price: number }> = [
-    { qty: `${product.minOrderQty}+`, price: product.priceFrom },
-    ...(product.priceTo
-      ? [{ qty: `${product.minOrderQty * 2}+`, price: Math.round(product.priceFrom * 0.9) }]
-      : []),
-    ...(product.isWholesale && product.wholesalePrice && product.wholesaleMinQty
-      ? [{ qty: `${product.wholesaleMinQty}+`, price: product.wholesalePrice }]
-      : []),
-  ];
+  const toggleCustom = (opt: string) =>
+    setCustomisation((c) => (c.includes(opt) ? c.filter((x) => x !== opt) : [...c, opt]));
+
+  const onAddToCart = () => {
+    cart.add(product, qty);
+    toast.success(`${product.name} (×${qty}) added to cart`);
+  };
+  const onAddToBag = () => {
+    bag.add(product, qty, customisation.join(", ") || undefined);
+    toast.success(`${product.name} added to quote bag`);
+  };
 
   return (
-    <div className="min-h-screen">
-      <div className="bg-lotus-cream/60 border-b border-stone-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex items-center gap-1.5 text-xs text-stone-500 flex-wrap">
-            <Link href="/" className="hover:text-lotus-emerald-800">
-              Home
-            </Link>
-            <ChevronRight className="w-3 h-3" />
-            <Link href="/products" className="hover:text-lotus-emerald-800">
-              Products
-            </Link>
-            {product.category && (
-              <>
-                <ChevronRight className="w-3 h-3" />
-                <Link
-                  href={`/categories/${product.category.slug}`}
-                  className="hover:text-lotus-emerald-800"
-                >
-                  {product.category.name}
-                </Link>
-              </>
-            )}
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-stone-900 font-medium truncate">
-              {product.name}
-            </span>
-          </nav>
-        </div>
-      </div>
+    <div className="px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
+      <div className="mx-auto max-w-7xl">
+        <nav className="text-xs text-stone-500 flex items-center gap-1.5 mb-6">
+          <Link href="/" className="hover:text-brand-ink-800">
+            Home
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href="/products" className="hover:text-brand-ink-800">
+            Products
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link
+            href={`/categories/${product.category.slug}`}
+            className="hover:text-brand-ink-800"
+          >
+            {product.category.name}
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-brand-ink-800 font-semibold truncate">
+            {product.name}
+          </span>
+        </nav>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14">
-          <div className="lg:col-span-7">
-            <ProductGallery images={images} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          <div className="lg:col-span-6">
+            <ProductGallery
+              images={product.images.length > 0
+                ? product.images.map((i) => ({ src: i.url, alt: i.alt ?? product.name }))
+                : [{ src: product.imageUrl ?? "", alt: product.name }]}
+            />
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="lg:sticky lg:top-28">
-              <div className="flex items-center gap-2">
-                {product.category && (
-                  <Link href={`/categories/${product.category.slug}`}>
-                    <Badge tone="emerald">{product.category.name}</Badge>
-                  </Link>
-                )}
-                {product.isFeatured && <Badge tone="gold">Featured</Badge>}
-                {product.isWholesale && <Badge tone="rose">Wholesale</Badge>}
+          <div className="lg:col-span-6">
+            <div className="flex items-center gap-2">
+              {product.isFeatured && <Badge tone="pink">Featured</Badge>}
+              {product.isWholesale && <Badge tone="green">Wholesale</Badge>}
+              <Badge tone="neutral">{product.category.name}</Badge>
+            </div>
+            <h1 className="mt-4 h2-display">{product.name}</h1>
+            <div className="mt-3 flex items-center gap-4 flex-wrap">
+              <StarRating
+                value={product.rating ?? 4.7}
+                showValue
+                reviews={product.reviews}
+                size="md"
+              />
+              <span className="text-xs text-stone-500">
+                SKU: <span className="font-medium text-brand-ink-800">{product.sku}</span>
+              </span>
+            </div>
+            <p className="mt-5 text-base text-stone-600 leading-relaxed">
+              {product.shortDesc ?? product.description}
+            </p>
+
+            <div className="mt-7 rounded-3xl border border-stone-100 bg-white p-5 sm:p-6 shadow-soft">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-stone-500">
+                    Unit price at {qty}+ units
+                  </p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-brand-ink-900 tabular-nums">
+                    {formatInr(currentUnit)}
+                  </p>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Line total: <span className="font-semibold text-brand-ink-800">{formatInr(lineTotal)}</span>
+                  </p>
+                </div>
+                <QuantityStepper
+                  value={qty}
+                  onChange={setQty}
+                  min={product.minOrderQty}
+                  step={product.minOrderQty}
+                  max={Math.max(product.stock, product.minOrderQty * 100)}
+                />
               </div>
 
-              <h1 className="mt-3 font-display text-3xl font-bold text-stone-900 leading-tight">
-                {product.name}
-              </h1>
-
-              <div className="mt-3 flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-4 w-4 fill-lotus-gold-400 text-lotus-gold-400"
-                  />
-                ))}
-                <span className="ml-2 text-xs text-stone-500">4.9 · 120 reviews</span>
-              </div>
-
-              <div className="mt-5 flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-lotus-emerald-800">
-                  {formatInr(product.priceFrom)}
-                </span>
-                {product.priceTo && (
-                  <span className="text-sm text-stone-500">
-                    – {formatInr(product.priceTo)}
-                  </span>
-                )}
-                <span className="text-xs text-stone-400">per unit</span>
-              </div>
-
-              {product.shortDesc && (
-                <p className="mt-4 text-sm text-stone-600 leading-relaxed">
-                  {product.shortDesc}
-                </p>
+              {tier.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+                    Volume tiers
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {tier.map((t) => {
+                      const isActive = qty >= t.qty;
+                      return (
+                        <button
+                          key={t.qty}
+                          type="button"
+                          onClick={() => setQty(t.qty)}
+                          className={cn(
+                            "rounded-2xl border p-3 text-left transition-colors",
+                            isActive
+                              ? "bg-brand-green-50 border-brand-green-200"
+                              : "bg-white border-stone-200 hover:border-brand-ink-300",
+                          )}
+                        >
+                          <p className="text-[11px] font-medium text-stone-500">
+                            {t.qty}+ units
+                          </p>
+                          <p className="text-base font-bold text-brand-ink-900 tabular-nums">
+                            {formatInr(t.unitPrice)}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
 
-              {tieredPricing.length > 1 && (
-                <div className="mt-5 rounded-2xl border border-lotus-gold-100 bg-lotus-cream p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lotus-gold-700 mb-3">
-                    Volume pricing
+              {customOptions.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+                    Branding options
                   </p>
-                  <div className="grid grid-cols-3 gap-3 text-sm">
-                    {tieredPricing.map((t) => (
-                      <div
-                        key={t.qty}
-                        className="rounded-xl bg-white p-3 ring-1 ring-stone-200"
+                  <div className="flex flex-wrap gap-2">
+                    {customOptions.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => toggleCustom(opt)}
+                        className={cn(
+                          "rounded-full px-4 py-1.5 text-xs font-semibold transition-colors",
+                          customisation.includes(opt)
+                            ? "bg-brand-pink-500 text-white"
+                            : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200",
+                        )}
                       >
-                        <p className="text-xs text-stone-500">{t.qty} pcs</p>
-                        <p className="mt-1 font-bold text-lotus-emerald-800">
-                          {formatInr(t.price)}
-                        </p>
-                      </div>
+                        {opt}
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-                <div className="rounded-xl border border-stone-200 p-3">
-                  <p className="text-stone-500">Min. order</p>
-                  <p className="mt-0.5 text-sm font-semibold text-stone-800">
-                    {product.minOrderQty} pcs
-                  </p>
-                </div>
-                <div className="rounded-xl border border-stone-200 p-3">
-                  <p className="text-stone-500">Stock</p>
-                  <p className="mt-0.5 text-sm font-semibold text-stone-800">
-                    {product.stock > 0 ? `${product.stock} available` : "Made to order"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center gap-3">
-                <div className="inline-flex items-center rounded-xl border border-stone-200 bg-white">
-                  <button
-                    type="button"
-                    aria-label="Decrease quantity"
-                    onClick={() =>
-                      setQty((q) => Math.max(product.minOrderQty || 1, q - 1))
-                    }
-                    className="px-3 py-2.5 text-stone-500 hover:text-stone-900"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <input
-                    type="number"
-                    min={product.minOrderQty || 1}
-                    value={qty}
-                    onChange={(e) =>
-                      setQty(
-                        Math.max(product.minOrderQty || 1, Number(e.target.value || 1)),
-                      )
-                    }
-                    className="w-16 border-0 bg-transparent text-center text-sm font-semibold focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    aria-label="Increase quantity"
-                    onClick={() => setQty((q) => q + 1)}
-                    className="px-3 py-2.5 text-stone-500 hover:text-stone-900"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-                <span className="text-xs text-stone-400">
-                  Min. {product.minOrderQty} pcs
-                </span>
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={`/request-quote?product=${product.slug}&qty=${qty}`}
-                  className="btn-primary !py-3 text-base flex-1"
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={onAddToCart}
+                  className="btn-pink btn-lg flex-1"
                 >
-                  <ShoppingBag className="h-4 w-4" />
-                  Add to Quote
-                </Link>
-                <Link
-                  href="/contact"
-                  className="btn-outline !py-3 text-base flex-1"
+                  <span className="btn-disc">
+                    <ShoppingCart className="h-4 w-4" />
+                  </span>
+                  Add to cart · {formatInr(lineTotal)}
+                </button>
+                <button
+                  type="button"
+                  onClick={onAddToBag}
+                  className="btn-outline rounded-full flex-1"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Custom request
-                </Link>
+                  <FileText className="h-4 w-4" />
+                  Add to quote bag
+                </button>
+                <button
+                  type="button"
+                  onClick={() => wish.toggle(product.id)}
+                  aria-label="Toggle wishlist"
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full h-12 w-12 ring-1",
+                    isWish
+                      ? "bg-brand-pink-500 text-white ring-brand-pink-500"
+                      : "bg-white text-stone-500 ring-stone-200 hover:text-brand-pink-600",
+                  )}
+                >
+                  <Heart className={cn("h-5 w-5", isWish && "fill-current")} />
+                </button>
               </div>
+            </div>
 
-              <ul className="mt-6 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
-                <li className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-stone-200">
-                  <Truck className="h-3.5 w-3.5 text-lotus-emerald-700" />
-                  <span className="text-stone-700">3–5 day dispatch</span>
-                </li>
-                <li className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-stone-200">
-                  <ShieldCheck className="h-3.5 w-3.5 text-lotus-emerald-700" />
-                  <span className="text-stone-700">QC inspected</span>
-                </li>
-                <li className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-stone-200">
-                  <Award className="h-3.5 w-3.5 text-lotus-emerald-700" />
-                  <span className="text-stone-700">Free mockups</span>
-                </li>
-              </ul>
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { icon: Truck, label: "5d dispatch" },
+                { icon: ShieldCheck, label: "QC every batch" },
+                { icon: Award, label: "Brand-matched" },
+                { icon: Sparkles, label: "Free mockups" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-2xl bg-stone-50 px-3 py-2.5 inline-flex items-center gap-2"
+                >
+                  <s.icon className="h-4 w-4 text-brand-green-600" />
+                  <span className="text-xs font-semibold text-brand-ink-800">
+                    {s.label}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -325,111 +275,135 @@ export default function ProductDetailPage() {
           <Tabs defaultValue="description">
             <TabsList>
               <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="specs">Specifications</TabsTrigger>
-              <TabsTrigger value="customization">Customisation</TabsTrigger>
+              <TabsTrigger value="branding">Branding</TabsTrigger>
               <TabsTrigger value="shipping">Shipping</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews</TabsTrigger>
             </TabsList>
             <TabsContent value="description">
-              <div className="card p-6 text-sm leading-relaxed text-stone-600">
-                {product.description ? (
-                  <p>{product.description}</p>
-                ) : (
-                  <p>
-                    Premium {product.name.toLowerCase()} crafted for corporate gifting and
-                    promotional programs. Final finish, packaging and branding can be tailored
-                    to your campaign.
-                  </p>
-                )}
+              <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8 text-stone-600 leading-relaxed">
+                <p>{product.description}</p>
+                <ul className="mt-4 space-y-2 text-sm">
+                  <li>Lead time: 10–14 days from artwork approval</li>
+                  <li>Minimum order: {product.minOrderQty} units</li>
+                  <li>Wholesale tier starts at {product.wholesaleMinQty} units</li>
+                  <li>
+                    Stock on hand:{" "}
+                    <span className="font-semibold text-brand-ink-800">
+                      {product.stock.toLocaleString("en-IN")}
+                    </span>
+                  </li>
+                </ul>
               </div>
             </TabsContent>
-            <TabsContent value="specs">
-              <div className="card p-6 grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                <div className="flex justify-between border-b border-stone-100 pb-2">
-                  <span className="text-stone-500">SKU</span>
-                  <span className="font-medium text-stone-800">{product.sku}</span>
-                </div>
-                <div className="flex justify-between border-b border-stone-100 pb-2">
-                  <span className="text-stone-500">Category</span>
-                  <span className="font-medium text-stone-800">
-                    {product.category?.name ?? "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-stone-100 pb-2">
-                  <span className="text-stone-500">MOQ</span>
-                  <span className="font-medium text-stone-800">
-                    {product.minOrderQty} pcs
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-stone-100 pb-2">
-                  <span className="text-stone-500">Wholesale MOQ</span>
-                  <span className="font-medium text-stone-800">
-                    {product.wholesaleMinQty || "—"}
-                  </span>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="customization">
-              <div className="card p-6 text-sm">
-                {customizationOptions.length > 0 ? (
-                  <ul className="grid sm:grid-cols-2 gap-3">
-                    {customizationOptions.map((opt) => (
-                      <li
-                        key={opt}
-                        className="flex items-center gap-2 rounded-xl bg-lotus-emerald-50/40 px-3 py-2 ring-1 ring-lotus-emerald-100"
-                      >
-                        <Check className="h-4 w-4 text-lotus-emerald-700" />
-                        <span className="text-stone-700">{opt}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-stone-500">
-                    Logo printing, embroidery, deboss and custom packaging available on
-                    request. Share artwork and we&apos;ll send mockups within 24 hours.
-                  </p>
-                )}
+            <TabsContent value="branding">
+              <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8 text-stone-600">
+                <p>
+                  Available branding methods for this product include:
+                </p>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {(customOptions.length > 0
+                    ? customOptions
+                    : ["Logo printing", "Custom packaging"]
+                  ).map((opt) => (
+                    <li
+                      key={opt}
+                      className="rounded-full bg-stone-100 px-3 py-1.5 text-xs font-semibold text-brand-ink-700"
+                    >
+                      {opt}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-5 text-sm">
+                  Pantone-matched colours, embroidery files and packaging
+                  mockups are included on every order. Final artwork sign-off is
+                  required before production locks.
+                </p>
               </div>
             </TabsContent>
             <TabsContent value="shipping">
-              <div className="card p-6 text-sm text-stone-600 space-y-2">
+              <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8 text-stone-600 space-y-3 text-sm">
                 <p>
-                  Standard production runs ship within 7–10 business days from artwork
-                  approval. Express slots available for urgent campaigns.
+                  <strong className="text-brand-ink-900">Dispatch:</strong>{" "}
+                  3–5 working days post artwork approval, scaling with quantity.
                 </p>
                 <p>
-                  Pan-India delivery via tracked logistics. International shipping available
-                  on request.
+                  <strong className="text-brand-ink-900">Coverage:</strong>{" "}
+                  Pan-India delivery via partners (Bluedart, Delhivery, DTDC).
+                  Multi-city splits supported.
                 </p>
+                <p>
+                  <strong className="text-brand-ink-900">Tracking:</strong>{" "}
+                  Live status + ETA emails per shipment, with consolidated POD
+                  reports for finance.
+                </p>
+                <p>
+                  <strong className="text-brand-ink-900">Returns:</strong>{" "}
+                  Branded merchandise is non-returnable except in case of QC defects, replaced free of charge.
+                </p>
+              </div>
+            </TabsContent>
+            <TabsContent value="reviews">
+              <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div>
+                    <p className="text-4xl font-extrabold text-brand-ink-900 tabular-nums">
+                      {(product.rating ?? 4.7).toFixed(1)}
+                    </p>
+                    <StarRating value={product.rating ?? 4.7} size="md" />
+                    <p className="text-xs text-stone-500 mt-1">
+                      Based on {product.reviews ?? 0} verified reviews
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-6 space-y-4">
+                  {[
+                    {
+                      n: "Priya Menon",
+                      c: "Swift Edge",
+                      d: "Quality is great, branding came out exactly like the mockup.",
+                    },
+                    {
+                      n: "Karan Shah",
+                      c: "Routebox",
+                      d: "Fast delivery, helpful coordinator. Will reorder.",
+                    },
+                  ].map((r) => (
+                    <div key={r.n} className="rounded-2xl bg-stone-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-brand-ink-900">
+                          {r.n} <span className="text-stone-500 font-normal">· {r.c}</span>
+                        </p>
+                        <StarRating value={5} size="sm" />
+                      </div>
+                      <p className="mt-1 text-sm text-stone-600">{r.d}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
           </Tabs>
         </div>
-      </section>
 
-      {related.length > 0 && (
-        <section className="bg-stone-50/50 border-t border-stone-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-            <div className="mb-8 flex items-end justify-between gap-3">
-              <h2 className="font-display text-2xl font-bold text-stone-900">
-                You may also like
-              </h2>
-              {product.category && (
-                <Link
-                  href={`/categories/${product.category.slug}`}
-                  className="text-sm font-semibold text-lotus-emerald-700 hover:text-lotus-emerald-900"
-                >
-                  More in {product.category.name}
-                </Link>
-              )}
+        {related.length > 0 && (
+          <div className="mt-12 lg:mt-16">
+            <div className="flex items-end justify-between mb-6">
+              <h2 className="h3-display">You might also like</h2>
+              <Link
+                href={`/categories/${product.category.slug}`}
+                className="text-sm font-semibold text-brand-green-600 hover:text-brand-green-700 inline-flex items-center gap-1"
+              >
+                View category
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {related.map((rp) => (
-                <ProductCard key={rp.id} product={rp} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {related.map((p) => (
+                <ProductCard key={p.id} product={p} />
               ))}
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </div>
     </div>
   );
 }

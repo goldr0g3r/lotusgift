@@ -1,143 +1,139 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Package, ArrowLeft, ChevronRight } from "lucide-react";
-import type { Product, Category } from "@/lib/api";
+import { ChevronRight, ArrowRight } from "lucide-react";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { categoryHero } from "@/lib/images";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+import { mockCategories, mockProducts } from "@/lib/mock-data";
 
 export default function CategoryPage() {
-  const { slug } = useParams<{ slug: string }>();
-  const [category, setCategory] = useState<Category | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const category = useMemo(
+    () => mockCategories.find((c) => c.slug === slug),
+    [slug],
+  );
+  const products = useMemo(
+    () => mockProducts.filter((p) => p.category.slug === slug),
+    [slug],
+  );
+  const other = mockCategories.filter((c) => c.slug !== slug).slice(0, 4);
 
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    setError("");
-
-    Promise.all([
-      fetch(`${API}/categories/slug/${slug}`).then((res) => {
-        if (!res.ok) throw new Error("Category not found");
-        return res.json();
-      }),
-      fetch(`${API}/products?categorySlug=${slug}`).then((res) =>
-        res.ok ? res.json() : [],
-      ),
-    ])
-      .then(([catData, prodData]) => {
-        setCategory(catData);
-        setProducts(Array.isArray(prodData) ? prodData : prodData.data ?? []);
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load category"),
-      )
-      .finally(() => setLoading(false));
-  }, [slug]);
-
-  const heroImg = slug ? categoryHero(slug) : null;
-
-  if (loading) {
+  if (!category) {
     return (
-      <div className="min-h-screen">
-        <Skeleton className="h-[260px] w-full rounded-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="card overflow-hidden">
-                <Skeleton className="aspect-[4/5] rounded-none" />
-                <div className="p-5 space-y-3">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !category) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center px-6">
-          <Package className="w-14 h-14 text-stone-200 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-stone-900 mb-2">
-            {error || "Category not found"}
-          </h2>
-          <Link href="/products" className="btn-secondary mt-4">
-            <ArrowLeft className="w-4 h-4" />
-            Browse all products
-          </Link>
-        </div>
+      <div className="px-4 sm:px-6 lg:px-10 py-16 text-center">
+        <h1 className="h2-display">Category not found</h1>
+        <Link href="/products" className="btn-primary btn-sm mt-6 mx-auto">
+          Back to catalog
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <section className="relative h-[300px] md:h-[360px] overflow-hidden">
-        {heroImg && (
-          <ImageWithFallback
-            src={heroImg.src}
-            alt={category.name}
-            sizes="100vw"
-            priority
-            className="animate-ken-burns"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/45 to-stone-950/15" />
-        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-10">
-          <nav className="mb-4 flex items-center gap-1.5 text-xs text-stone-200">
-            <Link href="/" className="hover:text-white">Home</Link>
+    <div>
+      <section className="px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl">
+          <nav className="text-xs text-stone-500 flex items-center gap-1.5 mb-6">
+            <Link href="/" className="hover:text-brand-ink-800">
+              Home
+            </Link>
             <ChevronRight className="h-3 w-3" />
-            <Link href="/products" className="hover:text-white">Products</Link>
+            <Link href="/products" className="hover:text-brand-ink-800">
+              Products
+            </Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-white font-medium">{category.name}</span>
+            <span className="text-brand-ink-800 font-semibold">{category.name}</span>
           </nav>
-          <span className="eyebrow !bg-white/10 !text-lotus-gold-200 !ring-white/15 self-start">
-            Collection
-          </span>
-          <h1 className="mt-3 font-display text-3xl sm:text-5xl font-bold text-white leading-tight">
-            {category.name}
-          </h1>
-          {category.description && (
-            <p className="mt-3 max-w-2xl text-sm sm:text-base text-stone-200/85">
-              {category.description}
-            </p>
-          )}
-          <p className="mt-3 text-xs text-stone-300">
-            {products.length} product{products.length !== 1 ? "s" : ""} available
-          </p>
+
+          <div className="relative overflow-hidden rounded-4xl bg-gradient-to-br from-stone-50 via-white to-brand-pink-50 p-6 sm:p-10 ring-1 ring-stone-100">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              <div className="lg:col-span-7">
+                <span className="eyebrow">Category</span>
+                <h1 className="mt-4 h1-display">{category.name}</h1>
+                <p className="mt-4 text-base sm:text-lg text-stone-500 max-w-2xl">
+                  {category.description}
+                </p>
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <Link href="/request-quote" className="btn-primary btn-lg">
+                    <span className="btn-disc">
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                    Request a quote
+                  </Link>
+                  <Link href="/products" className="btn-outline rounded-full">
+                    All products
+                  </Link>
+                </div>
+              </div>
+              <div className="lg:col-span-5">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-3xl ring-1 ring-white shadow-elevated-lg">
+                  <ImageWithFallback
+                    src={category.imageUrl}
+                    alt={category.name}
+                    sizes="(max-width: 1024px) 90vw, 480px"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        {products.length === 0 ? (
-          <div className="card p-12 text-center">
-            <Package className="w-12 h-12 text-stone-200 mx-auto mb-4" />
-            <p className="font-medium text-stone-700">No products in this category yet.</p>
-            <Link href="/products" className="btn-secondary mt-6">
-              <ArrowLeft className="w-4 h-4" />
-              Browse all products
-            </Link>
+      <section className="px-4 sm:px-6 lg:px-10 pb-12 sm:pb-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex items-end justify-between mb-6">
+            <h2 className="h3-display">
+              {products.length} product{products.length === 1 ? "" : "s"} in {category.name}
+            </h2>
           </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          {products.length === 0 ? (
+            <div className="rounded-3xl bg-white border border-stone-100 p-12 text-center">
+              <p className="text-base font-semibold text-brand-ink-900">
+                No products published yet
+              </p>
+              <p className="mt-2 text-sm text-stone-500">
+                Check back soon or browse the full catalog.
+              </p>
+              <Link href="/products" className="btn-primary btn-sm mt-6 mx-auto">
+                Browse catalog
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {products.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="px-4 sm:px-6 lg:px-10 pb-16">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="h3-display mb-6">Explore other categories</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {other.map((c) => (
+              <Link
+                key={c.id}
+                href={`/categories/${c.slug}`}
+                className="group rounded-3xl bg-white border border-stone-100 p-5 text-center hover:-translate-y-0.5 hover:shadow-elevated transition-all"
+              >
+                <div className="relative h-20 w-20 mx-auto overflow-hidden rounded-full ring-4 ring-stone-50 group-hover:ring-brand-green-100">
+                  <ImageWithFallback src={c.imageUrl} alt={c.name} sizes="100px" />
+                </div>
+                <p className="mt-3 text-sm font-semibold text-brand-ink-900">
+                  {c.name}
+                </p>
+                <p className="mt-1 text-xs text-stone-500">
+                  {c._count?.products ?? 0} products
+                </p>
+              </Link>
             ))}
           </div>
-        )}
+        </div>
       </section>
     </div>
   );

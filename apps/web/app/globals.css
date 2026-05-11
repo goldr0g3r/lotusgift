@@ -20,72 +20,127 @@
   }
 
   body {
-    color: #1f2937;
-    background: #faf7f2;
+    color: #0e0e13;
+    background: #ffffff;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01" on, "cv11" on;
   }
 
   ::selection {
-    background-color: rgba(16, 185, 129, 0.18);
-    color: #065f46;
+    background-color: rgba(2, 120, 60, 0.18);
+    color: #014424;
+  }
+
+  h1, h2, h3, h4, h5 {
+    letter-spacing: -0.02em;
   }
 }
 
 @layer components {
-  /* — Buttons — */
+  /* === Surfaces === */
+  .panel {
+    @apply bg-white rounded-4xl shadow-panel;
+  }
+
+  .panel-soft {
+    @apply bg-white rounded-3xl shadow-soft border border-stone-100;
+  }
+
+  .card {
+    @apply bg-white rounded-3xl border border-stone-100 shadow-soft;
+  }
+
+  .card-flat {
+    @apply bg-white rounded-3xl border border-stone-100;
+  }
+
+  /* === Pill Buttons === */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200
+           disabled:opacity-50 disabled:pointer-events-none
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-green-500/40;
+  }
+
   .btn-primary {
-    @apply bg-lotus-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold
-           shadow-sm shadow-lotus-emerald-700/20
-           hover:bg-lotus-emerald-800 hover:shadow-md hover:shadow-lotus-emerald-700/25
-           active:bg-lotus-emerald-900 active:shadow-sm active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center justify-center gap-2;
+    @apply btn bg-brand-green-500 text-white pl-2 pr-6 py-2 shadow-pill
+           hover:bg-brand-green-600 active:bg-brand-green-700;
   }
 
-  .btn-secondary {
-    @apply border border-lotus-emerald-200 text-lotus-emerald-800 bg-lotus-emerald-50/60
-           px-6 py-2.5 rounded-xl font-semibold
-           hover:bg-lotus-emerald-50 hover:border-lotus-emerald-300 hover:shadow-sm
-           active:bg-lotus-emerald-100 active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center justify-center gap-2;
+  .btn-primary > .btn-disc {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-green-800 text-white;
   }
 
-  .btn-accent {
-    @apply bg-lotus-gold-600 text-white px-6 py-2.5 rounded-xl font-semibold
-           shadow-sm shadow-lotus-gold-600/25
-           hover:bg-lotus-gold-700 hover:shadow-md hover:shadow-lotus-gold-700/25
-           active:bg-lotus-gold-800 active:shadow-sm active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center justify-center gap-2;
+  .btn-pink {
+    @apply btn bg-brand-pink-500 text-white pl-2 pr-6 py-2 shadow-pill
+           hover:bg-brand-pink-600 active:bg-brand-pink-700;
+  }
+
+  .btn-pink > .btn-disc {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-pink-800 text-white;
   }
 
   .btn-outline {
-    @apply border border-stone-300 text-stone-700 bg-white px-6 py-2.5 rounded-xl font-semibold
-           hover:bg-stone-50 hover:border-stone-400
-           active:bg-stone-100 active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center justify-center gap-2;
+    @apply btn border border-brand-green-500 text-brand-green-600 bg-white px-6 py-2.5
+           hover:bg-brand-green-50 hover:border-brand-green-600;
+  }
+
+  .btn-outline-pink {
+    @apply btn border border-brand-pink-500 text-brand-pink-600 bg-white px-6 py-2.5
+           hover:bg-brand-pink-50 hover:border-brand-pink-600;
   }
 
   .btn-ghost {
-    @apply text-stone-600 px-4 py-2 rounded-xl font-medium
-           hover:bg-stone-100 hover:text-stone-900
-           active:bg-stone-200 active:scale-[0.98]
-           transition-all duration-200 inline-flex items-center gap-2;
+    @apply btn text-stone-600 px-5 py-2.5
+           hover:bg-stone-100 hover:text-stone-900;
   }
 
-  /* — Card — */
-  .card {
-    @apply bg-white rounded-2xl border border-stone-200/70 shadow-soft;
+  .btn-dark {
+    @apply btn bg-brand-ink-900 text-white pl-2 pr-6 py-2 shadow-pill
+           hover:bg-black;
   }
 
-  .card-warm {
-    @apply bg-lotus-ivory rounded-2xl border border-lotus-gold-100 shadow-warm;
+  .btn-dark > .btn-disc {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand-ink-900;
   }
 
-  /* — Inputs — */
+  .btn-sm {
+    @apply px-4 py-1.5 text-sm rounded-full;
+  }
+
+  .btn-lg {
+    @apply text-base pl-2 pr-8 py-2.5;
+  }
+
+  /* === Circle icon buttons === */
+  .icon-circle {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-brand-ink-700
+           ring-1 ring-stone-200 transition-colors hover:bg-stone-50 hover:text-brand-ink-900
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-500/40;
+  }
+
+  .icon-circle-dark {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-ink-900 text-white
+           transition-colors hover:bg-black;
+  }
+
+  .icon-circle-pink {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-pink-500 text-white
+           transition-colors hover:bg-brand-pink-600 shadow-pill;
+  }
+
+  /* === Inputs === */
   .input-field {
-    @apply w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-white
-           focus:outline-none focus:ring-2 focus:ring-lotus-emerald-500/20
-           focus:border-lotus-emerald-500
+    @apply w-full px-5 py-3 border border-stone-200 rounded-full text-sm bg-white
+           focus:outline-none focus:ring-2 focus:ring-brand-green-500/20
+           focus:border-brand-green-500
+           placeholder:text-stone-400 transition-all duration-200;
+  }
+
+  .input-field-square {
+    @apply w-full px-4 py-2.5 border border-stone-200 rounded-2xl text-sm bg-white
+           focus:outline-none focus:ring-2 focus:ring-brand-green-500/20
+           focus:border-brand-green-500
            placeholder:text-stone-400 transition-all duration-200;
   }
 
@@ -93,63 +148,80 @@
     @apply block text-sm font-medium text-stone-700 mb-1.5;
   }
 
-  /* — Badges — */
+  /* === Pill Nav === */
+  .pill-nav {
+    @apply inline-flex items-center gap-1 rounded-full bg-white ring-1 ring-stone-200 px-1.5 py-1.5 shadow-pill;
+  }
+
+  .pill-nav a,
+  .pill-nav button {
+    @apply px-4 py-2 rounded-full text-sm font-semibold text-brand-ink-700 transition-colors;
+  }
+
+  .pill-nav a:hover,
+  .pill-nav button:hover {
+    @apply text-brand-ink-900 bg-stone-100;
+  }
+
+  .pill-nav a.is-active,
+  .pill-nav button.is-active {
+    @apply bg-brand-ink-900 text-white;
+  }
+
+  /* === Badges === */
+  .badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ring-1;
+  }
+
   .badge-green {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-lotus-emerald-50 text-lotus-emerald-800 ring-1 ring-lotus-emerald-100;
+    @apply badge bg-brand-green-50 text-brand-green-700 ring-brand-green-100;
   }
 
-  .badge-gold {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-lotus-gold-50 text-lotus-gold-800 ring-1 ring-lotus-gold-100;
+  .badge-pink {
+    @apply badge bg-brand-pink-50 text-brand-pink-700 ring-brand-pink-100;
   }
 
-  .badge-pink,
-  .badge-rose {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-lotus-rose-50 text-lotus-rose-700 ring-1 ring-lotus-rose-100;
+  .badge-neutral {
+    @apply badge bg-stone-100 text-stone-700 ring-stone-200;
   }
 
-  .badge-gray {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-stone-100 text-stone-700 ring-1 ring-stone-200;
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-800 ring-amber-200;
   }
 
-  .badge-yellow {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-lotus-gold-50 text-lotus-gold-800 ring-1 ring-lotus-gold-200;
+  .badge-danger {
+    @apply badge bg-rose-50 text-rose-700 ring-rose-200;
   }
 
   .badge-outline {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-           bg-white text-stone-600 ring-1 ring-stone-200;
+    @apply badge bg-white text-stone-600 ring-stone-200;
   }
 
-  /* — Glass — */
-  .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40;
-  }
-
-  .glass-warm {
-    @apply bg-lotus-ivory/80 backdrop-blur-xl border border-lotus-gold-100;
-  }
-
-  .glass-dark {
-    @apply bg-stone-900/70 backdrop-blur-xl border border-white/10;
-  }
-
-  /* — Section heading utilities — */
   .eyebrow {
-    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.18em]
-           bg-lotus-gold-50 text-lotus-gold-800 ring-1 ring-lotus-gold-100;
+    @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide
+           bg-brand-green-50 text-brand-green-700 ring-1 ring-brand-green-100;
+  }
+
+  .eyebrow-pink {
+    @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide
+           bg-brand-pink-50 text-brand-pink-700 ring-1 ring-brand-pink-100;
+  }
+
+  /* === Display headings === */
+  .h-display {
+    @apply font-display font-extrabold tracking-tight text-brand-ink-900;
   }
 
   .h1-display {
-    @apply font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.05] tracking-tight text-stone-900;
+    @apply h-display text-4xl sm:text-5xl lg:text-6xl leading-[1.02];
   }
 
   .h2-display {
-    @apply font-display text-3xl sm:text-4xl font-bold tracking-tight text-stone-900;
+    @apply h-display text-3xl sm:text-4xl lg:text-5xl leading-[1.05];
+  }
+
+  .h3-display {
+    @apply h-display text-2xl sm:text-3xl leading-tight;
   }
 
   .section-heading {
@@ -157,7 +229,17 @@
   }
 
   .section-subheading {
-    @apply mt-4 text-lg text-stone-500 max-w-2xl;
+    @apply mt-4 text-base sm:text-lg text-stone-500 max-w-2xl;
+  }
+
+  /* === Star rating === */
+  .star-row {
+    @apply inline-flex items-center gap-0.5 text-amber-500;
+  }
+
+  /* === Scribble decoration === */
+  .scribble {
+    @apply pointer-events-none absolute text-brand-pink-500/70;
   }
 }
 
@@ -177,16 +259,20 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .ring-soft {
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.06);
+  }
 }
 
-/* — Smooth dotted grid background for sections — */
+/* === Patterns === */
 .dot-grid {
   background-image: radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-size: 22px 22px;
 }
 
-.lotus-pattern {
+.brand-pattern {
   background-image:
-    radial-gradient(circle at 25% 30%, rgba(217, 119, 6, 0.06) 0, transparent 35%),
-    radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.06) 0, transparent 35%);
+    radial-gradient(circle at 18% 24%, rgba(240, 18, 130, 0.06) 0, transparent 38%),
+    radial-gradient(circle at 82% 76%, rgba(2, 120, 60, 0.07) 0, transparent 40%);
 }

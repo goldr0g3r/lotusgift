@@ -50,7 +50,7 @@ export function Accordion({
   };
   return (
     <AccordionContext.Provider value={{ active, setActive, multiple, values, toggle }}>
-      <div className={cn("divide-y divide-stone-200 rounded-2xl border border-stone-200 bg-white", className)}>
+      <div className={cn("divide-y divide-stone-100 rounded-3xl border border-stone-100 bg-white", className)}>
         {children}
       </div>
     </AccordionContext.Provider>
@@ -82,7 +82,7 @@ export function AccordionItem({
         <ChevronDown
           className={cn(
             "h-4 w-4 text-stone-500 transition-transform",
-            isOpen && "rotate-180 text-lotus-emerald-700",
+            isOpen && "rotate-180 text-brand-green-600",
           )}
         />
       </button>

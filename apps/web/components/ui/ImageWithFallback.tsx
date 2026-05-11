@@ -30,7 +30,7 @@ export function ImageWithFallback({
       {!loaded && (
         <div
           aria-hidden="true"
-          className="absolute inset-0 animate-pulse-soft bg-gradient-to-br from-stone-100 via-stone-50 to-lotus-cream"
+          className="absolute inset-0 animate-pulse-soft bg-gradient-to-br from-stone-100 via-stone-50 to-stone-100"
         />
       )}
       <Image

@@ -1,212 +1,121 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import {
-  FileText,
-  Search,
-  Plus,
-  ArrowRight,
-} from "lucide-react";
-import type { Quote } from "@/lib/api";
-import { Input } from "@/components/ui/Input";
+import { PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { formatInr } from "@/components/ui/PriceTag";
+import { mockQuotes } from "@/lib/mock-data";
+import type { QuoteStatus } from "@/lib/api-types";
 import { cn } from "@/lib/cn";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const statuses: ("all" | QuoteStatus)[] = [
+  "all",
+  "DRAFT",
+  "SENT",
+  "ACCEPTED",
+  "REJECTED",
+  "EXPIRED",
+];
 
-const STATUS_TABS = ["ALL", "DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED"];
-
-const statusTone: Record<string, "gray" | "yellow" | "emerald" | "rose"> = {
-  DRAFT: "gray",
-  SENT: "yellow",
-  ACCEPTED: "emerald",
-  REJECTED: "rose",
-  EXPIRED: "gray",
+const tone: Record<QuoteStatus, "neutral" | "warning" | "green" | "danger"> = {
+  DRAFT: "neutral",
+  SENT: "warning",
+  ACCEPTED: "green",
+  REJECTED: "danger",
+  EXPIRED: "neutral",
 };
 
-export default function QuotesPage() {
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    fetch(`${API}/quotes`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token") ?? ""}` },
-      credentials: "include",
-    })
-      .then((r) => r.json())
-      .then((data) => setQuotes(Array.isArray(data) ? data : data.data || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = quotes.filter((q) => {
-    const matchTab = activeTab === "ALL" || q.status === activeTab;
-    const matchSearch =
-      !search ||
-      q.quoteNumber.toLowerCase().includes(search.toLowerCase()) ||
-      q.client?.companyName?.toLowerCase().includes(search.toLowerCase());
-    return matchTab && matchSearch;
-  });
+export default function AdminQuotesPage() {
+  const [filter, setFilter] = useState<(typeof statuses)[number]>("all");
+  const list =
+    filter === "all" ? mockQuotes : mockQuotes.filter((q) => q.status === filter);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="eyebrow">Sales</span>
-          <h2 className="mt-2 font-display text-2xl font-bold text-stone-900">
-            Quotes
-          </h2>
+          <h2 className="mt-3 h2-display">Quotes</h2>
           <p className="text-stone-500 mt-1 text-sm">
-            {quotes.length} total quote{quotes.length === 1 ? "" : "s"}
+            {list.length} of {mockQuotes.length} quotes
           </p>
         </div>
-        <Link href="/admin/quotes/new" className="btn-primary">
-          <Plus className="w-4 h-4" /> New quote
+        <Link href="/admin/quotes/new" className="btn-primary btn-lg">
+          <span className="btn-disc">
+            <PlusCircle className="h-4 w-4" />
+          </span>
+          New quote
         </Link>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => {
-          const active = activeTab === tab;
-          const count =
-            tab === "ALL" ? quotes.length : quotes.filter((q) => q.status === tab).length;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ring-1",
-                active
-                  ? "bg-lotus-emerald-700 text-white ring-lotus-emerald-700"
-                  : "bg-white text-stone-600 hover:bg-stone-50 ring-stone-200",
-              )}
-            >
-              {tab === "ALL"
-                ? "All"
-                : tab.charAt(0) + tab.slice(1).toLowerCase()}
-              <span className="ml-1.5 text-xs opacity-70">({count})</span>
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center gap-2">
+        {statuses.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setFilter(s)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+              filter === s
+                ? "bg-brand-ink-900 text-white"
+                : "bg-stone-100 text-brand-ink-700 hover:bg-stone-200",
+            )}
+          >
+            {s === "all" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+          </button>
+        ))}
       </div>
 
-      <div className="card p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-          <Input
-            placeholder="Search by quote number or client..."
-            className="!pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="card overflow-hidden">
+      <div className="rounded-3xl bg-white border border-stone-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-stone-100 bg-stone-50/60">
-                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Quote
-                </th>
-                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Client
-                </th>
-                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Date
-                </th>
-                <th className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Items
-                </th>
-                <th className="text-right text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Total
-                </th>
-                <th className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Status
-                </th>
-                <th className="text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Valid until
-                </th>
-                <th className="text-right text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 px-5 py-3">
-                  Action
-                </th>
+            <thead className="bg-stone-50/60 text-xs font-semibold uppercase tracking-wider text-stone-500">
+              <tr>
+                <th className="text-left px-5 py-3">Quote</th>
+                <th className="text-left px-5 py-3">Client</th>
+                <th className="text-left px-5 py-3">Items</th>
+                <th className="text-right px-5 py-3">Total</th>
+                <th className="text-left px-5 py-3">Status</th>
+                <th className="text-left px-5 py-3">Valid until</th>
+                <th className="px-5 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-50">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
-                    <td colSpan={8} className="px-5 py-3.5">
-                      <Skeleton className="h-9" />
-                    </td>
-                  </tr>
-                ))
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center">
-                    <FileText className="w-10 h-10 mx-auto mb-2 text-stone-200" />
-                    <p className="text-stone-500">No quotes found</p>
+            <tbody className="divide-y divide-stone-100">
+              {list.map((q) => (
+                <tr key={q.id} className="hover:bg-stone-50/40">
+                  <td className="px-5 py-3 font-bold text-brand-ink-900">
+                    {q.quoteNumber}
+                  </td>
+                  <td className="px-5 py-3 text-stone-600">
+                    {q.client?.companyName ?? "Direct"}
+                  </td>
+                  <td className="px-5 py-3 text-stone-600">
+                    {q.items.length} items
+                  </td>
+                  <td className="px-5 py-3 text-right font-semibold tabular-nums">
+                    {formatInr(q.total)}
+                  </td>
+                  <td className="px-5 py-3">
+                    <Badge tone={tone[q.status]}>{q.status}</Badge>
+                  </td>
+                  <td className="px-5 py-3 text-stone-500">
+                    {q.validUntil
+                      ? new Date(q.validUntil).toLocaleDateString()
+                      : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <Link
+                      href={`/admin/quotes/${q.id}`}
+                      className="text-sm font-semibold text-brand-green-700 hover:text-brand-green-800"
+                    >
+                      View
+                    </Link>
                   </td>
                 </tr>
-              ) : (
-                filtered.map((quote) => (
-                  <tr
-                    key={quote.id}
-                    className="hover:bg-stone-50/60 transition-colors"
-                  >
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm font-semibold text-stone-900">
-                        {quote.quoteNumber}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-stone-600">
-                      {quote.client?.companyName || "Direct"}
-                    </td>
-                    <td className="px-5 py-3.5 text-stone-500">
-                      {new Date(quote.createdAt).toLocaleDateString("en-IN")}
-                    </td>
-                    <td className="px-5 py-3.5 text-center text-stone-600">
-                      {quote.items?.length || 0}
-                    </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums font-semibold text-stone-900">
-                      ₹{quote.total.toLocaleString("en-IN")}
-                    </td>
-                    <td className="px-5 py-3.5 text-center">
-                      <Badge tone={statusTone[quote.status] ?? "gray"}>
-                        {quote.status}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-stone-500">
-                      {quote.validUntil
-                        ? new Date(quote.validUntil).toLocaleDateString("en-IN")
-                        : "—"}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <Link
-                        href={`/admin/quotes/${quote.id}`}
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-lotus-emerald-700 hover:text-lotus-emerald-900"
-                      >
-                        View <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
-        </div>
-        <div className="px-5 py-3 border-t border-stone-100 flex items-center justify-between text-sm">
-          <span className="text-stone-500">
-            Showing {filtered.length} of {quotes.length} quotes
-          </span>
-          <div className="font-semibold text-stone-900 tabular-nums">
-            Total: ₹{filtered.reduce((sum, q) => sum + q.total, 0).toLocaleString("en-IN")}
-          </div>
         </div>
       </div>
     </div>

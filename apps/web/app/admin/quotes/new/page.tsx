@@ -1,412 +1,241 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  Save,
-  Send,
-  Calculator,
-  Loader2,
-} from "lucide-react";
-import type { Client, Product } from "@/lib/api";
-import { Input, Label, Select, Textarea } from "@/components/ui/Input";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, PlusCircle, Send, Trash2 } from "lucide-react";
+import { Input, Label, Textarea, Select } from "@/components/ui/Input";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import { formatInr } from "@/components/ui/PriceTag";
+import { mockClients, mockProducts } from "@/lib/mock-data";
 import { toast } from "@/components/ui/Toaster";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
-interface QuoteItem {
+type Line = {
   productId: string;
-  productName: string;
-  sku: string;
-  quantity: number;
+  qty: number;
   unitPrice: number;
-}
+};
 
-export default function NewQuotePage() {
+export default function NewQuoteAdminPage() {
   const router = useRouter();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  const [clientId, setClientId] = useState("");
-  const [validUntil, setValidUntil] = useState("");
+  const [clientId, setClientId] = useState(mockClients[0]?.id ?? "");
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<QuoteItem[]>([]);
-  const [discount, setDiscount] = useState(0);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [addProductId, setAddProductId] = useState(mockProducts[0]?.id ?? "");
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const headers: HeadersInit = token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-
-    Promise.all([
-      fetch(`${API}/clients`, { headers, credentials: "include" }).then((r) =>
-        r.json(),
-      ),
-      fetch(`${API}/products/admin`, { headers, credentials: "include" }).then(
-        (r) => r.json(),
-      ),
-    ])
-      .then(([c, p]) => {
-        setClients(Array.isArray(c) ? c : c.data || []);
-        setProducts(Array.isArray(p) ? p : p.data || []);
-      })
-      .catch(() => toast.error("Failed to load clients or products"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const addItem = () => {
-    setItems([
-      ...items,
-      { productId: "", productName: "", sku: "", quantity: 1, unitPrice: 0 },
+  const addLine = () => {
+    const p = mockProducts.find((x) => x.id === addProductId);
+    if (!p) return;
+    if (lines.find((l) => l.productId === p.id)) return;
+    setLines([
+      ...lines,
+      { productId: p.id, qty: p.minOrderQty, unitPrice: p.wholesalePrice ?? p.priceFrom },
     ]);
   };
 
-  const updateItem = (index: number, updates: Partial<QuoteItem>) => {
-    const next = [...items];
-    next[index] = { ...next[index]!, ...updates } as QuoteItem;
-    setItems(next);
-  };
+  const removeLine = (id: string) =>
+    setLines((arr) => arr.filter((l) => l.productId !== id));
 
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
-  };
-
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      updateItem(index, {
-        productId: product.id,
-        productName: product.name,
-        sku: product.sku,
-        unitPrice: product.priceFrom,
-      });
-    }
-  };
-
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.quantity * item.unitPrice,
-    0,
-  );
-  const total = Math.max(0, subtotal - discount);
-
-  const handleSave = async (sendAfterSave: boolean) => {
-    if (!clientId) {
-      toast.error("Please select a client");
-      return;
-    }
-    if (items.length === 0 || items.some((i) => !i.productId)) {
-      toast.error("Please add at least one product to the quote");
-      return;
-    }
-
-    setSaving(true);
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch(`${API}/quotes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          clientId,
-          discount,
-          notes: notes || undefined,
-          validUntil: validUntil || undefined,
-          items: items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-          })),
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Failed to create quote");
-      }
-
-      const quote = await res.json();
-
-      if (sendAfterSave) {
-        await fetch(`${API}/quotes/${quote.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-          body: JSON.stringify({ status: "SENT" }),
-        });
-      }
-
-      toast.success(sendAfterSave ? "Quote sent" : "Quote saved");
-      router.push("/admin/quotes");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-72" />
-        <div className="grid lg:grid-cols-3 gap-6">
-          <Skeleton className="lg:col-span-2 h-96" />
-          <Skeleton className="h-96" />
-        </div>
-      </div>
+  const updateLine = (id: string, patch: Partial<Line>) =>
+    setLines((arr) =>
+      arr.map((l) => (l.productId === id ? { ...l, ...patch } : l)),
     );
-  }
+
+  const subtotal = lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
+  const discount = Math.round(subtotal * 0.05);
+  const tax = Math.round((subtotal - discount) * 0.18);
+  const total = subtotal - discount + tax;
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/quotes"
-          className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <span className="eyebrow">Sales</span>
-          <h2 className="mt-1 font-display text-2xl font-bold text-stone-900">
-            Create quote
-          </h2>
-          <p className="text-stone-500 mt-1 text-sm">
-            Build a new quotation for a client
-          </p>
-        </div>
+    <div className="space-y-6">
+      <Link
+        href="/admin/quotes"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-500 hover:text-brand-ink-900"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to quotes
+      </Link>
+      <div>
+        <span className="eyebrow">New quote</span>
+        <h2 className="mt-3 h2-display">Build a quote</h2>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="card p-6 space-y-5">
-            <h3 className="font-display text-lg font-semibold text-stone-900">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-5">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-7">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
               Client
             </h3>
-            <div>
-              <Label>Select client</Label>
-              <Select
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-              >
-                <option value="" disabled>
-                  Choose a client
-                </option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.companyName} ({client.contactName})
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Valid until</Label>
-              <Input
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-              />
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Select client</Label>
+                <Select
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                >
+                  {mockClients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.companyName}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label>Valid for</Label>
+                <Select defaultValue="21">
+                  <option value="7">7 days</option>
+                  <option value="14">14 days</option>
+                  <option value="21">21 days</option>
+                  <option value="30">30 days</option>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div className="card p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-lg font-semibold text-stone-900">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-7">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-display text-lg font-bold text-brand-ink-900">
                 Line items
               </h3>
-              <button
-                type="button"
-                onClick={addItem}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-lotus-emerald-700 hover:text-lotus-emerald-900"
-              >
-                <Plus className="w-4 h-4" /> Add item
-              </button>
-            </div>
-
-            {items.length === 0 ? (
-              <div className="py-10 text-center border-2 border-dashed border-stone-200 rounded-2xl">
-                <Calculator className="w-8 h-8 text-stone-300 mx-auto" />
-                <p className="text-sm text-stone-500 mt-2">No items added yet</p>
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="mt-3 text-sm font-semibold text-lotus-emerald-700 hover:text-lotus-emerald-900"
+              <div className="flex items-center gap-2">
+                <Select
+                  value={addProductId}
+                  onChange={(e) => setAddProductId(e.target.value)}
+                  className="!py-2"
                 >
-                  + Add your first item
+                  {mockProducts.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Select>
+                <button type="button" onClick={addLine} className="btn-primary btn-sm">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Add
                 </button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {items.map((item, index) => (
+            </div>
+            <div className="mt-4 divide-y divide-stone-100">
+              {lines.length === 0 && (
+                <p className="text-sm text-stone-500 py-6 text-center">
+                  No line items yet — pick a product above and click Add.
+                </p>
+              )}
+              {lines.map((l) => {
+                const p = mockProducts.find((x) => x.id === l.productId)!;
+                return (
                   <div
-                    key={index}
-                    className="grid grid-cols-12 gap-3 items-end p-4 bg-stone-50/60 rounded-2xl ring-1 ring-stone-200"
+                    key={l.productId}
+                    className="py-3 flex flex-col sm:flex-row gap-3 sm:items-center"
                   >
-                    <div className="col-span-12 sm:col-span-5">
-                      <Label className="!text-xs">Product</Label>
-                      <Select
-                        className="!text-sm"
-                        value={item.productId}
-                        onChange={(e) =>
-                          handleProductSelect(index, e.target.value)
-                        }
-                      >
-                        <option value="">Select product</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} (₹{p.priceFrom.toLocaleString("en-IN")})
-                          </option>
-                        ))}
-                      </Select>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-brand-ink-900 truncate">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        MOQ {p.minOrderQty}
+                      </p>
                     </div>
-                    <div className="col-span-4 sm:col-span-2">
-                      <Label className="!text-xs">Qty</Label>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <QuantityStepper
+                        value={l.qty}
+                        onChange={(q) => updateLine(l.productId, { qty: q })}
+                        min={p.minOrderQty}
+                      />
                       <Input
                         type="number"
-                        min="1"
-                        className="!text-sm"
-                        value={item.quantity}
+                        min={0}
+                        value={l.unitPrice}
                         onChange={(e) =>
-                          updateItem(index, {
-                            quantity: Math.max(1, Number(e.target.value)),
+                          updateLine(l.productId, {
+                            unitPrice: Number(e.target.value) || 0,
                           })
                         }
+                        className="w-28 !rounded-full"
                       />
-                    </div>
-                    <div className="col-span-4 sm:col-span-2">
-                      <Label className="!text-xs">Unit (₹)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="!text-sm"
-                        value={item.unitPrice}
-                        onChange={(e) =>
-                          updateItem(index, {
-                            unitPrice: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="col-span-3 sm:col-span-2">
-                      <Label className="!text-xs">Total</Label>
-                      <div className="text-sm font-semibold text-stone-900 py-2.5 tabular-nums">
-                        ₹
-                        {(item.quantity * item.unitPrice).toLocaleString(
-                          "en-IN",
-                        )}
-                      </div>
-                    </div>
-                    <div className="col-span-1 flex items-end pb-1">
+                      <p className="text-sm font-semibold tabular-nums w-24 text-right">
+                        {formatInr(l.qty * l.unitPrice)}
+                      </p>
                       <button
                         type="button"
-                        onClick={() => removeItem(index)}
-                        className="p-2 rounded-md hover:bg-lotus-rose-50 text-stone-400 hover:text-lotus-rose-600"
+                        onClick={() => removeLine(l.productId)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-rose-600 hover:bg-rose-50"
                         aria-label="Remove"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
-          <div className="card p-6 space-y-5">
-            <h3 className="font-display text-lg font-semibold text-stone-900">
+          <div className="rounded-3xl bg-white border border-stone-100 p-6 sm:p-7">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
               Notes
             </h3>
             <Textarea
-              rows={3}
-              placeholder="Additional notes, terms, or special instructions..."
+              rows={4}
+              className="mt-3"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              placeholder="Lead time, customisation notes, payment terms…"
             />
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="card p-6 space-y-4 sticky top-24">
-            <h3 className="font-display text-lg font-semibold text-stone-900">
+        <aside className="lg:col-span-4">
+          <div className="sticky top-6 rounded-3xl bg-white border border-stone-100 p-6 shadow-soft">
+            <h3 className="font-display text-lg font-bold text-brand-ink-900">
               Summary
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Items ({items.length})</span>
-                <span className="font-medium tabular-nums">
-                  ₹{subtotal.toLocaleString("en-IN")}
-                </span>
+            <dl className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-stone-500">Subtotal</dt>
+                <dd className="font-semibold tabular-nums">
+                  {formatInr(subtotal)}
+                </dd>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Discount</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-stone-400">₹</span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="!w-24 !text-right !text-sm !py-1.5"
-                    value={discount}
-                    onChange={(e) =>
-                      setDiscount(Math.max(0, Number(e.target.value)))
-                    }
-                  />
-                </div>
+              <div className="flex justify-between">
+                <dt className="text-stone-500">Discount (5%)</dt>
+                <dd className="font-semibold tabular-nums text-brand-green-700">
+                  − {formatInr(discount)}
+                </dd>
               </div>
-              <div className="border-t border-stone-100 pt-3 flex items-center justify-between">
-                <span className="font-semibold text-stone-900">Total</span>
-                <span className="font-display text-2xl font-bold text-lotus-emerald-700 tabular-nums">
-                  ₹{total.toLocaleString("en-IN")}
-                </span>
+              <div className="flex justify-between">
+                <dt className="text-stone-500">GST (18%)</dt>
+                <dd className="font-semibold tabular-nums">{formatInr(tax)}</dd>
               </div>
-            </div>
-
-            <div className="space-y-2 pt-3">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleSave(false)}
-                className="btn-secondary w-full justify-center"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                Save as draft
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleSave(true)}
-                className="btn-primary w-full justify-center"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                Save &amp; send
-              </button>
-            </div>
+              <div className="flex justify-between border-t border-stone-100 pt-3">
+                <dt className="text-sm font-bold text-brand-ink-900">Total</dt>
+                <dd className="text-xl font-extrabold tabular-nums">
+                  {formatInr(total)}
+                </dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              onClick={() => {
+                toast.success("Quote saved (stub)");
+                router.push("/admin/quotes");
+              }}
+              className="btn-primary btn-lg w-full mt-6"
+            >
+              <span className="btn-disc">
+                <Send className="h-4 w-4" />
+              </span>
+              Save & send
+            </button>
+            <button
+              type="button"
+              onClick={() => toast.success("Saved as draft")}
+              className="btn-outline rounded-full w-full mt-3"
+            >
+              Save as draft
+            </button>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

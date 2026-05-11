@@ -58,7 +58,7 @@ export function Dialog({
       />
       <div
         className={cn(
-          "relative w-full bg-white rounded-2xl shadow-elevated-lg overflow-hidden animate-scale-in",
+          "relative w-full bg-white rounded-3xl shadow-elevated-lg overflow-hidden animate-scale-in",
           sizeCls[size],
           className,
         )}

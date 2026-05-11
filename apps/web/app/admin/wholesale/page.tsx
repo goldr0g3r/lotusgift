@@ -1,244 +1,130 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Search,
-  Package,
-  Filter,
-  Warehouse,
-  Tag,
-} from "lucide-react";
-import type { Product } from "@/lib/api";
-import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
-import { productImage } from "@/lib/images";
-import { cn } from "@/lib/cn";
+import { useState } from "react";
+import { Plus, Save, Trash2 } from "lucide-react";
+import { Input, Label } from "@/components/ui/Input";
+import { toast } from "@/components/ui/Toaster";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+type Tier = { id: string; minQty: number; discountPct: number };
 
-export default function WholesalePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+const initial: Tier[] = [
+  { id: "t1", minQty: 50, discountPct: 5 },
+  { id: "t2", minQty: 100, discountPct: 10 },
+  { id: "t3", minQty: 500, discountPct: 18 },
+  { id: "t4", minQty: 1000, discountPct: 25 },
+];
 
-  useEffect(() => {
-    fetch(`${API}/products?isWholesale=true`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((data) => setProducts(Array.isArray(data) ? data : data.data || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+export default function AdminWholesalePage() {
+  const [tiers, setTiers] = useState<Tier[]>(initial);
 
-  const categoryNames = [
-    "All",
-    ...Array.from(new Set(products.map((p) => p.category?.name).filter(Boolean))),
-  ];
+  const update = (id: string, patch: Partial<Tier>) =>
+    setTiers((arr) => arr.map((t) => (t.id === id ? { ...t, ...patch } : t)));
 
-  const filtered = products.filter((p) => {
-    const matchSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase());
-    const matchCategory =
-      selectedCategory === "All" || p.category?.name === selectedCategory;
-    return matchSearch && matchCategory;
-  });
+  const remove = (id: string) =>
+    setTiers((arr) => arr.filter((t) => t.id !== id));
 
-  const totalStock = products.reduce((s, p) => s + p.stock, 0);
-  const maxSavings = products.reduce((max, p) => {
-    if (!p.wholesalePrice || p.priceFrom <= 0) return max;
-    const pct = Math.round(
-      ((p.priceFrom - p.wholesalePrice) / p.priceFrom) * 100,
-    );
-    return pct > max ? pct : max;
-  }, 0);
+  const add = () =>
+    setTiers((arr) => [
+      ...arr,
+      { id: `t${Date.now()}`, minQty: 0, discountPct: 0 },
+    ]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="eyebrow">Marketing</span>
-          <div className="flex items-center gap-2 mt-2">
-            <h2 className="font-display text-2xl font-bold text-stone-900">
-              Wholesale products
-            </h2>
-            <Badge tone="gold">
-              <Tag className="w-3 h-3 mr-1" />
-              Bulk pricing
-            </Badge>
-          </div>
-          <p className="text-stone-500 mt-1 text-sm">
-            Products available at wholesale pricing for bulk orders
-          </p>
-        </div>
+      <div>
+        <span className="eyebrow">Marketing</span>
+        <h2 className="mt-3 h2-display">Wholesale rules</h2>
+        <p className="text-stone-500 mt-1 text-sm">
+          Configure volume tiers that apply across products. Individual products
+          can override.
+        </p>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
-        {[
-          {
-            icon: Warehouse,
-            value: products.length,
-            label: "Wholesale products",
-            tone: "emerald" as const,
-          },
-          {
-            icon: Tag,
-            value: maxSavings > 0 ? `Up to ${maxSavings}%` : "—",
-            label: "Max savings",
-            tone: "rose" as const,
-          },
-          {
-            icon: Package,
-            value: `${totalStock.toLocaleString()}+`,
-            label: "Items in stock",
-            tone: "gold" as const,
-          },
-        ].map((stat) => (
-          <div key={stat.label} className="card p-5 flex items-center gap-4">
+      <div className="rounded-3xl bg-white border border-stone-100 overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-stone-100 flex items-center justify-between">
+          <h3 className="font-display text-lg font-bold text-brand-ink-900">
+            Default volume tiers
+          </h3>
+          <button type="button" onClick={add} className="btn-primary btn-sm">
+            <Plus className="h-4 w-4" />
+            Add tier
+          </button>
+        </div>
+        <div className="p-5 sm:p-6 space-y-3">
+          {tiers.map((t) => (
             <div
-              className={cn(
-                "h-11 w-11 rounded-xl flex items-center justify-center ring-1",
-                stat.tone === "emerald" &&
-                  "bg-lotus-emerald-50 ring-lotus-emerald-100",
-                stat.tone === "rose" &&
-                  "bg-lotus-rose-50 ring-lotus-rose-100",
-                stat.tone === "gold" &&
-                  "bg-lotus-gold-50 ring-lotus-gold-100",
-              )}
+              key={t.id}
+              className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end rounded-2xl bg-stone-50 p-4"
             >
-              <stat.icon
-                className={cn(
-                  "h-5 w-5",
-                  stat.tone === "emerald" && "text-lotus-emerald-700",
-                  stat.tone === "rose" && "text-lotus-rose-700",
-                  stat.tone === "gold" && "text-lotus-gold-700",
-                )}
-              />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-stone-900">
-                {stat.value}
+              <div className="sm:col-span-5">
+                <Label>Min quantity</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={t.minQty}
+                  onChange={(e) =>
+                    update(t.id, { minQty: Number(e.target.value) || 0 })
+                  }
+                />
               </div>
-              <div className="text-xs text-stone-500">{stat.label}</div>
+              <div className="sm:col-span-5">
+                <Label>Discount %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={80}
+                  value={t.discountPct}
+                  onChange={(e) =>
+                    update(t.id, { discountPct: Number(e.target.value) || 0 })
+                  }
+                />
+              </div>
+              <div className="sm:col-span-2 flex sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => remove(t.id)}
+                  className="inline-flex items-center gap-2 rounded-full text-sm font-semibold text-rose-600 hover:bg-rose-50 px-3 py-2"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Remove
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="card p-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-            <Input
-              placeholder="Search wholesale products..."
-              className="!pl-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <Filter className="w-4 h-4 text-stone-400 flex-shrink-0" />
-            {categoryNames.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat!)}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ring-1",
-                  selectedCategory === cat
-                    ? "bg-lotus-emerald-700 text-white ring-lotus-emerald-700"
-                    : "bg-white text-stone-600 hover:bg-stone-50 ring-stone-200",
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-[3/4]" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="card p-12 text-center">
-          <Package className="w-10 h-10 text-stone-200 mx-auto" />
-          <h3 className="mt-3 text-sm font-semibold text-stone-900">
-            No wholesale products found
-          </h3>
-          <p className="text-sm text-stone-500 mt-1">
-            {products.length === 0
-              ? "No products have wholesale pricing enabled yet."
-              : "Try adjusting your search or filter."}
-          </p>
+        <div className="px-5 sm:px-6 py-4 border-t border-stone-100 flex justify-end">
+          <button
+            type="button"
+            onClick={() => toast.success("Tiers saved")}
+            className="btn-primary btn-lg"
+          >
+            <span className="btn-disc">
+              <Save className="h-4 w-4" />
+            </span>
+            Save changes
+          </button>
         </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {filtered.map((product) => {
-            const savings =
-              product.wholesalePrice && product.priceFrom > 0
-                ? Math.round(
-                    ((product.priceFrom - product.wholesalePrice) /
-                      product.priceFrom) *
-                      100,
-                  )
-                : 0;
+      </div>
 
-            return (
-              <div
-                key={product.id}
-                className="card overflow-hidden hover:shadow-elevated hover:-translate-y-0.5 transition-all group"
-              >
-                <div className="relative aspect-[4/3] bg-stone-100">
-                  <ImageWithFallback
-                    src={productImage(product).src}
-                    alt={product.name}
-                    sizes="(max-width: 640px) 50vw, 25vw"
-                  />
-                  {savings > 0 && (
-                    <span className="absolute top-3 right-3 rounded-full bg-lotus-rose-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-warm">
-                      Save {savings}%
-                    </span>
-                  )}
-                </div>
-                <div className="p-4">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-lotus-gold-700">
-                    {product.category?.name}
-                  </span>
-                  <h3 className="text-sm font-semibold text-stone-900 mt-1 group-hover:text-lotus-emerald-700 transition-colors line-clamp-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-stone-400 font-mono mt-0.5">
-                    {product.sku}
-                  </p>
-                  <div className="mt-3 flex items-end gap-2">
-                    <span className="text-lg font-bold text-lotus-emerald-700">
-                      ₹
-                      {(
-                        product.wholesalePrice ?? product.priceFrom
-                      ).toLocaleString("en-IN")}
-                    </span>
-                    {product.wholesalePrice &&
-                      product.wholesalePrice < product.priceFrom && (
-                        <span className="text-sm text-stone-400 line-through">
-                          ₹{product.priceFrom.toLocaleString("en-IN")}
-                        </span>
-                      )}
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
-                    <span>Min: {product.wholesaleMinQty} pcs</span>
-                    <span>{product.stock.toLocaleString()} in stock</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      <div className="rounded-3xl bg-white border border-stone-100 p-6">
+        <h3 className="font-display text-lg font-bold text-brand-ink-900">
+          Wholesale program overview
+        </h3>
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+          {[
+            { label: "Active wholesale SKUs", value: "126" },
+            { label: "Avg. order size", value: "₹1,82,500" },
+            { label: "Repeat client rate", value: "62%" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-stone-50 p-5">
+              <p className="text-3xl font-extrabold text-brand-ink-900 tabular-nums">
+                {s.value}
+              </p>
+              <p className="mt-2 text-xs text-stone-500">{s.label}</p>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

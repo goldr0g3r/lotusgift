@@ -42,7 +42,7 @@ export function ProductGallery({ images, className }: ProductGalleryProps) {
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="relative overflow-hidden rounded-2xl bg-stone-100 ring-1 ring-stone-200">
+      <div className="relative overflow-hidden rounded-3xl bg-stone-100 ring-1 ring-stone-200">
         <div ref={mainRef} className="overflow-hidden">
           <div className="flex">
             {safeImages.map((img, i) => (
@@ -62,7 +62,7 @@ export function ProductGallery({ images, className }: ProductGalleryProps) {
               type="button"
               aria-label="Previous image"
               onClick={() => mainApi?.scrollPrev()}
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-elevated text-stone-700 hover:text-lotus-emerald-700"
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-pill text-brand-ink-700 hover:bg-brand-ink-900 hover:text-white"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -70,7 +70,7 @@ export function ProductGallery({ images, className }: ProductGalleryProps) {
               type="button"
               aria-label="Next image"
               onClick={() => mainApi?.scrollNext()}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-elevated text-stone-700 hover:text-lotus-emerald-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-pill text-brand-ink-700 hover:bg-brand-ink-900 hover:text-white"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -81,7 +81,7 @@ export function ProductGallery({ images, className }: ProductGalleryProps) {
           type="button"
           aria-label="Open lightbox"
           onClick={() => setLightboxOpen(true)}
-          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-elevated text-stone-700 hover:text-lotus-emerald-700"
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-pill text-brand-ink-700 hover:bg-brand-ink-900 hover:text-white"
         >
           <Maximize2 className="h-5 w-5" />
         </button>
@@ -96,9 +96,9 @@ export function ProductGallery({ images, className }: ProductGalleryProps) {
                 key={`thumb-${i}`}
                 onClick={() => mainApi?.scrollTo(i)}
                 className={cn(
-                  "relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl ring-1 transition-all",
+                  "relative aspect-square w-20 shrink-0 overflow-hidden rounded-2xl ring-1 transition-all",
                   i === selected
-                    ? "ring-2 ring-lotus-emerald-700"
+                    ? "ring-2 ring-brand-green-500"
                     : "ring-stone-200 hover:ring-stone-300",
                 )}
               >

@@ -52,7 +52,7 @@ export function TabsList({ className, ...props }: HTMLAttributes<HTMLDivElement>
     <div
       role="tablist"
       className={cn(
-        "inline-flex items-center gap-1 rounded-xl bg-stone-100 p-1",
+        "inline-flex items-center gap-1 rounded-full bg-stone-100 p-1",
         className,
       )}
       {...props}
@@ -75,9 +75,9 @@ export function TabsTrigger({
       aria-selected={isActive}
       onClick={() => setValue(value)}
       className={cn(
-        "px-4 py-1.5 text-sm font-medium rounded-lg transition-all",
+        "px-4 py-1.5 text-sm font-semibold rounded-full transition-all",
         isActive
-          ? "bg-white text-lotus-emerald-800 shadow-sm"
+          ? "bg-brand-ink-900 text-white shadow-pill"
           : "text-stone-600 hover:text-stone-900",
         className,
       )}
