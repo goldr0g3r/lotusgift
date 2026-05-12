@@ -45,7 +45,8 @@ function FloatingTag({
 
 export function HeroSlider() {
   return (
-    <section className="px-4 sm:px-6 lg:px-10 pt-2 sm:pt-4 pb-10 sm:pb-14">
+    <section className="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-10 sm:pb-14">
+      <div className="mx-auto max-w-7xl">
       <Carousel
         autoplay
         autoplayDelay={6500}

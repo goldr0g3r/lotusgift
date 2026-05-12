@@ -31,9 +31,8 @@ export function AuthSplitLayout({
   badge?: string;
 }) {
   return (
-    <div className="min-h-screen bg-[#EEEEF2]">
-      <div className="mx-auto max-w-[1480px] px-2 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
-        <div className="bg-white rounded-3xl sm:rounded-4xl shadow-panel overflow-hidden grid lg:grid-cols-2 min-h-[calc(100vh-2.5rem)]">
+    <div className="min-h-screen bg-white">
+      <div className="grid lg:grid-cols-2 min-h-screen">
           <div className="relative hidden lg:block overflow-hidden">
             <ImageWithFallback
               src={imageSrc ?? defaultImage}
@@ -83,7 +82,6 @@ export function AuthSplitLayout({
               <div className="mt-8">{children}</div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

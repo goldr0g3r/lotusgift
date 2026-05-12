@@ -226,59 +226,59 @@ export default function AdminLayout({
         </aside>
 
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="bg-white rounded-3xl sm:rounded-4xl shadow-panel overflow-hidden flex flex-col flex-1">
-            <header className="sticky top-0 z-30 bg-white border-b border-stone-100 px-5 sm:px-7 h-16 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => setMobileOpen(true)}
-                  className="p-2 rounded-full hover:bg-stone-100 lg:hidden"
-                  aria-label="Open menu"
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
-                <nav className="flex items-center gap-1.5 text-sm">
-                  {breadcrumb.map((b, i) => (
-                    <span key={`${b.label}-${i}`} className="flex items-center gap-1.5">
-                      {i > 0 && <span className="text-stone-300">/</span>}
-                      {b.href ? (
-                        <Link
-                          href={b.href}
-                          className="text-stone-500 hover:text-brand-ink-900"
-                        >
-                          {b.label}
-                        </Link>
-                      ) : (
-                        <span className="font-bold text-brand-ink-900">{b.label}</span>
-                      )}
-                    </span>
-                  ))}
-                </nav>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="hidden md:flex items-center relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                  <input
-                    placeholder="Search products, orders, clients…"
-                    className="w-72 rounded-full border border-stone-200 bg-white pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500/30"
-                  />
-                </div>
-                <IconButton ariaLabel="Notifications" variant="light" size="sm">
-                  <Bell className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-brand-pink-500" />
-                </IconButton>
-                <div className="hidden sm:flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-ink-900 text-white text-[10px] font-bold">
-                    {user.name?.charAt(0).toUpperCase() || "A"}
-                  </div>
-                  <span className="text-sm font-semibold text-brand-ink-900">
-                    {user.name?.split(" ")[0]}
+          <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-100 px-5 sm:px-7 h-16 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="p-2 rounded-full hover:bg-stone-100 lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <nav className="flex items-center gap-1.5 text-sm">
+                {breadcrumb.map((b, i) => (
+                  <span key={`${b.label}-${i}`} className="flex items-center gap-1.5">
+                    {i > 0 && <span className="text-stone-300">/</span>}
+                    {b.href ? (
+                      <Link
+                        href={b.href}
+                        className="text-stone-500 hover:text-brand-ink-900"
+                      >
+                        {b.label}
+                      </Link>
+                    ) : (
+                      <span className="font-bold text-brand-ink-900">{b.label}</span>
+                    )}
                   </span>
-                </div>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <input
+                  placeholder="Search products, orders, clients…"
+                  className="w-72 rounded-full border border-stone-200 bg-white pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500/30"
+                />
               </div>
-            </header>
-            <main className="flex-1 p-5 sm:p-7 lg:p-8">{children}</main>
-          </div>
+              <IconButton ariaLabel="Notifications" variant="light" size="sm">
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-brand-pink-500" />
+              </IconButton>
+              <div className="hidden sm:flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-ink-900 text-white text-[10px] font-bold">
+                  {user.name?.charAt(0).toUpperCase() || "A"}
+                </div>
+                <span className="text-sm font-semibold text-brand-ink-900">
+                  {user.name?.split(" ")[0]}
+                </span>
+              </div>
+            </div>
+          </header>
+          <main className="flex-1 p-5 sm:p-7 lg:p-8 bg-stone-50/40">
+            {children}
+          </main>
         </div>
       </div>
     </div>
