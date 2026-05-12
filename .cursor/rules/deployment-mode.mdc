@@ -1,0 +1,37 @@
+---
+description: Modular-monolith-first; Nest libraries mounted by api-gateway; transport-agnostic outbox
+alwaysApply: true
+---
+
+# Deployment Mode
+
+LotusGift v2 deploys as **one Node process** (`apps/api-gateway`) hosting every business module as a Nest library under `services/*`. Single MongoDB Atlas cluster with collection-namespacing per service (`<service>.<entity>` — e.g. `order.orders`, `inventory.stock_ledger`). Outbox is transport-agnostic via the `OutboxPort` interface — in-process `EventEmitter` for MVP, swap to Upstash Workflow + QStash post-revenue per [docs/runbooks/scaling-up.md](../../docs/runbooks/scaling-up.md).
+
+## Do
+
+- Create new business modules with `nest g library <name>` in `services/`.
+- Mount the library inside `apps/api-gateway/src/app.module.ts`.
+- Namespace collections: `inventory.stock_ledger`, never bare `stock_ledger`.
+- Publish events via `OutboxPort.publish(event, { transactionId })`.
+
+## Don't
+
+- Spin up a separate Nest app per service before the GMV trigger in `scaling-up.md` is hit.
+- Provision a separate Mongo cluster per service — Atlas M0 quota = 1 cluster per project.
+- Import `EventEmitter2` directly in service code.
+
+## Concrete example
+
+```ts
+// services/order-service/src/order.module.ts
+@Module({ imports: [DatabaseModule.forFeature('order')], providers: [OrderService] })
+export class OrderModule {}
+
+// apps/api-gateway/src/app.module.ts
+@Module({ imports: [OrderModule, InventoryModule, RfqModule, /* ... */] })
+export class AppModule {}
+```
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) — citations #7 (Oracle Always Free, retrieved 2026-05-12) and #8 (Atlas M0, retrieved 2026-05-12).

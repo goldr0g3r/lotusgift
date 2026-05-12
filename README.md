@@ -1,159 +1,103 @@
-# Turborepo starter
+# LotusGift v2
 
-This Turborepo starter is maintained by the Turborepo core team.
+Multi-vendor multi-warehouse corporate-gifting marketplace for India. Built as a Turborepo monorepo with a NestJS modular monolith (`apps/api-gateway` mounting 16 service libraries) and 4 Next.js apps (customer, vendor, admin, customer-service) — all deployed to Oracle Cloud + Vercel.
 
-## Using this example
+**Status: PR-1 scaffold (pre-launch, greenfield).** This commit lands the empty-skeleton workspace via CLI tooling (`create-turbo`, `create-next-app`, `scripts/scaffold-package.ts`). Implementation arrives across PR-2 through PR-22 per the [parent architecture plan](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md) and tracked on the [GitHub Projects v2 board](https://github.com/users/goldr0g3r/projects/9).
 
-Run the following command:
+## Workspace layout
 
-```sh
-npx create-turbo@latest
+```text
+lotusgift/
+├── _old/                         # archived previous codebase (single-vendor RFQ site); reference only
+├── apps/
+│   ├── api-gateway/              # NestJS modular monolith host (port 3001)
+│   ├── web-customer/             # Next.js retail + corporate buyer surface (port 3000)
+│   ├── web-vendor/               # Next.js vendor portal (port 3002)
+│   ├── web-admin/                # Next.js internal admin (port 3003)
+│   └── web-customer-service/     # Next.js customer-service console (port 3004)
+├── services/                     # 16 NestJS service libraries (pnpm workspace packages, prefix `@lotusgift/*`)
+│   ├── auth-service/             # Better-Auth + organization plugin (vendor-org / corporate-buyer-org / internal-staff-org)
+│   ├── vendor-service/           # onboarding + multi-warehouse registry + SLA scoring
+│   ├── product-service/          # catalog + corporate-gifting taxonomy + Atlas Search sync
+│   ├── inventory-service/        # per-(variant, warehouse) stock + Redis reservations
+│   ├── customization-service/    # versioned art uploads + mockup approval + in-app thread
+│   ├── rfq-service/              # quote workflow + auto-router (cart vs RFQ)
+│   ├── recipient-list-service/   # CSV recipient upload + per-recipient personalization
+│   ├── order-service/            # multi-recipient orders + saga orchestrator
+│   ├── payment-service/          # Razorpay + PO + credit terms
+│   ├── shipping-service/         # Shiprocket + Delhivery + Bluedart adapters
+│   ├── tax-service/              # GST per-shipment + IRP e-invoice
+│   ├── promotions-service/       # vendor tiers + volume discounts + auto-replenish
+│   ├── notification-service/     # Resend + MSG91 + WhatsApp + in-app
+│   ├── insights-service/         # vendor AI forecasting
+│   ├── review-service/           # reviews + sentiment
+│   └── support-service/          # tickets + RMA
+├── packages/                     # 18 shared workspace packages (prefix `@repo/*`)
+│   ├── api/                      # Kubb-generated TanStack Query hooks (P4)
+│   ├── analytics-sdk/            # PostHog wrapper
+│   ├── auth-client/              # Better-Auth client
+│   ├── config/                   # env Zod schema
+│   ├── database/                 # Mongoose helper
+│   ├── design-tokens/            # TS source-of-truth, emits typed TS + SCSS
+│   ├── eslint-config/            # shared ESLint flat configs
+│   ├── events/                   # transport-agnostic event schemas
+│   ├── feature-flags/            # PostHog flags
+│   ├── jest-config/              # shared Jest configs
+│   ├── observability/            # OTEL + RUM SDK init
+│   ├── openapi-spec/             # shared OpenAPI x-* extensions
+│   ├── prettier-config/          # shared Prettier config
+│   ├── types/                    # shared TS types
+│   ├── typescript-config/        # shared tsconfig bases
+│   ├── ui/                       # Radix + CSS Modules + Sass + Lucide (PR-6)
+│   ├── utils/                    # OutboxPort + redactor + ulid + pino + retry
+│   └── validators/               # Zod schemas (source of truth)
+├── scripts/
+│   └── scaffold-package.ts       # tsx CLI: `pnpm dlx tsx scripts/scaffold-package.ts <package|service> <name>`
+├── docs/
+│   └── research/                 # phase-N-topic research notes with retrieval-dated citations
+└── .cursor/plans/                # multi-PR plans for the rebuild
 ```
 
-## What's inside?
+## Getting started
 
-This Turborepo includes the following packages/apps:
+Requires: Node 20+, pnpm 9+, gh CLI (for PR creation), Git.
 
-### Apps and Packages
+```powershell
+# 1. Clone + cd
+git clone https://github.com/goldr0g3r/lotusgift.git
+cd lotusgift
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+# 2. Install all workspace deps
+pnpm install
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+# 3. Build everything
+pnpm build
 
-### Utilities
+# 4. Lint
+pnpm lint
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+# 5. Run dev (all apps in parallel via turbo)
+pnpm dev
 ```
 
-Without global `turbo`, use your package manager:
+Ports during dev: api-gateway `:3001`, web-customer `:3000`, web-vendor `:3002`, web-admin `:3003`, web-customer-service `:3004`.
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+## Architecture references
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+- [Parent architecture plan](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md) — full rebuild scope, phased PR roadmap (P0 through P22).
+- [P0-scaffold sub-plan](.cursor/plans/p0-scaffold_sub-plan_pr-1_d9158dc4.plan.md) — this PR's detailed steps.
+- [P0-scaffold research note](docs/research/phase-0-scaffold.md) — retrieval-dated citations + version captures.
+- [GitHub Projects v2 board](https://github.com/users/goldr0g3r/projects/9) — phase tracker with custom fields (Phase / Workstream / Layer / Type).
+- [`_old/`](_old/) — archived previous codebase, kept under source control as a design/feature reference. Excluded from the live pnpm workspace and from ESLint.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## CLI-driven scaffold
 
-```sh
-turbo build --filter=docs
-```
+This project is generated entirely via official CLIs — no hand-rolled `package.json` or `tsconfig`:
 
-Without global `turbo`:
+- `pnpm dlx create-turbo@latest -e with-nestjs` for the base monorepo (apps/api-gateway + apps/web-customer + shared packages).
+- `pnpm dlx create-next-app@latest` for the 3 additional Next.js apps.
+- `pnpm dlx tsx scripts/scaffold-package.ts <package|service> <name>` for the 16 services + 13 new packages.
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## License
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+UNLICENSED (private).

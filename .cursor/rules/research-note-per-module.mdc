@@ -1,0 +1,37 @@
+---
+description: Mandatory docs/research/phase-N-topic.md before any new package, service, or app
+alwaysApply: true
+---
+
+# Research Note Per Module
+
+Before writing code in a new package, service, or app, open `docs/research/phase-<N>-<topic>.md`. The note is a **prerequisite**, not a deliverable to backfill.
+
+## Required sections
+
+1. **Goal** — one paragraph, what's being built and why now.
+2. **Retrieval-dated citations** — every dependency the module touches, each with: page title + URL + retrieval date ≤14 days old.
+3. **Decisions log** — chose / rejected with reasoning.
+4. **Open questions** — parked decisions (resolve before PR-merge).
+5. **Implementation checklist** — file-by-file deliverables.
+6. **Versions** — output of `pnpm ls --depth=0 --filter <package>` after CLI install.
+
+## Do
+
+- Open the note in the same PR as the first commit for the module.
+- Cite the live docs URL, not your memory of the API.
+- Run `pnpm ls` and paste the output — never type version numbers from memory.
+
+## Don't
+
+- Open a PR touching a new package without a research note.
+- Use citations older than 14 days (re-fetch and update the date).
+- Skip the open-questions section — every module has them.
+
+## Concrete example
+
+See [docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) — the exemplar this rule was shipped alongside.
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) — citation #10 (Cursor `create-rule` skill, retrieved 2026-05-12). Validated by the `research-note-validator` subagent in [.cursor/agents/research-note-validator.md](../agents/research-note-validator.md).
