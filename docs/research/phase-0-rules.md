@@ -50,14 +50,14 @@ None blocking. Sub-plan §5 open questions all resolved as "recommend yes" for: 
 ## 5. Implementation checklist
 
 - [x] Research note committed (this file)
-- [ ] All 15 `.cursor/rules/*.mdc` rules
-- [ ] All 15 `.github/instructions/*.instructions.md` mirrors
-- [ ] `.github/copilot-instructions.md`
-- [ ] `AGENTS.md` + `CLAUDE.md` at repo root
-- [ ] `.cursor/skills/add-rest-endpoint/SKILL.md`
-- [ ] 5 subagents in `.cursor/agents/`
-- [ ] `pnpm lint` clean
-- [ ] PR opened on branch `p0-rules`
+- [x] All 15 `.cursor/rules/*.mdc` rules
+- [x] All 15 `.github/instructions/*.instructions.md` mirrors
+- [x] `.github/copilot-instructions.md`
+- [x] `AGENTS.md` + `CLAUDE.md` at repo root
+- [x] `.cursor/skills/add-rest-endpoint/SKILL.md`
+- [x] 5 subagents in `.cursor/agents/`
+- [x] `pnpm lint` clean
+- [x] Shipped to `main` (see Implementation reference below — work merged via PR #1's follow-up commits, not a separate p0-rules PR)
 
 ## 6. Versions (locked at PR-1 scaffold time, refresh before code phases)
 
@@ -65,4 +65,10 @@ Versions for the libraries cited above will be locked into `pnpm-lock.yaml` at P
 
 ## 7. Implementation reference
 
-PR URL will be appended here at status-sync time: _pending_.
+Shipped to `main` across two commits (no separate p0-rules PR — folded into PR #1's follow-up commit chain):
+
+- [`7d50829`](https://github.com/goldr0g3r/lotusgift/commit/7d50829fe80fb86e746cc2be8dd3dbd7c5610570) — `chore(scaffold): archive _old/ + re-scaffold workspace via CLI (#1)` — included this research note + 4 rules (`api-type-safety`, `deployment-mode`, `design-discovery`, `research-note-per-module`).
+- [`dacbbbb`](https://github.com/goldr0g3r/lotusgift/commit/dacbbbb9e8fa53781b105c3761306fb724ab1dfd) — `docs(research): update phase-0-scaffold documentation with implementation details and references` — added the remaining 11 rules + 15 Copilot instruction mirrors + `.github/copilot-instructions.md` + `AGENTS.md` + `CLAUDE.md` + 5 subagents.
+- [`#1` merged PR](https://github.com/goldr0g3r/lotusgift/pull/1) — parent PR that the rule rollout was folded into.
+
+Status-sync tracking issue: see GitHub issue with label `phase/P0` + `workstream/platform` (created at status-sync time).
