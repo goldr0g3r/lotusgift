@@ -2,7 +2,7 @@
 
 Multi-vendor multi-warehouse corporate-gifting marketplace for India. Built as a Turborepo monorepo with a NestJS modular monolith (`apps/api-gateway` mounting 16 service libraries) and 4 Next.js apps (customer, vendor, admin, customer-service) — all deployed to Oracle Cloud + Vercel.
 
-**Status: Phase 0 (foundation) in progress.** PR-1 landed the empty-skeleton workspace; PR-2 + PR-3 landed governance and architecture docs (rules + ADRs + dep-graph); **PR-4 lands the CI surface** — 10 GitHub Actions workflows + Renovate + dep-cruiser + branch protection (applied post-merge). Implementation continues across PR-5 through PR-22 per the [parent architecture plan](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md) and tracked on the [GitHub Projects v2 board](https://github.com/users/goldr0g3r/projects/9).
+**Status: Phase 0 (foundation) in progress.** PR-1 landed the empty-skeleton workspace; PR-2 landed governance (rules + agents + skills); PR-3 (in review) lands architecture docs (ADRs + dep-graph + README rewrite); **PR-4 (this PR) lands the CI surface** — 10 GitHub Actions workflows + Renovate + dep-cruiser + branch protection (applied post-merge). Implementation continues across PR-5 through PR-22 per the [parent architecture plan](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md) and tracked on the [GitHub Projects v2 board](https://github.com/users/goldr0g3r/projects/9).
 
 ## Workspace layout
 

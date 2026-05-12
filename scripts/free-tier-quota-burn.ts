@@ -32,10 +32,34 @@ interface QuotaResult {
   note?: string;
 }
 
-const REPO_OWNER = "goldr0g3r";
-const REPO_NAME = "lotusgift";
+function resolveRepo(): { owner: string; name: string } {
+  const override = process.env.GITHUB_REPOSITORY;
+  if (override && override.includes("/")) {
+    const [owner, name] = override.split("/");
+    if (owner && name) return { owner, name };
+  }
+  return { owner: "goldr0g3r", name: "lotusgift" };
+}
 
-const THRESHOLD = Number(process.env.QUOTA_BURN_THRESHOLD ?? "0.70");
+const { owner: REPO_OWNER, name: REPO_NAME } = resolveRepo();
+
+const DEFAULT_THRESHOLD = 0.7;
+
+function resolveThreshold(): number {
+  const raw = process.env.QUOTA_BURN_THRESHOLD;
+  if (raw === undefined || raw === "") return DEFAULT_THRESHOLD;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+    // eslint-disable-next-line no-console
+    console.log(
+      `[${new Date().toISOString()}] [warn] QUOTA_BURN_THRESHOLD="${raw}" is not a finite number in (0, 1]; falling back to ${DEFAULT_THRESHOLD}.`,
+    );
+    return DEFAULT_THRESHOLD;
+  }
+  return parsed;
+}
+
+const THRESHOLD = resolveThreshold();
 const DRY_RUN = process.argv.includes("--dry-run");
 
 function log(level: "info" | "warn" | "error", message: string): void {

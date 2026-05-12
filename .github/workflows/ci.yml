@@ -95,9 +95,13 @@ jobs:
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
+    env:
+      ACTIONLINT_VERSION: "1.7.12"
     steps:
       - uses: actions/checkout@v6
       - name: actionlint
+        # Pin the bootstrap script to the tagged release rather than `main` to
+        # close the supply-chain hole — the script can't change underneath us.
         run: |
-          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12
+          bash <(curl -fsSL "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") "${ACTIONLINT_VERSION}"
           ./actionlint -color

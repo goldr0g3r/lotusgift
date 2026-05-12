@@ -18,6 +18,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # Types from .cursor/rules/commit-conventions.mdc line 22.
           types: |
             feat
             fix
@@ -29,8 +30,42 @@ jobs:
             ci
             build
             style
-            revert
-          requireScope: false
+          # Workstream scopes from .cursor/rules/commit-conventions.mdc line 23.
+          # requireScope is true because the rule explicitly forbids skipping
+          # the scope (see the "Don't" section of the rule).
+          scopes: |
+            scaffold
+            rules
+            architecture
+            ci
+            infra
+            design
+            runbook
+            auth
+            vendor
+            product
+            inventory
+            customization
+            order
+            rfq
+            recipient-list
+            payment
+            shipping
+            notification
+            tax
+            promotions
+            insights
+            review
+            support
+            gateway
+            web-customer
+            web-vendor
+            web-admin
+            web-customer-service
+            observability
+            release
+            deps
+          requireScope: true
           subjectPattern: ^[a-z].*[^.]$
           subjectPatternError: |
             The subject of the PR title MUST start with a lowercase letter

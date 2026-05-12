@@ -1,7 +1,7 @@
 <!--
 Title format (validated by .github/workflows/pr-title.yml):
   <type>(<workstream-scope>): <imperative summary>
-Allowed types: feat, fix, chore, docs, refactor, test, perf, ci, build, style, revert.
+Allowed types: feat, fix, chore, docs, refactor, test, perf, ci, build, style.
 Allowed scopes: see .cursor/rules/commit-conventions.mdc.
 -->
 

@@ -60,7 +60,7 @@ Companion deliverables: 10 workflows in `.github/workflows/`, 4 issue forms + `c
 | Q3 | `corporate-gifting-domain.yml` matrix-spec path | @goldr0g3r | The reserved path `services/rfq-service/test/auto-router.matrix.spec.ts` is touched by the workflow's path filter; the spec itself lands at P9b. |
 | Q4 | `release.yml` auto-publish toggle | @goldr0g3r | P22 launch runbook decision. |
 | Q5 | `enforce_admins` flip + `required_approving_review_count` bump to 2 | @goldr0g3r | P22 when the team scales beyond solo. |
-| Q6 | `actionlint` in CI as a required check | @goldr0g3r | Add to required-status-checks list after first run shows stability. Bake into `ci.yml` now, escalate to required check post-merge. |
+| Q6 | `actionlint` required-check stability monitoring | @goldr0g3r | `actionlint` ships in `ci.yml` AND `branch-protection.json` `required_status_checks.contexts` from day one. Monitor first 2 weeks; if frequent transient failures emerge (e.g., GitHub Actions catalog changes), demote to non-required and reinstate via Q-follow-up. |
 
 ## 5. Implementation checklist
 
