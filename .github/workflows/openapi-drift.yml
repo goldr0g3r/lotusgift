@@ -1,0 +1,52 @@
+name: openapi-drift
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.0.0"
+  OPENAPI_SPEC_PATH: "packages/api/openapi.json"
+
+jobs:
+  openapi-drift:
+    name: openapi-drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: detect OpenAPI artefact
+        id: detect
+        run: |
+          if [[ -f "${OPENAPI_SPEC_PATH}" ]]; then
+            echo "spec_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "spec_exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=openapi-drift skipped::No ${OPENAPI_SPEC_PATH} present yet. Becomes load-bearing once apps/api-gateway emits the OpenAPI spec (P4)."
+          fi
+      - uses: pnpm/action-setup@v6
+        if: steps.detect.outputs.spec_exists == 'true'
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        if: steps.detect.outputs.spec_exists == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+        if: steps.detect.outputs.spec_exists == 'true'
+      - name: regenerate spec
+        if: steps.detect.outputs.spec_exists == 'true'
+        run: pnpm --filter @repo/api openapi:generate
+      - name: diff against committed spec
+        if: steps.detect.outputs.spec_exists == 'true'
+        run: |
+          if ! git diff --exit-code "${OPENAPI_SPEC_PATH}"; then
+            echo "::error title=openapi-drift::Committed OpenAPI spec diverges from the freshly-generated spec. Run 'pnpm --filter @repo/api openapi:generate' and commit the result."
+            exit 1
+          fi

@@ -1,0 +1,40 @@
+name: atlas-search-mapping-drift
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  ATLAS_SEARCH_DIR: "infrastructure/atlas/search"
+
+jobs:
+  atlas-search-mapping-drift:
+    name: atlas-search-mapping-drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: detect Atlas Search mappings
+        id: detect
+        run: |
+          if [[ -d "${ATLAS_SEARCH_DIR}" ]] && ls "${ATLAS_SEARCH_DIR}"/*.json >/dev/null 2>&1; then
+            echo "mappings_exist=true" >> "$GITHUB_OUTPUT"
+            count=$(ls "${ATLAS_SEARCH_DIR}"/*.json | wc -l)
+            echo "mapping_count=${count}" >> "$GITHUB_OUTPUT"
+          else
+            echo "mappings_exist=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=atlas-search-mapping-drift skipped::No ${ATLAS_SEARCH_DIR}/*.json mappings present yet. Becomes load-bearing once search indexes are registered (P7)."
+          fi
+      - name: enforce M0 search-index budget
+        if: steps.detect.outputs.mappings_exist == 'true'
+        run: |
+          count="${{ steps.detect.outputs.mapping_count }}"
+          if (( count > 3 )); then
+            echo "::error title=atlas-search-mapping-drift::Atlas Search budget exceeded — ${count} mappings present, M0 allows at most 3. See docs/adr/0006-atlas-search-m0-budget-3-indexes.md."
+            exit 1
+          fi
+          echo "Atlas Search mappings: ${count}/3 (M0 budget)."

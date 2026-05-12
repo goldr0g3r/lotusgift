@@ -1,0 +1,19 @@
+{
+  // markdownlint-cli2 runner config — controls the file picker + ignore set.
+  // Rule overrides live in .markdownlint.jsonc (shared with VS Code extension).
+  "config": {
+    "extends": ".markdownlint.jsonc"
+  },
+  "ignores": [
+    "**/node_modules/**",
+    "_old/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/.turbo/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/.git/**"
+  ],
+  "noProgress": false,
+  "showFound": false
+}

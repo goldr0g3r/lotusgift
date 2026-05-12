@@ -11,16 +11,21 @@
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "check-types": "turbo run check-types",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "dep-cruiser": "depcruise --config .dependency-cruiser.cjs --output-type err --exclude \"(^|/)(_old|node_modules|dist|.next|.turbo|coverage)(/|$)\" apps packages services",
+    "free-tier-burn": "tsx scripts/free-tier-quota-burn.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "dependency-cruiser": "^17.4.0",
     "prettier": "^3.2.5",
+    "tsx": "^4.21.0",
     "turbo": "^2.9.12"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

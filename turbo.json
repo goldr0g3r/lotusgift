@@ -12,6 +12,9 @@
     },
     "lint": {},
     "test": {},
-    "test:e2e": {}
+    "test:e2e": {},
+    "check-types": {
+      "dependsOn": ["^build"]
+    }
   }
 }
