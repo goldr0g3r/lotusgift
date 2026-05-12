@@ -23,9 +23,10 @@ volumes:
 services:
   # MongoDB 8.0 LTS major.
   # Atlas M0 production currently runs the 7.0 server line; local-dev tracks
-  # latest-stable for forward-compat (see ADR Q3 in phase-0-dev-stack research
-  # note). Single standalone instance; replica-set upgrade lands at P10
-  # when payment-service needs ACID transactions.
+  # latest-stable for forward-compat (see open question Q3 in
+  # docs/research/phase-0-dev-stack.md §4). Single standalone instance;
+  # replica-set upgrade lands at P10 when payment-service needs ACID
+  # transactions (research note §4 Q4).
   mongo:
     image: mongo:8.0
     container_name: lotusgift-mongo

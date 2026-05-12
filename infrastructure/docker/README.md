@@ -23,7 +23,11 @@ docker compose version    # v2.x
 # From the repo root.
 docker compose -f infrastructure/docker/docker-compose.yml up -d
 
-# Wait for healthchecks (~30 seconds on first run, <10s on subsequent runs).
+# Wait ~30s on first run (image pulls), <10s on subsequent runs.
+# `mongo`, `redis`, `mailpit` will report `Up (healthy)`.
+# `otel-collector` reports `Up` WITHOUT a `(healthy)` annotation by design —
+# its image is distroless and has no in-container probe binary; verify it
+# externally via `curl -fsS http://localhost:13133/`.
 docker compose -f infrastructure/docker/docker-compose.yml ps
 
 # Tear down (preserves volumes).
@@ -89,9 +93,11 @@ docker compose -f infrastructure/docker/docker-compose.yml logs -f otel-collecto
 
 ### Functional pings
 
+Commands below assume the **default ports**. If you overrode any port via env vars (see [Port-conflict workaround](#port-conflict-workaround)), substitute accordingly — for example `redis-cli -h localhost -p 6380 ping` after `REDIS_PORT=6380`.
+
 ```bash
 mongosh mongodb://localhost:27017 --eval "db.adminCommand({ ping: 1 })"
-redis-cli -h localhost ping
+redis-cli -h localhost -p 6379 ping
 curl -sf http://localhost:8025/api/v1/info | jq
 curl -sf http://localhost:13133/
 ```
