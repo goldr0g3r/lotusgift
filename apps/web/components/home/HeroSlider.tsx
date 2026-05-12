@@ -170,6 +170,7 @@ export function HeroSlider() {
           <CarouselDots />
         </div>
       </Carousel>
+    </div>
     </section>
-  );
+  )
 }

@@ -41,7 +41,7 @@ export default function PortalProfilePage() {
       </div>
 
       <Tabs defaultValue="profile">
-        <TabsList className="!flex flex-wrap !rounded-full">
+        <TabsList className="flex w-full max-w-full flex-nowrap overflow-x-auto scrollbar-hide">
           <TabsTrigger value="profile">
             <User className="h-4 w-4" />
             Profile

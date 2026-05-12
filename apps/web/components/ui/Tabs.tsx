@@ -75,7 +75,7 @@ export function TabsTrigger({
       aria-selected={isActive}
       onClick={() => setValue(value)}
       className={cn(
-        "px-4 py-1.5 text-sm font-semibold rounded-full transition-all",
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-1.5 text-sm font-semibold rounded-full transition-all",
         isActive
           ? "bg-brand-ink-900 text-white shadow-pill"
           : "text-stone-600 hover:text-stone-900",
