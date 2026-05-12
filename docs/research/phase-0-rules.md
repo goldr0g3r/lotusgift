@@ -65,10 +65,36 @@ Versions for the libraries cited above will be locked into `pnpm-lock.yaml` at P
 
 ## 7. Implementation reference
 
-Shipped to `main` across two commits (no separate p0-rules PR — folded into PR #1's follow-up commit chain):
+Shipped to `main` across two commits (no separate p0-rules PR — work was folded into PR #1's follow-up commit chain and then completed via a second direct-to-main commit):
 
-- [`7d50829`](https://github.com/goldr0g3r/lotusgift/commit/7d50829fe80fb86e746cc2be8dd3dbd7c5610570) — `chore(scaffold): archive _old/ + re-scaffold workspace via CLI (#1)` — included this research note + 4 rules (`api-type-safety`, `deployment-mode`, `design-discovery`, `research-note-per-module`).
-- [`dacbbbb`](https://github.com/goldr0g3r/lotusgift/commit/dacbbbb9e8fa53781b105c3761306fb724ab1dfd) — `docs(research): update phase-0-scaffold documentation with implementation details and references` — added the remaining 11 rules + 15 Copilot instruction mirrors + `.github/copilot-instructions.md` + `AGENTS.md` + `CLAUDE.md` + 5 subagents.
-- [`#1` merged PR](https://github.com/goldr0g3r/lotusgift/pull/1) — parent PR that the rule rollout was folded into.
+- [`55e0610`](https://github.com/goldr0g3r/lotusgift/commit/55e0610) (feature branch) — `chore(scaffold): pnpm install + fix build (definite assignment, fonts) + fix lint (ignores, --max-warnings) + research note` — included this research note + 4 rules (`api-type-safety`, `deployment-mode`, `design-discovery`, `research-note-per-module`) + 4 mirrors. Squash-merged into `main` as part of PR #1.
+- [`7d50829`](https://github.com/goldr0g3r/lotusgift/commit/7d50829fe80fb86e746cc2be8dd3dbd7c5610570) — squash-merge of PR [#1](https://github.com/goldr0g3r/lotusgift/pull/1) `chore(scaffold): archive _old/ + re-scaffold workspace via CLI` onto `main`.
+- [`dacbbbb`](https://github.com/goldr0g3r/lotusgift/commit/dacbbbb9e8fa53781b105c3761306fb724ab1dfd) — `docs(research): update phase-0-scaffold documentation with implementation details and references` — direct-to-main commit (no PR) that added the remaining 11 rules + 5 subagents + 1 skill + 15 Copilot instruction mirrors + `.github/copilot-instructions.md` + `AGENTS.md` + `CLAUDE.md`. The commit message references "phase-0-scaffold" but the actual contents are PR-2 rules+governance (see `docs/research/phase-0-scaffold.md` section 6 footnote).
 
-Status-sync tracking issue: see GitHub issue with label `phase/P0` + `workstream/platform` (created at status-sync time).
+### Retro-sync governance (PR-2 follow-up)
+
+Tracked in [`p0-rules_retro-sync_governance_032648dd.plan.md`](../../.cursor/plans/p0-rules_retro-sync_governance_032648dd.plan.md). Executed 2026-05-12:
+
+- 23 milestones created (#1 `Phase 0 - Foundation Reset` through #23 `Phase 22 - Launch`).
+- 52 labels created (10 `type/*` + 23 `phase/*` + 4 `prio/*` + 5 `area/*` + 10 special).
+- Phase-0 issues opened:
+  - [#3 Phase 0 — Research Note](https://github.com/goldr0g3r/lotusgift/issues/3) — `state: closed`, `state_reason: completed`.
+  - [#4 Phase 0 — Epic: Foundation Reset](https://github.com/goldr0g3r/lotusgift/issues/4) — open; tracks all P0 deliverables.
+  - [#5 Phase 0 — Phase Acceptance](https://github.com/goldr0g3r/lotusgift/issues/5) — open; acceptance checklist with first 5 items ticked.
+- All 3 issues added to Projects v2 board #9 with `Phase: P0`, `Layer: L0` set; Status/Workstream/Type as appropriate.
+- Parent plan `p0-rules` + `p0-issues` todos both marked `status: completed` with explanatory notes.
+- This sub-plan's 28 frontmatter todos all `status: completed`.
+
+### Per-file verification (2026-05-12)
+
+All file artefacts in `dacbbbb` + `55e0610` were verified against this sub-plan's spec on 2026-05-12. No deviations.
+
+| Group | Count | Files | Line range | Spec compliance |
+| --- | --- | --- | --- | --- |
+| `.cursor/rules/*.mdc` | 15 | always-latest-docs, analytics-instrumentation, api-type-safety, architecture-layers, commit-conventions, corporate-gifting-domain, deployment-mode, design-discovery, event-driven-discipline, free-tier-budget, microservice-boundaries, no-composer-2, research-note-per-module, secrets-and-secrets-handling, test-coverage | 21–36 | All ≤50 lines per create-rule skill; frontmatter complete; References cite this note |
+| `.cursor/agents/*.md` | 5 | api-type-safety-auditor, code-reviewer, corporate-gifting-domain-auditor, phase-acceptance-validator, research-note-validator | 52–71 | `name` + `description` frontmatter; system prompts with workflow + checklists |
+| `.cursor/skills/add-rest-endpoint/SKILL.md` | 1 | add-rest-endpoint | 158 | ≤500 lines per create-skill skill; `disable-model-invocation: true` |
+| `.github/instructions/*.instructions.md` | 15 | one mirror per rule | 21–34 | `applyTo:` frontmatter (correctly converted from `globs:` / `alwaysApply: true`) |
+| `.github/copilot-instructions.md` | 1 | repo-wide instructions | 68 | ≤2 pages per GitHub recommendation |
+| `AGENTS.md` | 1 | root agents pointer | 40 | Pointer to copilot-instructions + rule index |
+| `CLAUDE.md` | 1 | Claude Code mirror | 14 | Symlink-equivalent of AGENTS.md |

@@ -106,3 +106,5 @@ Note version drift between web-customer (older Next) and the 3 new web-* apps (n
   - `d50a593` LotusGift v2 README
 - CI run: not yet (CI starts after PR-4 lands)
 - Projects v2 board item: `PVTI_lAHOB9XnOc4BXcKjzgseqK4` on project #9 — Status `Done`, Phase `P0`, Workstream `infra`, Layer `L0`, Type `chore`.
+
+> **Note (retro-sync 2026-05-12):** the subsequent direct-to-main commit [`dacbbbb`](https://github.com/goldr0g3r/lotusgift/commit/dacbbbb9e8fa53781b105c3761306fb724ab1dfd) carries the commit message `docs(research): update phase-0-scaffold documentation with implementation details and references`, but its actual contents are 11 rules + 5 subagents + 1 skill + 15 Copilot instruction mirrors + `.github/copilot-instructions.md` + `AGENTS.md` + `CLAUDE.md` — i.e., PR-2 (rules) content, not phase-0-scaffold. See [`phase-0-rules.md`](phase-0-rules.md) section 7 for the canonical implementation reference.
