@@ -73,7 +73,7 @@ Shipped to `main` across two commits (no separate p0-rules PR — work was folde
 
 ### Retro-sync governance (PR-2 follow-up)
 
-Tracked in [`p0-rules_retro-sync_governance_032648dd.plan.md`](../../.cursor/plans/p0-rules_retro-sync_governance_032648dd.plan.md). Executed 2026-05-12:
+Tracked in [`p0-rules_retro-sync_governance_032648dd.plan.md`](../../.cursor/plans/p0-rules_retro-sync_governance_032648dd.plan.md). Executed 2026-05-12 and finalised via PR [#6](https://github.com/goldr0g3r/lotusgift/pull/6) (squash [`9b2a4811`](https://github.com/goldr0g3r/lotusgift/commit/9b2a48115792f578f488d7e256c5b58b0dac8b18)):
 
 - 23 milestones created (#1 `Phase 0 - Foundation Reset` through #23 `Phase 22 - Launch`).
 - 52 labels created (10 `type/*` + 23 `phase/*` + 4 `prio/*` + 5 `area/*` + 10 special).
