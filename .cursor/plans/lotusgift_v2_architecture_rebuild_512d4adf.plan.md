@@ -9,11 +9,11 @@ todos:
     content: "PR-2 chore(rules): commit all .cursor/rules/*.mdc (api-type-safety with nestjs-zod + Swagger + Kubb, deployment-mode modular-monolith-first + transport-agnostic Outbox, research-note-per-module, design-discovery, analytics-instrumentation, always-latest-docs ≤14d, free-tier-budget, architecture-layers, microservice-boundaries, event-driven-discipline, test-coverage) + LotusGift-specific corporate-gifting-domain.mdc (auto-routing thresholds, recipient-list validation, customization workflow invariants) + no-composer-2.mdc (user preference). Mirror in .github/instructions/. Create skill add-rest-endpoint. COMPLETED 2026-05-12 via direct-to-main commits 55e0610 + dacbbbb (bypassed PR workflow; retroactively tracked in Phase-0 Epic issue #4). 15 rules + 5 agents + 1 skill + 15 instructions mirrors + copilot-instructions.md + AGENTS.md + CLAUDE.md verified against p0-rules sub-plan spec (no deviations)."
     status: completed
   - id: p0-docs
-    content: "PR-3 docs(architecture): README rewrite + docs/architecture/dep-graph.svg + ADR-001..ADR-007 (India launch + Razorpay + carrier aggregator; NestJS REST not tRPC; vendor tiered monetization no Customer Prime; modular-monolith-first; Oracle Mumbai + Vercel; Atlas Search M0 budget; corporate-gifting deltas RFQ+customization+recipient-list)."
-    status: pending
+    content: "PR-3 docs(architecture): README rewrite + docs/architecture/dep-graph.svg + ADR-001..ADR-007 (India launch + Razorpay + carrier aggregator; NestJS REST not tRPC; vendor tiered monetization no Customer Prime; modular-monolith-first; Oracle Mumbai + Vercel; Atlas Search M0 budget; corporate-gifting deltas RFQ+customization+recipient-list). IN PROGRESS via PR #7 (pr-3-docs branch, commit 1065a00) — open as of 2026-05-12; awaiting merge."
+    status: in_progress
   - id: p0-ci
-    content: "PR-4 ci: .github/workflows (ci.yml + pr-title.yml + secret-scan.yml + dependency-review.yml + dep-cruiser.yml + openapi-drift.yml skeleton + atlas-search-mapping-drift.yml skeleton + corporate-gifting-domain.yml + free-tier-burn.yml weekly cron + release.yml) + issue templates + PR template + CODEOWNERS + branch-protection JSON. deploy-oracle.yml ships in PR-7; deploy-vercel.yml added at P16."
-    status: pending
+    content: "PR-4 ci: .github/workflows (ci.yml + pr-title.yml + secret-scan.yml + dependency-review.yml + dep-cruiser.yml + openapi-drift.yml skeleton + atlas-search-mapping-drift.yml skeleton + corporate-gifting-domain.yml + free-tier-burn.yml weekly cron + release.yml) + issue templates + PR template + CODEOWNERS + branch-protection JSON. deploy-oracle.yml ships in PR-7; deploy-vercel.yml added at P16. IN PROGRESS via PR #8 (pr-4-ci branch, commit 17686ee) — open as of 2026-05-12 with 13/13 CI checks green + Copilot review feedback addressed; awaiting merge."
+    status: in_progress
   - id: p0-dev-stack
     content: "PR-5 feat(infra): infrastructure/docker/docker-compose.yml for local dev (Mongo + Redis + Mailhog + OTEL collector)."
     status: pending
