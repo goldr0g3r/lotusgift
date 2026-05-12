@@ -1,0 +1,40 @@
+---
+description: Never spawn Task subagents with model "composer-2-fast"; subagents inherit parent model
+alwaysApply: true
+---
+
+# No Composer-2 Subagents
+
+When delegating to a subagent via the `Task` tool, **never pass `model: "composer-2-fast"`**. Omit the `model` parameter entirely so the subagent inherits the parent agent's model. Override only when the user explicitly names a different model in the conversation.
+
+## Do
+
+- Call `Task` without a `model` arg by default.
+- If the user says "use Sonnet for this subagent", pass that model name verbatim.
+- If a subagent definition file (`.cursor/agents/*.md`) needs a fixed model, document the rationale in the subagent's system-prompt body — never default it.
+
+## Don't
+
+- Pass `model: "composer-2-fast"` for any reason.
+- Pass `model: "<anything>"` without an explicit user instruction in this session.
+- Remove this rule (it codifies a hard user preference).
+
+## Concrete example
+
+```ts
+// ❌
+Task({ subagent_type: 'explore', model: 'composer-2-fast', prompt: '...' });
+
+// ❌
+Task({ subagent_type: 'generalPurpose', model: 'composer-2-fast', prompt: '...' });
+
+// ✅
+Task({ subagent_type: 'explore', prompt: '...' });
+
+// ✅ (only if user said "use claude-sonnet for this")
+Task({ subagent_type: 'generalPurpose', model: 'claude-sonnet-4.5', prompt: '...' });
+```
+
+## References
+
+User preference codified during the LotusGift v2 architecture-rebuild planning session (May 12, 2026). See [docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) Decisions log D7.

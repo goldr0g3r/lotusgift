@@ -1,0 +1,44 @@
+---
+applyTo: "**"
+---
+
+# Architecture Layers
+
+Imports may only flow **upward** through these layers. Enforced by `dep-cruiser` in CI (`.github/workflows/dep-cruiser.yml`).
+
+| Layer | Path | Imports from |
+|-------|------|--------------|
+| L0 | `packages/{eslint-config,typescript-config,jest-config,prettier-config}` | nothing |
+| L1 | `packages/{types,validators,events,openapi-spec}` | L0 |
+| L2 | `packages/{database,config,utils,observability}` | L0–L1 |
+| L3 | `packages/{analytics-sdk,feature-flags,auth-client,api,design-tokens,ui}` | L0–L2 |
+| L4 | `services/*` (Nest libraries) | L0–L3 + sibling-service via `OutboxPort` events only |
+| L5 | `apps/api-gateway` | L0–L4 |
+| L6 | `apps/web-*` | L0–L3 + L5's `@repo/api` (Kubb hooks) |
+
+## Do
+
+- Add a new package to the lowest layer that satisfies its dependency needs.
+- Run `pnpm dep-cruiser` locally before pushing.
+- When tempted to import down a layer, push the shared piece into a lower layer instead.
+
+## Don't
+
+- Import a `service/*` from another `service/*` — use outbox events.
+- Import `apps/api-gateway` code from a `service/*` library.
+- Import `apps/web-*` code into any package or service.
+
+## Concrete example — violation
+
+```ts
+// ❌ services/order-service/src/order.service.ts
+import { InventoryService } from '../../inventory-service/src';  // L4 → L4 direct
+
+// ✅
+import { OutboxPort } from '@repo/utils';  // L4 → L2
+await outbox.publish({ type: 'order.placed.v1', payload: { ... } });
+```
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) — Decisions log D1; parent plan §4 (modular monolith).

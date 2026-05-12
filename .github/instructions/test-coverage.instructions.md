@@ -1,0 +1,45 @@
+---
+applyTo: "**"
+---
+
+# Test Coverage
+
+Coverage gates are tiered by criticality. CI fails if any tier dips below its floor.
+
+| Tier | Services | Lines | Branches | Extra |
+|------|----------|-------|----------|-------|
+| **1** | auth, payment, order, inventory, vendor, tax, insights, rfq, customization, recipient-list | ≥85% | ≥80% | Saga happy + unhappy path tests |
+| **2** | product, promotions, shipping, notification, review, support | ≥70% | — | — |
+| **3** | everything else (ui, utils, observability, infra) | ≥50% | — | — |
+
+## Tooling
+
+- **Backend**: Jest (config in `@repo/jest-config`).
+- **Frontend**: Vitest + React Testing Library.
+- **E2E**: Playwright + `@axe-core/playwright` (WCAG 2.2 AA on every page).
+
+## Do
+
+- Co-locate unit tests next to source: `order.service.ts` ↔ `order.service.spec.ts`.
+- For Tier-1 sagas, write at least one happy-path and one compensation-path test.
+- Run `pnpm test` locally before pushing; rely on `turbo` to skip unchanged packages.
+
+## Don't
+
+- Skip writing tests because "the code is obvious."
+- Mock the database in Tier-1 service tests — use Mongo Memory Server.
+- Disable `@axe-core/playwright` on a page because it "fails on minor issues."
+
+## Concrete example
+
+```ts
+// services/order-service/src/order.service.spec.ts
+describe('OrderService.placeOrder', () => {
+  it('routes to RFQ when MOQ exceeded (happy path)', async () => { ... });
+  it('compensates inventory + payment on shipping-quote failure (unhappy path)', async () => { ... });
+});
+```
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md); parent plan §5 (Tier-1 services + axe-core in CI).
