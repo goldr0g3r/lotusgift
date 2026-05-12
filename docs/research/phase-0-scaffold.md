@@ -94,9 +94,15 @@ Note version drift between web-customer (older Next) and the 3 new web-* apps (n
 
 ## 6. Implementation reference
 
-Filled in after PR is merged:
-
-- PR URL: TBD
-- Merged at: TBD
-- Commits: 95d53d4 (archive) → bd9aa11 (scaffold) → fb61c6b (rename) → 0d5b589 (3 next apps) → 12a217e (scripts + services + packages) → TBD (build/lint fixes) → TBD (smoke + readme + commit-push)
-- CI run: TBD (CI starts after PR-4 lands)
+- PR URL: https://github.com/goldr0g3r/lotusgift/pull/1
+- Merged at: 2026-05-12 (squash merge `7d50829`)
+- Commits (pre-squash):
+  - `95d53d4` archive current code to `_old/` (234 git renames at 100% similarity)
+  - `bd9aa11` re-scaffold via `create-turbo -e with-nestjs`
+  - `fb61c6b` rename `apps/api` → `apps/api-gateway`, `apps/web` → `apps/web-customer`, root name + `packageManager: pnpm@9.0.0`
+  - `0d5b589` add `web-vendor` + `web-admin` + `web-customer-service` via `create-next-app@latest`
+  - `12a217e` add `scripts/scaffold-package.ts` + 16 services + 13 packages
+  - `55e0610` `pnpm install` + build/lint fixes + research note
+  - `d50a593` LotusGift v2 README
+- CI run: not yet (CI starts after PR-4 lands)
+- Projects v2 board item: `PVTI_lAHOB9XnOc4BXcKjzgseqK4` on project #9 — Status `Done`, Phase `P0`, Workstream `infra`, Layer `L0`, Type `chore`.
