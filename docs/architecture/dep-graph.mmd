@@ -1,0 +1,113 @@
+%% LotusGift v2 dependency graph
+%% Single canonical topology diagram. Hand-authored at PR-3 because the codebase is
+%% still mostly empty scaffolds; automated graph (dependency-cruiser) lands with PR-4.
+%% Render: pnpm dlx @mermaid-js/mermaid-cli -i docs/architecture/dep-graph.mmd -o docs/architecture/dep-graph.svg -t neutral -b transparent
+flowchart TB
+  subgraph cdn [Cloudflare]
+    CF[DNS plus CDN plus WAF]
+  end
+
+  subgraph vercel [Vercel - 4 Next.js apps]
+    WC[web-customer]
+    WV[web-vendor]
+    WA[web-admin]
+    WS[web-customer-service]
+  end
+
+  subgraph oracle [Oracle Cloud A1.Flex Mumbai]
+    NGINX[nginx plus Certbot]
+    GW["apps/api-gateway<br/>NestJS modular monolith"]
+    subgraph services [16 service libraries]
+      AUTH[auth-service]
+      VEND[vendor-service]
+      PROD[product-service]
+      INV[inventory-service]
+      CUST[customization-service]
+      RFQ[rfq-service]
+      RECL[recipient-list-service]
+      ORD[order-service]
+      PAY[payment-service]
+      SHIP[shipping-service]
+      TAX[tax-service]
+      PROMO[promotions-service]
+      NOTIF[notification-service]
+      INS[insights-service]
+      REV[review-service]
+      SUP[support-service]
+    end
+    BUS["OutboxPort<br/>in-process EventEmitter MVP"]
+  end
+
+  subgraph data [Data tier - AWS Mumbai]
+    MONGO[("MongoDB Atlas M0<br/>collection-namespaced<br/>+ Atlas Search 3 indexes")]
+    REDIS[("Upstash Redis<br/>cache + rate-limit + idempotency")]
+    R2[("Cloudflare R2<br/>images + art files + invoices")]
+  end
+
+  subgraph external [External services]
+    RZP[Razorpay]
+    CARRIER["Shiprocket<br/>+ Delhivery<br/>+ Bluedart"]
+    IRP["GST IRP<br/>e-invoice"]
+    MSG["Resend<br/>+ MSG91<br/>+ WhatsApp Cloud"]
+  end
+
+  subgraph obs [Observability]
+    SENTRY[Sentry]
+    GRAFANA[Grafana Cloud]
+    POSTHOG[PostHog Cloud EU]
+  end
+
+  WC -->|HTTPS| CF
+  WV -->|HTTPS| CF
+  WA -->|HTTPS| CF
+  WS -->|HTTPS| CF
+  CF -->|HTTPS| NGINX
+  NGINX -->|HTTP localhost| GW
+
+  GW --> AUTH
+  GW --> VEND
+  GW --> PROD
+  GW --> INV
+  GW --> CUST
+  GW --> RFQ
+  GW --> RECL
+  GW --> ORD
+  GW --> PAY
+  GW --> SHIP
+  GW --> TAX
+  GW --> PROMO
+  GW --> NOTIF
+  GW --> INS
+  GW --> REV
+  GW --> SUP
+
+  AUTH -. publish .-> BUS
+  VEND -. publish .-> BUS
+  PROD -. publish .-> BUS
+  INV -. publish .-> BUS
+  CUST -. publish .-> BUS
+  RFQ -. publish .-> BUS
+  RECL -. publish .-> BUS
+  ORD -. publish .-> BUS
+  PAY -. publish .-> BUS
+  SHIP -. publish .-> BUS
+  BUS -. subscribe .-> NOTIF
+  BUS -. subscribe .-> INS
+
+  GW -->|Mongoose wire| MONGO
+  GW -->|Redis protocol| REDIS
+  PROD -->|S3 API| R2
+  CUST -->|S3 API| R2
+  TAX -->|invoice PDF| R2
+  PAY -->|REST + webhook| RZP
+  SHIP -->|REST + webhook| CARRIER
+  TAX -->|REST| IRP
+  NOTIF -->|REST + webhook| MSG
+
+  GW -. errors .-> SENTRY
+  GW -. logs + traces .-> GRAFANA
+  WC -. RUM .-> POSTHOG
+  WV -. RUM .-> POSTHOG
+  WA -. RUM .-> POSTHOG
+  WS -. RUM .-> POSTHOG
+  GW -. server events .-> POSTHOG

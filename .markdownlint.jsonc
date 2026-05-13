@@ -1,0 +1,37 @@
+{
+  // Codifies the docs convention already established by phase-0-scaffold.md
+  // and applied to all PR-3 ADRs / research notes. Markdown lint is treated as
+  // a smoke check, not a hard gate; rules below are disabled to match the
+  // existing repo style. Tighten incrementally as the team accepts.
+  "default": true,
+  // Allow long prose lines (research notes + ADRs naturally have long rows).
+  "MD013": false,
+  // Tables in MADR ADRs use compact-with-extra-spacing for readability;
+  // do not enforce a single style across the repo.
+  "MD060": false,
+  // Bare URLs appear in Sources tables; reviewers convert to links case-by-case.
+  "MD034": false,
+  // Allow inline HTML in markdown (mermaid blocks, foreignObject SVG, br tags
+  // inside table cells, etc.).
+  "MD033": false,
+  // Multiple-blank-line collapsing is overly strict for visual section breaks.
+  "MD012": false,
+  // Allow duplicate headings across distinct ADRs (each ADR uses the same
+  // section names — "Context and Problem Statement", "Decision Outcome", etc.).
+  "MD024": { "siblings_only": true },
+  // First line need not be a level-1 heading — some docs lead with frontmatter
+  // or context paragraphs.
+  "MD041": false,
+  // Trailing punctuation in headings is acceptable for ADR-style "Why: ..."
+  // and "How: ..." section titles.
+  "MD026": false,
+  // Allow both asterisk and underscore emphasis styles (research notes use
+  // underscores for placeholder strings like `_pending_`).
+  "MD049": false,
+  // Pre-existing scaffold note uses spaces inside code spans for readability;
+  // accept the convention.
+  "MD038": false,
+  // Pre-existing scaffold note has table cells containing literal pipes
+  // (Zod range syntax `^3.x \|\| ^4.x`) that confuse the column-count parser.
+  "MD056": false
+}
