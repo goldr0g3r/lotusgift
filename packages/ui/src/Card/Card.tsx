@@ -1,17 +1,18 @@
 "use client";
 
-import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type HTMLAttributes, type ReactNode, type Ref } from "react";
 import clsx from "clsx";
 import styles from "./Card.module.scss";
 
 export type CardPadding = "sm" | "md" | "lg";
+export type CardElement = "div" | "article" | "section";
 
 export interface CardProps extends HTMLAttributes<HTMLElement> {
   header?: ReactNode;
   footer?: ReactNode;
   padding?: CardPadding;
   /** Render as a different element (e.g. 'article' for semantic posts). */
-  as?: "div" | "article" | "section";
+  as?: CardElement;
   children: ReactNode;
 }
 
@@ -22,7 +23,7 @@ export const Card = forwardRef<HTMLElement, CardProps>(function Card(
   const Comp = as as "div";
   return (
     <Comp
-      ref={ref as React.Ref<HTMLDivElement>}
+      ref={ref as Ref<HTMLDivElement>}
       className={clsx(styles.card, styles[`padding-${padding}`], className)}
       {...rest}
     >

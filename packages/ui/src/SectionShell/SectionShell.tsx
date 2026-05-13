@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type HTMLAttributes, type ReactNode, type Ref } from "react";
 import clsx from "clsx";
 import styles from "./SectionShell.module.scss";
 
@@ -20,7 +20,7 @@ export const SectionShell = forwardRef<HTMLElement, SectionShellProps>(function 
   const Comp = as as "section";
   return (
     <Comp
-      ref={ref as React.Ref<HTMLElement>}
+      ref={ref as Ref<HTMLElement>}
       className={clsx(styles.shell, styles[`width-${width}`], className)}
       {...rest}
     >

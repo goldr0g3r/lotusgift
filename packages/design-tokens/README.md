@@ -1,6 +1,6 @@
 # `@repo/design-tokens`
 
-LotusGift's design tokens — the canonical source for color, typography, spacing, radii, shadows, motion, and animation values. Powered by [Style Dictionary v4](https://styledictionary.com/).
+LotusGift's design tokens — the canonical source for color, typography, spacing, radii, shadows, motion, and animation values. Powered by [Style Dictionary v5](https://styledictionary.com/).
 
 ## Outputs
 

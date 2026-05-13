@@ -13,7 +13,7 @@ This note backs the design tokens + UI baseline ship for PR-6. Every dependency 
 
 | # | Topic | URL | Notes |
 | --- | --- | --- | --- |
-| 1 | Style Dictionary v4 | https://styledictionary.com/ | Industry-standard token transformer maintained by Amazon. v4.x (2024+) supports W3C DTCG and native JSON inputs; configurable platforms emit SCSS, CSS custom properties, and typed TS in one pass. Used by Apple/Salesforce/Adobe. |
+| 1 | Style Dictionary v5 | https://styledictionary.com/ | Industry-standard token transformer maintained by Amazon. v5.x (May 2025+) requires Node ≥ 22, supports W3C DTCG and native JSON inputs; configurable platforms emit SCSS, CSS custom properties, and typed TS in one pass. Used by Apple/Salesforce/Adobe. |
 | 2 | Radix Primitives | https://www.radix-ui.com/primitives/docs | Per-primitive packages (e.g., `@radix-ui/react-slot`); tree-shaken; full keyboard + screen-reader support; unstyled by default. PR-6 only needs `react-slot` for Button's `asChild` API. |
 | 3 | Lucide React | https://lucide.dev/ | Tree-shakable icon set (~1300 icons May 2026); first-class React component (`lucide-react`). Successor to react-feather. Used in `_old/apps/web/components/ui/IconButton.tsx`. |
 | 4 | Sonner | https://sonner.emilkowal.ski/ | Lightweight (~11 KB gzipped) toast lib for React. Dark-mode-aware, promise-aware. Used in `_old/apps/web/components/ui/Toaster.tsx`. |
@@ -29,7 +29,7 @@ This note backs the design tokens + UI baseline ship for PR-6. Every dependency 
 
 | # | Decision | Choice | Rejected | Reasoning |
 | --- | --- | --- | --- | --- |
-| D1 | Token emission tooling | Style Dictionary v4 native JSON inputs | Custom tsx script; TS-only no-SCSS | Mature, multi-platform output; one source of truth, three emitted formats (SCSS + typed TS + CSS vars) in one run. |
+| D1 | Token emission tooling | Style Dictionary v5 native JSON inputs | Custom tsx script; TS-only no-SCSS | Mature, multi-platform output; one source of truth, three emitted formats (SCSS + typed TS + CSS vars) in one run. v5 (May 2025) requires Node ≥ 22 — already our floor. |
 | D2 | Token source format | Style Dictionary native JSON (one file per category) | W3C DTCG format | DTCG adds a translation layer we do not need for a single-repo private project. |
 | D3 | Sass mixins location | `packages/design-tokens/src/mixins/*.scss` (consumed by `@repo/ui` via `@use '@repo/design-tokens/mixins'`) | Co-located in `@repo/ui` | Mixins reference token values; pairing them with the tokens keeps a single semantic-utility surface. |
 | D4 | Component framework | Radix Primitives where applicable + Sonner for Toaster | Headless UI / chakra-ui | Parent plan fixes Radix. Sonner already used in `_old`. |
@@ -78,8 +78,8 @@ Captured via `pnpm --filter @repo/design-tokens ls --depth=0` and `pnpm --filter
 | `@repo/design-tokens` | workspace link |
 | `clsx` | 2.1.1 |
 | `lucide-react` | 1.14.0 |
-| `react` | 19.2.0 |
-| `react-dom` | 19.2.0 |
+| `react` | 19.1.0 (`^19.1.0` resolves to 19.2.0 at install time; package.json pin is the source of truth) |
+| `react-dom` | 19.1.0 (same) |
 | `sonner` | 2.0.7 |
 | `@axe-core/playwright` | 4.11.3 |
 | `@playwright/experimental-ct-react` | 1.60.0 |

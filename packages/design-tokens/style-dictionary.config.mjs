@@ -1,4 +1,4 @@
-// Style Dictionary v4 build. Emits three artifacts under dist/:
+// Style Dictionary v5 build. Emits three artifacts under dist/:
 //   - tokens.scss : Sass variables ($brand-green-500: ...;)
 //   - tokens.css  : CSS custom properties (:root { --brand-green-500: ...; })
 //   - tokens.ts   : Typed nested const + Tokens type (export const tokens = { ... } as const)
