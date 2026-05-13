@@ -1,0 +1,70 @@
+# LotusGift v2 — fail2ban jail overrides.
+#
+# Drop at /etc/fail2ban/jail.local (NOT jail.conf — keep distro defaults
+# pristine). fail2ban reloads on systemctl restart fail2ban.
+#
+# Apply:
+#   sudo install -m 0644 infrastructure/oracle/fail2ban/jail.local \
+#        /etc/fail2ban/jail.local
+#   sudo install -m 0644 infrastructure/oracle/fail2ban/filter.d/nginx-limit-req.conf \
+#        /etc/fail2ban/filter.d/nginx-limit-req.conf
+#   sudo systemctl restart fail2ban
+#   sudo fail2ban-client status
+#
+# Decisions captured in docs/research/phase-0-oracle-runbook.md (UFW + fail2ban
+# pairing: fail2ban watches logs and adds time-boxed UFW deny rules).
+
+[DEFAULT]
+# 7-day ban for repeat offenders, 1-hour for first-time.
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+
+# Use UFW (already enabled by infrastructure/oracle/security/ufw-rules.sh)
+# as the ban backend so all blocks show up in `sudo ufw status numbered`.
+banaction = ufw
+banaction_allports = ufw
+
+# Never ban localhost, the Oracle internal subnet, or our office IPs.
+# Add operator IPs here as they appear. ipv4 + ipv6 entries are both
+# whitelisted via `127.0.0.1/8 ::1`.
+ignoreip = 127.0.0.1/8 ::1
+
+# Read systemd journal where Ubuntu 24.04 routes sshd + nginx logs.
+backend = systemd
+
+[sshd]
+enabled  = true
+port     = ssh
+filter   = sshd
+maxretry = 3
+findtime = 5m
+bantime  = 1d
+
+[nginx-limit-req]
+# Custom filter at filter.d/nginx-limit-req.conf — catches the 'limiting
+# requests' log lines emitted by the limit_req_zone directive in nginx.conf.
+enabled  = true
+port     = http,https
+filter   = nginx-limit-req
+logpath  = /var/log/nginx/error.log
+maxretry = 10
+findtime = 1m
+bantime  = 30m
+
+[nginx-badbots]
+# Distro-provided filter targeting common malicious user-agents.
+enabled  = true
+port     = http,https
+filter   = apache-badbots
+logpath  = /var/log/nginx/access.log
+maxretry = 1
+bantime  = 1d
+
+[nginx-noscript]
+enabled  = true
+port     = http,https
+filter   = nginx-noscript
+logpath  = /var/log/nginx/access.log
+maxretry = 5
+bantime  = 1d

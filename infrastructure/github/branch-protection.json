@@ -8,6 +8,7 @@
       "test",
       "a11y",
       "build",
+      "build-push",
       "markdownlint",
       "actionlint",
       "pr-title",

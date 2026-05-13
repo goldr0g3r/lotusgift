@@ -36,6 +36,7 @@ gh api -X PUT repos/goldr0g3r/lotusgift/branches/main/protection \
 | 11 | `openapi-drift` | `.github/workflows/openapi-drift.yml` | Skeleton — no-op until `packages/api/openapi.json` exists (P4). |
 | 12 | `atlas-search-mapping-drift` | `.github/workflows/atlas-search-mapping-drift.yml` | Skeleton — no-op until `infrastructure/atlas/search/*.json` mappings exist (P7). |
 | 13 | `corporate-gifting-domain` | `.github/workflows/corporate-gifting-domain.yml` | No-op until services/{order,rfq,recipient-list,customization}-service have real code (P9). |
+| 14 | `build-push` | `.github/workflows/deploy-oracle.yml` | Multi-arch `docker buildx` + push to `ghcr.io/<owner>/lotusgift-api`. The sibling `deploy` + `verify` jobs in the same workflow run only when `vars.LOTUSGIFT_ORACLE_DEPLOY_ENABLED == 'true'`, so they remain optional contexts until the Oracle VM is provisioned. |
 
 > **Context naming caveat.** GitHub Actions reports check names slightly differently across workflow shapes. After the first PR run lands, run `gh api repos/goldr0g3r/lotusgift/commits/<merge-sha>/check-runs --jq '.check_runs[].name'` to capture the exact strings; reconcile this JSON if any names diverge from the table above.
 

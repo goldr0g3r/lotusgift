@@ -1,0 +1,138 @@
+name: deploy-oracle
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to deploy (default = sha-<merge-sha>)"
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-oracle-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/lotusgift-api
+
+jobs:
+  build-push:
+    name: build-push
+    runs-on: ubuntu-latest
+    outputs:
+      sha-tag: ${{ steps.tags.outputs.sha-tag }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up QEMU (multi-arch emulation)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          SHA_TAG="sha-${GITHUB_SHA}"
+          {
+            echo "sha-tag=${SHA_TAG}"
+          } >> "${GITHUB_OUTPUT}"
+          TAGS="${REGISTRY}/${IMAGE_NAME}:${SHA_TAG}"
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:main"
+          fi
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          fi
+          {
+            echo "tags<<EOF"
+            echo "${TAGS}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Computed tags:"
+          echo "${TAGS}" | tr ',' '\n'
+
+      - name: Build + push multi-arch image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api-gateway/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  deploy:
+    name: deploy
+    needs: build-push
+    runs-on: ubuntu-latest
+    # Gate: this job + the verify job are no-ops until the VM is provisioned
+    # and the user flips vars.LOTUSGIFT_ORACLE_DEPLOY_ENABLED to 'true' in
+    # the repo Variables UI. See docs/runbooks/oracle-deploy.md §8.
+    if: vars.LOTUSGIFT_ORACLE_DEPLOY_ENABLED == 'true'
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            echo "value=${{ inputs.tag }}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "value=${{ needs.build-push.outputs.sha-tag }}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.ORACLE_SSH_HOST }}
+          username: ${{ secrets.ORACLE_SSH_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            /opt/lotusgift/scripts/deploy.sh ${{ steps.tag.outputs.value }}
+
+  verify:
+    name: verify
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: vars.LOTUSGIFT_ORACLE_DEPLOY_ENABLED == 'true'
+    steps:
+      - name: Public /healthz probe (5-retry exponential back-off)
+        env:
+          LOTUSGIFT_API_HOST: ${{ vars.LOTUSGIFT_API_HOST }}
+        run: |
+          : "${LOTUSGIFT_API_HOST:?LOTUSGIFT_API_HOST repo variable not set}"
+          URL="https://${LOTUSGIFT_API_HOST}/healthz"
+          for attempt in 1 2 3 4 5; do
+            echo "Attempt ${attempt}/5: GET ${URL}"
+            if response=$(curl -fsS --max-time 10 "${URL}" 2>&1); then
+              echo "OK: ${response}"
+              exit 0
+            fi
+            echo "Failed: ${response}"
+            if [ "${attempt}" -lt 5 ]; then
+              sleep $((2 ** (attempt - 1)))
+            fi
+          done
+          echo "Healthcheck FAILED after 5 attempts"
+          exit 1
