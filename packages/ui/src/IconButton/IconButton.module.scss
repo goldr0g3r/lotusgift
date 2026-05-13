@@ -61,8 +61,10 @@
   box-shadow: t.$shadow-pill;
 }
 
+// Pink-500 on white fails AA (~4.12:1). Pink-600 (~5.4:1) clears AA while
+// preserving the brand-pink feel. See `_buttons.scss` for the same note.
 .badge-pink {
-  background-color: t.$brand-pink-500;
+  background-color: t.$brand-pink-600;
 }
 
 .badge-green {

@@ -76,22 +76,27 @@
   }
 }
 
+// brand-pink-500 (#F01282) on white text fails WCAG AA color-contrast
+// (~4.12:1, AA needs 4.5:1). Solid pink + white-text combos use pink-600
+// (~5.4:1) so the brand stays pink while clearing AA. Pink-500 is still
+// the canonical accent for non-text surfaces, pill backgrounds, and
+// future iconography.
 @mixin pink {
   @include -base;
-  background-color: t.$brand-pink-500;
+  background-color: t.$brand-pink-600;
   color: t.$brand-white;
-  border-color: t.$brand-pink-500;
+  border-color: t.$brand-pink-600;
   box-shadow: t.$shadow-pill;
 
   &:hover {
-    background-color: t.$brand-pink-600;
-    border-color: t.$brand-pink-600;
+    background-color: t.$brand-pink-700;
+    border-color: t.$brand-pink-700;
     box-shadow: t.$shadow-glow-pink;
     transform: translateY(-1px);
   }
 
   &:active {
-    background-color: t.$brand-pink-700;
+    background-color: t.$brand-pink-800;
     transform: translateY(0);
   }
 }

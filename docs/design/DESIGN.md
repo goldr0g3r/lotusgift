@@ -45,7 +45,9 @@ Three brand families × 10 steps each (50 → 950 where applicable). All hex val
 | `brand.pink` | `#FEE8F2` | `#F01282` (accent / success) | `#4A052B` |
 | `brand.ink` | `#F7F7F8` | `#5E5E6B` | `#0E0E13` (default body text on light surfaces) |
 
-`brand.green.500` is the **primary CTA color**. `brand.pink.500` is the **accent + success state** (used for toasts, badges, recipient confirmations). `brand.ink.*` is the **neutral / text scale**.
+`brand.green.500` is the **primary CTA color**. `brand.pink.500` is the **accent color** (used for toasts, decorative surfaces, future iconography). `brand.ink.*` is the **neutral / text scale**.
+
+> **Accessibility note:** `brand.pink.500` (`#F01282`) on white has a contrast ratio of ~4.12:1, which is below WCAG AA's 4.5:1 threshold for normal-size text. Solid pink-with-white-text combos (the pink Button variant, the IconButton pink badge) therefore use `brand.pink.600` (`#D40D74`, ~5.4:1) for the resting state — the brand stays pink, but the surface always passes AA.
 
 ### Typography
 
