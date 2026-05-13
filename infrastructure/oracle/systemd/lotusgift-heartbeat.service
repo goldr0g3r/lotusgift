@@ -1,0 +1,37 @@
+# LotusGift v2 — Oracle idle-reclaim mitigation heartbeat (service).
+#
+# One-shot service activated by lotusgift-heartbeat.timer every 6h. Runs
+# infrastructure/oracle/scripts/heartbeat.sh which generates ~10s of
+# moderate CPU + a localhost curl to keep the 95th-percentile metrics
+# above Oracle's 20%-for-7-days reclaim threshold.
+#
+# Apply:
+#   sudo install -m 0644 infrastructure/oracle/systemd/lotusgift-heartbeat.service \
+#        /etc/systemd/system/lotusgift-heartbeat.service
+#   sudo install -m 0644 infrastructure/oracle/systemd/lotusgift-heartbeat.timer \
+#        /etc/systemd/system/lotusgift-heartbeat.timer
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now lotusgift-heartbeat.timer
+#
+# Inspect:
+#   systemctl list-timers lotusgift-heartbeat.timer
+#   sudo journalctl -u lotusgift-heartbeat.service -n 50
+#
+# Decisions captured in docs/research/phase-0-oracle-runbook.md D6 + D7.
+
+[Unit]
+Description=LotusGift v2 Oracle idle-reclaim heartbeat
+Documentation=https://github.com/goldr0g3r/lotusgift/blob/main/docs/runbooks/oracle-deploy.md
+Wants=lotusgift-api.service
+After=lotusgift-api.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/lotusgift/scripts/heartbeat.sh
+StandardOutput=journal
+StandardError=journal
+# Block runaway resource use (heartbeat should self-cap at ~10s; this is the
+# emergency brake).
+TimeoutStartSec=60
+CPUQuota=80%
+MemoryMax=128M

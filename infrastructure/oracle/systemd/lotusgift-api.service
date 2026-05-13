@@ -1,0 +1,44 @@
+# LotusGift v2 — api-gateway systemd unit.
+#
+# Wraps `docker compose -f /opt/lotusgift/compose/docker-compose.prod.yml`
+# so the api-gateway starts at boot + survives docker daemon restarts.
+#
+# Apply:
+#   sudo install -m 0644 infrastructure/oracle/systemd/lotusgift-api.service \
+#        /etc/systemd/system/lotusgift-api.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now lotusgift-api.service
+#
+# Inspect:
+#   sudo systemctl status lotusgift-api.service
+#   sudo journalctl -u lotusgift-api.service -f
+#
+# Decisions captured in docs/research/phase-0-oracle-runbook.md D4 + D10.
+
+[Unit]
+Description=LotusGift v2 api-gateway (docker compose wrapper)
+Documentation=https://github.com/goldr0g3r/lotusgift/blob/main/docs/runbooks/oracle-deploy.md
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+WorkingDirectory=/opt/lotusgift/compose
+EnvironmentFile=/opt/lotusgift/.env.production
+# IMAGE_TAG is overridden on every deploy by deploy.sh (which writes the
+# new tag to /opt/lotusgift/.env.production after the healthcheck succeeds).
+# At boot we resolve the recorded last-good tag from /opt/lotusgift/.last-good-tag
+# and feed it into compose so systemctl-driven restarts can never bypass the
+# rollback trail by silently grabbing a fresh :main.
+ExecStartPre=/bin/sh -c 'test -s /opt/lotusgift/.last-good-tag && echo "IMAGE_TAG=$(cat /opt/lotusgift/.last-good-tag)" > /opt/lotusgift/.image-tag.env'
+ExecStart=/bin/sh -c 'set -a; . /opt/lotusgift/.image-tag.env; set +a; /usr/bin/docker compose -f docker-compose.prod.yml up -d --wait --wait-timeout 60'
+ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml down
+TimeoutStartSec=180
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

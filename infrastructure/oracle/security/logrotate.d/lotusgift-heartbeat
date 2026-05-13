@@ -1,0 +1,19 @@
+# LotusGift v2 — logrotate snippet for the heartbeat script log.
+#
+# Apply:
+#   sudo install -m 0644 infrastructure/oracle/security/logrotate.d/lotusgift-heartbeat \
+#        /etc/logrotate.d/lotusgift-heartbeat
+#
+# logrotate runs daily via /etc/cron.daily/logrotate; this snippet caps the
+# file at 100 KB and keeps 7 days of history.
+
+/var/log/lotusgift/heartbeat.log {
+    daily
+    rotate 7
+    maxsize 100k
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 root adm
+}

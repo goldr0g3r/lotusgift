@@ -1,0 +1,51 @@
+# Limit the build context to what the Dockerfile actually needs.
+# Reduces context-upload time + prevents secret-leak via .env files.
+
+# Per-project artifacts.
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/.next
+**/build
+
+# OS + IDE noise.
+**/.DS_Store
+**/.idea
+**/.vscode
+**/Thumbs.db
+
+# Git history (huge, not needed at runtime).
+.git
+.gitignore
+.gitattributes
+
+# Local env files (NEVER bake into an image).
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+
+# Logs.
+**/*.log
+**/logs
+
+# Docs + CI metadata (not needed in the image).
+docs
+.github
+.cursor
+README.md
+**/README.md
+CHANGELOG.md
+LICENSE
+nursery-plan.md
+**/.markdownlint.jsonc
+
+# Old archive (PR-1 quarantine).
+_old
+
+# Infrastructure (not needed inside the image — only the workflow + host use these).
+infrastructure
+scripts

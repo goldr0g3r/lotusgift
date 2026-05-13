@@ -1,0 +1,47 @@
+# LotusGift v2 — sshd hardening overrides.
+#
+# Drop this file at /etc/ssh/sshd_config.d/00-lotusgift.conf so the standard
+# Ubuntu /etc/ssh/sshd_config sources it last (Ubuntu's default sshd_config
+# ends with `Include /etc/ssh/sshd_config.d/*.conf`).
+#
+# Apply:
+#   sudo install -m 0644 infrastructure/oracle/security/sshd_config.snippet \
+#        /etc/ssh/sshd_config.d/00-lotusgift.conf
+#   sudo sshd -t && sudo systemctl reload ssh
+#
+# Decisions captured in docs/research/phase-0-oracle-runbook.md D14.
+
+# Disable root login over SSH. Use sudo from the deploy user instead.
+PermitRootLogin no
+
+# Key-only auth. PRs require an SSH key on the VM via Oracle's metadata at
+# provision time + any subsequent keys appended to ~/.ssh/authorized_keys.
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+UsePAM yes
+PubkeyAuthentication yes
+
+# Disable forwards we don't need.
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+PrintMotd no
+
+# Drop dead sessions every 5 minutes after 3 missed keepalives (15 min idle
+# disconnect).
+ClientAliveInterval 300
+ClientAliveCountMax 3
+
+# Limit auth attempts per connection.
+MaxAuthTries 3
+MaxSessions 5
+LoginGraceTime 30
+
+# Restrict to the deploy user (created in runbook Step 2).
+AllowUsers ubuntu
+
+# Modern KEX + cipher list (Mozilla Modern as of 2026-05-13).
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,sntrup761x25519-sha512@openssh.com,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha256
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com

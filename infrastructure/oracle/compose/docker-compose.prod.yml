@@ -1,0 +1,70 @@
+# LotusGift v2 — production compose stack for the Oracle A1.Flex VM.
+#
+# Apply from /opt/lotusgift/compose/ on the VM:
+#   docker compose -f docker-compose.prod.yml up -d
+# Tear down (keeps logs):
+#   docker compose -f docker-compose.prod.yml down
+# Pull + recreate api-gateway only (zero-downtime swap):
+#   docker compose -f docker-compose.prod.yml pull api-gateway && \
+#     docker compose -f docker-compose.prod.yml up -d --no-deps api-gateway
+#
+# IMAGE_TAG selection (env-driven; deploy.sh sets it from the CI workflow):
+#   - main pushes  -> :main
+#   - tag pushes   -> :v1.2.3
+#   - SHA-specific -> :sha-<full-sha>   (used for rollback via .last-good-tag)
+#
+# Mongo + Redis are explicitly NOT in this compose: they live in Atlas + Upstash
+# per parent plan section 9. nginx + Certbot run on the host (see
+# infrastructure/oracle/nginx/ + scripts/certbot-bootstrap.sh) so Certbot snap
+# can write to /var/lib/letsencrypt/.
+#
+# Decisions captured in docs/research/phase-0-oracle-runbook.md D1, D3, D4, D5, D8.
+
+name: lotusgift-prod
+
+services:
+  api-gateway:
+    image: ghcr.io/${LOTUSGIFT_GHCR_OWNER:-goldr0g3r}/lotusgift-api:${IMAGE_TAG:-main}
+    container_name: lotusgift-api-gateway
+    restart: unless-stopped
+    pull_policy: always
+    # 127.0.0.1 only — nginx (host-side) is the public face on :443.
+    ports:
+      - "127.0.0.1:3001:3001"
+    env_file:
+      - ../.env.production
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+    # The image's HEALTHCHECK probes /healthz; `--wait` in deploy.sh blocks
+    # until this reports healthy.
+    healthcheck:
+      test:
+        - "CMD"
+        - "wget"
+        - "-q"
+        - "-O-"
+        - "http://127.0.0.1:3001/healthz"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # 10 MB x 5 rotation cap keeps /var/lib/docker/containers/ < 50 MB per
+    # service even under sustained noise.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # Drop kernel capabilities the Node process never needs.
+    cap_drop:
+      - ALL
+    # The Nest app needs to bind to TCP :3001 — that needs NET_BIND_SERVICE
+    # only for ports < 1024, so dropping ALL is fine for :3001.
+    # Read-only root filesystem (Node writes nothing outside the container's
+    # tmpfs); P21 may relax this if observability libs need /tmp at runtime.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true

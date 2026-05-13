@@ -1,0 +1,25 @@
+# LotusGift v2 — Oracle idle-reclaim mitigation heartbeat (timer).
+#
+# Fires the heartbeat service every 6 hours at minute 00 (00:00 / 06:00 /
+# 12:00 / 18:00 UTC) with a random ±10-minute jitter to avoid the thundering-
+# herd problem across the tenancy.
+#
+# `Persistent=true` ensures a missed firing during a reboot fires once the
+# system is back up (the next scheduled run isn't dropped).
+#
+# Decisions captured in docs/research/phase-0-oracle-runbook.md D6 + sources
+# §9 (systemd.timer man page).
+
+[Unit]
+Description=Trigger LotusGift heartbeat every 6 hours
+Documentation=https://github.com/goldr0g3r/lotusgift/blob/main/docs/runbooks/oracle-deploy.md
+
+[Timer]
+Unit=lotusgift-heartbeat.service
+OnCalendar=*-*-* 00/6:00:00
+RandomizedDelaySec=10m
+Persistent=true
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target
