@@ -100,4 +100,46 @@ Renovate's `pinDigests: true` for `github-actions` will pin all `@vN` references
 
 ## 6. Implementation reference
 
-Filled after merge: PR URL + squash SHA + diff stats + iteration timeline.
+PR-7 landed via PR [#13](https://github.com/goldr0g3r/lotusgift/pull/13) — squash merge SHA [`b6067aca`](https://github.com/goldr0g3r/lotusgift/commit/b6067aca19e69986e17d5a18f1f93e9b3302bd8d).
+
+| Metric | Value |
+| --- | --- |
+| Files changed (squashed) | 36 |
+| Insertions (squashed) | +2,235 |
+| Deletions (squashed) | -10 |
+| New CI jobs | 1 (`build-push`); `deploy` + `verify` ship gated, no-op until variable flips |
+| Branch-protection contexts added | 1 (`build-push`) |
+| Sass mixin partials (nginx snippets) | 6 (ssl, security-headers, proxy-params, letsencrypt-acme, connection-upgrade-map, vhost) |
+| systemd units | 3 (`lotusgift-api.service`, `lotusgift-heartbeat.{service,timer}`) |
+| Operational scripts | 5 (deploy.sh, rollback.sh, healthcheck.sh, heartbeat.sh, certbot-bootstrap.sh) |
+| Security hardening files | 4 (ufw-rules.sh, sshd_config.snippet, fail2ban jail.local, fail2ban nginx-limit-req filter) |
+| Runbook sections | 10 + Operational invariants appendix |
+| Iterations (squashed) | 4 (initial 33-file commit; `pull_request` trigger fix; `ignoreDeprecations` rollback after CI TS5103; 8-of-8 Copilot review fixes) |
+| Copilot review comments addressed | 8 (`.dockerignore` at repo root; PR-only build skips push; systemd pins tag via `.image-tag.env`; heartbeat traps `yes` reaper; runbook reorders `nginx -t`; nginx gzip-off comment clarified; fail2ban regex full date+time prefix; jail.local comment matches behaviour) |
+| Final CI duration | 16 jobs, longest = `build-push` at 2m51s (linux/amd64 + linux/arm64 multi-arch buildx) |
+
+### Squashed commit timeline (chronological inside the PR)
+
+1. `fe808de` — `feat(infra)` initial 33-file commit (Dockerfile + infra/oracle tree + workflow + runbook + research note + branch protection).
+2. `fb85849` — `ci(infra)` add `pull_request` trigger so `build-push` runs on PRs; split into `Build (PR validation only)` (push=false) + `Build + push multi-arch image` (push=true) using `if: github.event_name != 'pull_request'`.
+3. `e6cd64e` — `fix(infra)` drop `ignoreDeprecations: "6.0"` from `packages/typescript-config/nestjs.json` (TS 5.5 rejects `"6.0"` as `TS5103: Invalid value`; the local fix isn't needed under the lockfile-pinned TS that CI uses).
+4. `c7c03a7` — `fix(infra)` Copilot review pass: 8 separate issues addressed in a single commit (108 insertions, 19 deletions across 8 files).
+
+Squash-merged into main as the single commit `b6067aca`.
+
+### Status-sync trail
+
+- Project board [#9](https://github.com/users/goldr0g3r/projects/9): PR item added, fields set (Status=Done, Phase=P0, Workstream=infra, Layer=L0, Type=feat).
+- Epic [#4](https://github.com/goldr0g3r/lotusgift/issues/4) — PR-7 line ticked with PR URL + squash SHA + 8-Copilot-fix summary.
+- Phase-Acceptance [#5](https://github.com/goldr0g3r/lotusgift/issues/5) — Oracle runbook + `infrastructure/oracle/` acceptance line ticked.
+- Parent plan `.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md` — `p0-oracle-runbook` todo marked completed with full attribution note.
+- Branch protection on `main` re-applied via `gh api ... -X PUT` with `build-push` added to `required_status_checks.contexts` (now 15 required contexts total).
+- `pr-7-oracle-runbook` branch deleted local + remote.
+
+### Followup parked items (PR-8 / P22)
+
+- Oracle Resource Manager Terraform module (Q1 in §3).
+- Cloudflare proxy mode + `X-Forwarded-For` trust list audit for Razorpay webhooks (Q2).
+- UptimeRobot 5-min HTTPS check (Q4).
+- `recidive` fail2ban jail with 7-day ban for repeat offenders (Copilot review fix-8 deferred).
+- `oracle-quarterly-review.md` runbook + re-apply automation (PR-8).
