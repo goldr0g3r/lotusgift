@@ -1,0 +1,119 @@
+// Button-shape mixins.
+// Consumers: @use '@repo/design-tokens/mixins/buttons' as btn; @include btn.primary;
+
+@use "../../dist/tokens" as t;
+@use "sass:math";
+
+@mixin -base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-2;
+  border-radius: t.$radius-full;
+  border: 1px solid transparent;
+  font-family: t.$font-family-display;
+  font-weight: t.$font-weight-semibold;
+  letter-spacing: t.$font-letter-spacing-normal;
+  line-height: t.$font-line-height-snug;
+  cursor: pointer;
+  transition:
+    background-color t.$duration-base t.$ease-out,
+    color t.$duration-base t.$ease-out,
+    border-color t.$duration-base t.$ease-out,
+    box-shadow t.$duration-base t.$ease-out,
+    transform t.$duration-base t.$ease-out;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:focus-visible {
+    outline: 2px solid t.$brand-green-500;
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+@mixin size-sm {
+  padding: t.$space-2 t.$space-4;
+  font-size: t.$font-size-sm;
+  min-height: 2rem;
+}
+
+@mixin size-md {
+  padding: t.$space-3 t.$space-5;
+  font-size: t.$font-size-base;
+  min-height: 2.5rem;
+}
+
+@mixin size-lg {
+  padding: t.$space-4 t.$space-7;
+  font-size: t.$font-size-lg;
+  min-height: 3rem;
+}
+
+@mixin primary {
+  @include -base;
+  background-color: t.$brand-green-500;
+  color: t.$brand-white;
+  border-color: t.$brand-green-500;
+  box-shadow: t.$shadow-pill;
+
+  &:hover {
+    background-color: t.$brand-green-600;
+    border-color: t.$brand-green-600;
+    box-shadow: t.$shadow-glow;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    background-color: t.$brand-green-700;
+    transform: translateY(0);
+  }
+}
+
+// brand-pink-500 (#F01282) on white text fails WCAG AA color-contrast
+// (~4.12:1, AA needs 4.5:1). Solid pink + white-text combos use pink-600
+// (~5.4:1) so the brand stays pink while clearing AA. Pink-500 is still
+// the canonical accent for non-text surfaces, pill backgrounds, and
+// future iconography.
+@mixin pink {
+  @include -base;
+  background-color: t.$brand-pink-600;
+  color: t.$brand-white;
+  border-color: t.$brand-pink-600;
+  box-shadow: t.$shadow-pill;
+
+  &:hover {
+    background-color: t.$brand-pink-700;
+    border-color: t.$brand-pink-700;
+    box-shadow: t.$shadow-glow-pink;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    background-color: t.$brand-pink-800;
+    transform: translateY(0);
+  }
+}
+
+@mixin outline {
+  @include -base;
+  background-color: transparent;
+  color: t.$brand-ink-700;
+  border-color: t.$brand-ink-200;
+
+  &:hover {
+    background-color: t.$brand-ink-50;
+    border-color: t.$brand-ink-300;
+    color: t.$brand-ink-900;
+  }
+
+  &:active {
+    background-color: t.$brand-ink-100;
+  }
+}

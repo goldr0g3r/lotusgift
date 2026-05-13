@@ -1,0 +1,29 @@
+@use "@repo/design-tokens/mixins/buttons" as btn;
+
+.btn {
+  // Base set in each variant via the mixins.
+}
+
+.variant-primary {
+  @include btn.primary;
+}
+
+.variant-pink {
+  @include btn.pink;
+}
+
+.variant-outline {
+  @include btn.outline;
+}
+
+.size-sm {
+  @include btn.size-sm;
+}
+
+.size-md {
+  @include btn.size-md;
+}
+
+.size-lg {
+  @include btn.size-lg;
+}

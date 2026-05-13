@@ -1,0 +1,41 @@
+{
+  "font": {
+    "family": {
+      "sans":    { "value": "var(--font-jakarta), var(--font-geist-sans), system-ui, sans-serif", "type": "fontFamily" },
+      "mono":    { "value": "var(--font-geist-mono), monospace", "type": "fontFamily" },
+      "display": { "value": "var(--font-jakarta), var(--font-geist-sans), system-ui, sans-serif", "type": "fontFamily" }
+    },
+    "size": {
+      "xs":        { "value": "0.75rem",  "type": "fontSize" },
+      "sm":        { "value": "0.875rem", "type": "fontSize" },
+      "base":      { "value": "1rem",     "type": "fontSize" },
+      "lg":        { "value": "1.125rem", "type": "fontSize" },
+      "xl":        { "value": "1.25rem",  "type": "fontSize" },
+      "2xl":       { "value": "1.5rem",   "type": "fontSize" },
+      "3xl":       { "value": "1.875rem", "type": "fontSize" },
+      "4xl":       { "value": "2.25rem",  "type": "fontSize" },
+      "5xl":       { "value": "3rem",     "type": "fontSize" },
+      "6xl":       { "value": "3.75rem",  "type": "fontSize" },
+      "7xl":       { "value": "4.5rem",   "type": "fontSize" },
+      "display-1": { "value": "5.5rem",   "type": "fontSize" }
+    },
+    "weight": {
+      "normal":   { "value": "400", "type": "fontWeight" },
+      "medium":   { "value": "500", "type": "fontWeight" },
+      "semibold": { "value": "600", "type": "fontWeight" },
+      "bold":     { "value": "700", "type": "fontWeight" },
+      "extrabold": { "value": "800", "type": "fontWeight" }
+    },
+    "line-height": {
+      "tight":    { "value": "1.1",   "type": "lineHeight" },
+      "snug":     { "value": "1.25",  "type": "lineHeight" },
+      "normal":   { "value": "1.5",   "type": "lineHeight" },
+      "relaxed":  { "value": "1.625", "type": "lineHeight" }
+    },
+    "letter-spacing": {
+      "tight":  { "value": "-0.02em", "type": "letterSpacing" },
+      "normal": { "value": "0",       "type": "letterSpacing" },
+      "wide":   { "value": "0.04em",  "type": "letterSpacing" }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "animation": {
+    "fade-in-up":     { "value": "fade-in-up 0.5s ease-out forwards", "type": "animation" },
+    "fade-in":        { "value": "fade-in 0.4s ease-out forwards", "type": "animation" },
+    "slide-down":     { "value": "slide-down 0.2s ease-out forwards", "type": "animation" },
+    "slide-up":       { "value": "slide-up 0.2s ease-out forwards", "type": "animation" },
+    "slide-in-right": { "value": "slide-in-right 0.3s ease-out forwards", "type": "animation" },
+    "slide-in-left":  { "value": "slide-in-left 0.3s ease-out forwards", "type": "animation" },
+    "scale-in":       { "value": "scale-in 0.2s ease-out forwards", "type": "animation" },
+    "shimmer":        { "value": "shimmer 2s ease-in-out infinite", "type": "animation" },
+    "float":          { "value": "float 4s ease-in-out infinite", "type": "animation" },
+    "spin-slow":      { "value": "spin-slow 18s linear infinite", "type": "animation" },
+    "pulse-soft":     { "value": "pulse-soft 2.4s ease-in-out infinite", "type": "animation" },
+    "marquee":        { "value": "marquee 28s linear infinite", "type": "animation" },
+    "ken-burns":      { "value": "ken-burns 14s ease-out forwards", "type": "animation" }
+  }
+}

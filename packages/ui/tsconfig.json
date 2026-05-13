@@ -1,9 +1,19 @@
 {
   "extends": "@repo/typescript-config/react-library.json",
   "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "outDir": "dist",
-    "strictNullChecks": true
+    "noEmit": true,
+    "strictNullChecks": true,
+    "types": ["@testing-library/jest-dom", "vitest/globals"]
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src",
+    "tests",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "playwright-ct.config.ts"
+  ],
+  "exclude": ["node_modules", "dist", "test-results", "playwright-report"]
 }

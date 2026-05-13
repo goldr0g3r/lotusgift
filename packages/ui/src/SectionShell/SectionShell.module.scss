@@ -1,0 +1,30 @@
+@use "@repo/design-tokens/tokens.scss" as t;
+
+.shell {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: t.$space-4;
+  padding-block: t.$space-8;
+
+  @media (min-width: 768px) {
+    padding-inline: t.$space-6;
+    padding-block: t.$space-12;
+  }
+
+  @media (min-width: 1280px) {
+    padding-inline: t.$space-8;
+    padding-block: t.$space-16;
+  }
+}
+
+.width-narrow {
+  max-width: 768px;
+}
+
+.width-default {
+  max-width: 1280px;
+}
+
+.width-wide {
+  max-width: 1440px;
+}

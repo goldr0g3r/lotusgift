@@ -1,0 +1,60 @@
+@use "@repo/design-tokens/tokens.scss" as t;
+
+.card {
+  background-color: t.$brand-white;
+  border-radius: t.$radius-3xl;
+  border: 1px solid t.$brand-ink-100;
+  box-shadow: t.$shadow-soft;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  transition:
+    box-shadow t.$duration-base t.$ease-out,
+    border-color t.$duration-base t.$ease-out,
+    transform t.$duration-base t.$ease-out;
+
+  &:hover {
+    box-shadow: t.$shadow-elevated;
+    border-color: t.$brand-ink-200;
+  }
+}
+
+.padding-sm {
+  padding: t.$space-4;
+}
+
+.padding-md {
+  padding: t.$space-6;
+}
+
+.padding-lg {
+  padding: t.$space-8;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding-bottom: t.$space-3;
+  border-bottom: 1px solid t.$brand-ink-100;
+  font-family: t.$font-family-display;
+  font-weight: t.$font-weight-semibold;
+  color: t.$brand-ink-900;
+}
+
+.body {
+  flex: 1;
+  font-family: t.$font-family-sans;
+  color: t.$brand-ink-700;
+  line-height: t.$font-line-height-relaxed;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: t.$space-3;
+  padding-top: t.$space-3;
+  border-top: 1px solid t.$brand-ink-100;
+}
