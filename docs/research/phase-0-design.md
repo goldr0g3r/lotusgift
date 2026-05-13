@@ -51,13 +51,13 @@ This note backs the design tokens + UI baseline ship for PR-6. Every dependency 
 ## 4. Implementation checklist
 
 - [x] `docs/design/DESIGN.md` (6 sections)
-- [x] `packages/design-tokens` with Style Dictionary build + 7 token JSONs + 4 Sass mixin files + index.ts re-export
-- [x] `packages/ui` with 6 components (Button, IconButton, Card, Pill, SectionShell, Toaster) + Vitest specs + Playwright a11y skeleton
+- [x] `packages/design-tokens` with Style Dictionary build + 7 token JSONs + 5 Sass mixin partials + index.ts re-export
+- [x] `packages/ui` with 6 components (Button, IconButton, Card, Pill, SectionShell, Toaster) + Vitest specs + Playwright a11y smoke
 - [x] `.github/workflows/ci.yml` new `a11y` job
-- [x] `infrastructure/github/branch-protection.json` adds `a11y` to required contexts
-- [x] `pnpm install && pnpm build && pnpm lint && pnpm test` all green (Playwright browser install requires CI runner — `test:e2e` deferred to the GHA `a11y` job)
-- [ ] PR opened, Copilot review, squash merge
-- [ ] Status sync: project board + Epic #4 + Phase-Acceptance #5 + parent plan + this note
+- [x] `infrastructure/github/branch-protection.json` adds `a11y` to required contexts (applied post-merge)
+- [x] `pnpm install && pnpm build && pnpm lint && pnpm test` all green (Playwright browser install requires CI runner — `test:e2e` runs in the GHA `a11y` job)
+- [x] PR [#12](https://github.com/goldr0g3r/lotusgift/pull/12) opened, Copilot review (7 comments) addressed, squash merge `da04f1c4`
+- [x] Status sync: project board + Epic #4 + Phase-Acceptance #5 + parent plan + this note
 
 ## 5. Versions captured
 
