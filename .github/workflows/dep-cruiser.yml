@@ -1,0 +1,35 @@
+name: dep-cruiser
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.0.0"
+
+jobs:
+  dep-cruiser:
+    name: dep-cruiser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - name: dependency-cruiser validate
+        run: |
+          pnpm exec depcruise --config .dependency-cruiser.cjs \
+            --output-type err \
+            --exclude "(^|/)(_old|node_modules|dist|.next|.turbo|coverage)(/|$)" \
+            apps packages services

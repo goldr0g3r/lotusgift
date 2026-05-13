@@ -2,7 +2,7 @@
 
 Multi-vendor multi-warehouse corporate-gifting marketplace for India. Built as a Turborepo monorepo with a NestJS modular monolith (`apps/api-gateway` mounting 16 service libraries) and 4 Next.js apps (customer, vendor, admin, customer-service) — all deployed to Oracle Cloud Mumbai + Vercel.
 
-**Status:** PR-3 docs landed — architecture decision records + dep-graph + this README. Code phases land progressively per the [parent architecture plan](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md). Track progress on the [GitHub Projects v2 board](https://github.com/users/goldr0g3r/projects/9).
+**Status: Phase 0 (foundation) in progress.** PR-1 landed the scaffolded workspace; PR-2 landed governance (rules + agents + skills); PR-3 landed architecture docs (ADRs + dep-graph + README rewrite); PR-5 landed the local Docker dev stack; **PR-4 (this PR) lands the CI surface** — 10 GitHub Actions workflows + Renovate + dep-cruiser + branch protection (applied post-merge). Implementation continues across PR-6 through PR-22 per the [parent architecture plan](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md) and tracked on the [GitHub Projects v2 board](https://github.com/users/goldr0g3r/projects/9).
 
 ## Vision
 
@@ -100,7 +100,7 @@ lotusgift/
 
 ## Quickstart
 
-Requires: Node 20+, pnpm 9+, `gh` CLI (for PR creation), Git.
+Requires: Node 22+ (active LTS), pnpm 9+, `gh` CLI (for PR creation), Git.
 
 ```powershell
 # 1. Clone + cd
@@ -122,13 +122,13 @@ pnpm dev
 
 Ports during dev: api-gateway `:3001`, web-customer `:3000`, web-vendor `:3002`, web-admin `:3003`, web-customer-service `:3004`.
 
-A local Docker dev stack (MongoDB + Redis + Mailhog + OTEL collector) lands with PR-5 (`p0-dev-stack`).
+A local Docker dev stack (MongoDB + Redis + Mailpit + OTEL collector) is wired via [`infrastructure/docker/docker-compose.yml`](infrastructure/docker/docker-compose.yml) — see PR-5 for the dev-stack runbook.
 
 ## Phase roadmap
 
 Twenty-two phases, P0 → P22, each gated by research-note → epic → PRs → tests → phase-acceptance:
 
-- **P0 — Foundation:** scaffold (PR-1, done), rules + governance (PR-2, done), **docs + ADRs (PR-3, this PR)**, CI (PR-4), dev stack (PR-5), design tokens + base UI (PR-6), Oracle runbook (PR-7), future-state runbooks (PR-8).
+- **P0 — Foundation:** scaffold (PR-1, done), rules + governance (PR-2, done), docs + ADRs (PR-3, done), **CI (PR-4, this PR)**, dev stack (PR-5, done), design tokens + base UI (PR-6), Oracle runbook (PR-7), future-state runbooks (PR-8).
 - **P1–P3b — Leaf packages:** `@repo/typescript-config` / `eslint-config` / `jest-config` / `prettier-config` / `types` / `validators` / `events` / `openapi-spec` / `database` / `config` / `utils` / `observability` / `analytics-sdk` / `feature-flags`.
 - **P4 — API gateway shell:** trace-id middleware, rate-limit, helmet, CSP, Better-Auth mount, RFC 9457 error envelope, Kubb codegen wired in CI.
 - **P5–P15 — Services:** auth → vendor → product → inventory → customization → rfq → recipient-list → order → payment → shipping → tax → promotions → notification → insights.
@@ -158,6 +158,25 @@ This repo runs persistent guidance for both human contributors and AI coding age
 - **Skills + subagents** — [`.cursor/skills/`](.cursor/skills/) (procedure libraries) and [`.cursor/agents/`](.cursor/agents/) (specialised reviewers).
 
 Every PR follows the workflow in [parent plan §7b](.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md): sub-plan → research note → execution → status sync (parent plan todo + Projects v2 board + linked issue).
+
+## Continuous integration
+
+PR-4 wired the Phase-0 CI surface. Every PR to `main` runs these checks (see [docs/research/phase-0-ci.md](docs/research/phase-0-ci.md) and [infrastructure/github/README.md](infrastructure/github/README.md)):
+
+| Workflow | Trigger | Purpose |
+| --- | --- | --- |
+| [`ci.yml`](.github/workflows/ci.yml) | PR + push to `main` | `typecheck` + `lint` + `test` + `build` + `markdownlint` + `actionlint` over the monorepo (Node 22.x, pnpm 9). |
+| [`pr-title.yml`](.github/workflows/pr-title.yml) | PR opened/edited | Enforces `<type>(<scope>): <subject>` per [`.cursor/rules/commit-conventions.mdc`](.cursor/rules/commit-conventions.mdc). |
+| [`secret-scan.yml`](.github/workflows/secret-scan.yml) | PR + weekly cron | TruffleHog `--only-verified --fail` on full diff. |
+| [`dependency-review.yml`](.github/workflows/dependency-review.yml) | PR | `fail-on-severity: high` + license allow-list. |
+| [`dep-cruiser.yml`](.github/workflows/dep-cruiser.yml) | PR + push to `main` | L0→L6 architecture-layers + microservice-boundaries enforcement (see [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs)). |
+| [`openapi-drift.yml`](.github/workflows/openapi-drift.yml) | PR + push to `main` | Skeleton — fires once `packages/api/openapi.json` exists (P4). |
+| [`atlas-search-mapping-drift.yml`](.github/workflows/atlas-search-mapping-drift.yml) | PR + push to `main` | Skeleton — enforces M0 3-index budget once `infrastructure/atlas/search/*.json` lands (P7). |
+| [`corporate-gifting-domain.yml`](.github/workflows/corporate-gifting-domain.yml) | PR + push to `main` | Asserts auto-router matrix is updated when order/rfq/recipient-list/customization service code changes (P9 onward). |
+| [`free-tier-burn.yml`](.github/workflows/free-tier-burn.yml) | Mon 00:00 UTC cron | Atlas + Vercel + PostHog + Upstash + Oracle quota check; opens an issue if any > 70 % (see [`scripts/free-tier-quota-burn.ts`](scripts/free-tier-quota-burn.ts)). |
+| [`release.yml`](.github/workflows/release.yml) | Tag `v*` push | Draft GitHub Release with auto-generated notes; manual publish. |
+
+Renovate runs Monday 06:00 Asia/Kolkata via [`renovate.json`](renovate.json) (groups non-major updates, auto-merges patches, escalates security alerts). Branch protection on `main` is applied post-merge of PR-4 via [`infrastructure/github/branch-protection.json`](infrastructure/github/branch-protection.json).
 
 ## License
 

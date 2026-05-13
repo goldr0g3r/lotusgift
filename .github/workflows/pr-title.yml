@@ -1,0 +1,73 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+  statuses: write
+
+jobs:
+  pr-title:
+    name: pr-title
+    runs-on: ubuntu-latest
+    steps:
+      - name: validate semantic PR title
+        uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Types from .cursor/rules/commit-conventions.mdc line 22.
+          types: |
+            feat
+            fix
+            chore
+            docs
+            refactor
+            test
+            perf
+            ci
+            build
+            style
+          # Workstream scopes from .cursor/rules/commit-conventions.mdc line 23.
+          # requireScope is true because the rule explicitly forbids skipping
+          # the scope (see the "Don't" section of the rule).
+          scopes: |
+            scaffold
+            rules
+            architecture
+            ci
+            infra
+            design
+            runbook
+            auth
+            vendor
+            product
+            inventory
+            customization
+            order
+            rfq
+            recipient-list
+            payment
+            shipping
+            notification
+            tax
+            promotions
+            insights
+            review
+            support
+            gateway
+            web-customer
+            web-vendor
+            web-admin
+            web-customer-service
+            observability
+            release
+            deps
+          requireScope: true
+          subjectPattern: ^[a-z].*[^.]$
+          subjectPatternError: |
+            The subject of the PR title MUST start with a lowercase letter
+            and MUST NOT end with a period. See .cursor/rules/commit-conventions.mdc.
+          wip: true
