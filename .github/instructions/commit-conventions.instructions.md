@@ -1,0 +1,49 @@
+---
+applyTo: "**"
+---
+
+# Commit Conventions
+
+All commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/) with scopes drawn from the Workstream label set. PR titles are validated by `.github/workflows/pr-title.yml`. Squash-merge is the only allowed merge strategy on `main`.
+
+## Format
+
+```
+<type>(<workstream-scope>): <imperative summary>
+
+[optional body]
+
+[optional footer with BREAKING CHANGE / Closes #N]
+```
+
+## Allowed types & scopes
+
+- **Types**: `feat` · `fix` · `chore` · `docs` · `refactor` · `test` · `perf` · `ci` · `build` · `style`.
+- **Scopes** (Workstream labels): `scaffold` · `rules` · `architecture` · `ci` · `infra` · `design` · `runbook` · `auth` · `vendor` · `product` · `inventory` · `customization` · `order` · `rfq` · `recipient-list` · `payment` · `shipping` · `notification` · `tax` · `promotions` · `insights` · `review` · `support` · `gateway` · `web-customer` · `web-vendor` · `web-admin` · `web-customer-service` · `observability` · `release`.
+
+## Do
+
+- Lead with the imperative: `feat(rfq): add auto-router policy table`.
+- Reference issues in the footer: `Closes #42`.
+- Squash-merge in the GitHub UI; never click "Merge commit" or "Rebase and merge".
+
+## Don't
+
+- Use past-tense summaries: ❌ `feat(rfq): added auto-router policy table`.
+- Skip the scope: ❌ `feat: add auto-router`.
+- Use scopes outside the Workstream label set.
+
+## Concrete example
+
+```
+feat(rfq): add auto-router policy table
+
+Per-vendor configurable thresholds with platform defaults (cart value,
+per-product MOQ, requires-customization flag).
+
+Closes #42
+```
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md); validated by `pr-title.yml` workflow added in PR-4.

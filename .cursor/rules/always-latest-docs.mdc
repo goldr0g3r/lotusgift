@@ -1,0 +1,31 @@
+---
+description: Every research note WebFetches official docs ≤14 days old; no memory-pinned versions
+alwaysApply: true
+---
+
+# Always Latest Docs
+
+Library APIs change. Every research note `WebFetch`es the official docs of every dependency it introduces and records the page title + URL + retrieval timestamp. Citations older than 14 days fail validation.
+
+## Do
+
+- `WebFetch` (or open in browser, then paste URL) the live docs page for every new dependency.
+- Record: page title + full URL + retrieval date in the note's citations table.
+- Re-fetch and bump the date if a citation ages past 14 days.
+- Lock versions via `pnpm ls --depth=0` after CLI install — never hand-write a version.
+
+## Don't
+
+- Cite "latest" without a date.
+- Type a version from memory (e.g. `"nestjs-zod": "^5.3.0"`) — let the CLI write it.
+- Reuse a citation older than 14 days without re-verifying.
+
+## Concrete example
+
+| Topic | Title | URL | Retrieved |
+|-------|-------|-----|-----------|
+| nestjs-zod | nestjs-zod v5.3.0 on npm | https://www.npmjs.com/package/nestjs-zod | 2026-05-12 |
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) — exemplar of the citations table this rule enforces. Validated by [.cursor/agents/research-note-validator.md](../agents/research-note-validator.md).

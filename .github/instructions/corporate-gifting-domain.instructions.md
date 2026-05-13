@@ -1,0 +1,37 @@
+---
+applyTo: "services/rfq-service/**/*.ts,services/order-service/**/*.ts,services/customization-service/**/*.ts,services/recipient-list-service/**/*.ts,services/promotions-service/**/*.ts"
+---
+
+# Corporate-Gifting Domain Invariants
+
+Three corporate-gifting workflows have hard invariants the auditor enforces in CI (`corporate-gifting-domain.yml`).
+
+## Auto-router (rfq-service)
+
+Every `Order` whose draft trips a configured threshold (per-product MOQ, cart-value cap, or `requiresCustomization: true`) MUST route via `rfqService.routeDraft(orderDraft)` BEFORE payment authorization. Default route at checkout, never bypass.
+
+## Recipient-list (recipient-list-service)
+
+Every uploaded row passes the fixed Zod schema in `@repo/validators/recipient-list/row.ts` (name, addr1, addr2?, city, state, pincode, phone, customMessage?, variantSku?, billingGstin?). Failed rows surface in the upload UI; the upload itself fails atomically. One upload → one Order with N Shipments via `order-service` saga.
+
+## Customization (customization-service) — state machine
+
+`DRAFT → ART_UPLOADED → MOCKUP_PENDING → MOCKUP_DELIVERED → APPROVED|REJECTED → IN_PRODUCTION`
+
+Every transition emits a `customization.state-changed.v1` outbox event AND writes an audit-log row. Skipping states or backwards transitions fail validation.
+
+## Do
+
+- Call `rfqService.routeDraft()` from `OrderService.placeOrder` before payment.
+- Validate every recipient-list row with the Zod schema; reject the upload on the first failure.
+- Use a state-machine library (e.g. `xstate`) or guard manually with an exhaustive switch.
+
+## Don't
+
+- Bypass the auto-router for "small B2B" orders — let the policy decide.
+- Silently drop invalid recipient rows.
+- Skip the audit-log row on a customization transition.
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md); parent plan §4 (corporate-gifting deltas). Audited by [.cursor/agents/corporate-gifting-domain-auditor.md](../../.cursor/agents/corporate-gifting-domain-auditor.md).

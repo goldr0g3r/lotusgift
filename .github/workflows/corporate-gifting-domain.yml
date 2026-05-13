@@ -1,0 +1,63 @@
+name: corporate-gifting-domain
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  AUTO_ROUTER_MATRIX_SPEC: "services/rfq-service/test/auto-router.matrix.spec.ts"
+
+jobs:
+  corporate-gifting-domain:
+    name: corporate-gifting-domain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: detect order/rfq/recipient-list/customization changes
+        id: detect
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            base_sha="${{ github.event.before }}"
+            head_sha="${{ github.sha }}"
+          fi
+          if [[ -z "${base_sha}" || "${base_sha}" == "0000000000000000000000000000000000000000" ]]; then
+            echo "touched_domain=false" >> "$GITHUB_OUTPUT"
+            echo "touched_matrix=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=corporate-gifting-domain skipped::No base SHA available (likely first push of branch)."
+            exit 0
+          fi
+          changed=$(git diff --name-only "${base_sha}" "${head_sha}" || true)
+          echo "${changed}" > .changed.txt
+          if grep -qE '^services/(order|rfq|recipient-list|customization)-service/' .changed.txt; then
+            echo "touched_domain=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "touched_domain=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -q "${AUTO_ROUTER_MATRIX_SPEC}" .changed.txt; then
+            echo "touched_matrix=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "touched_matrix=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: assert auto-router matrix updated
+        if: steps.detect.outputs.touched_domain == 'true' && steps.detect.outputs.touched_matrix == 'false'
+        run: |
+          if [[ -f "${AUTO_ROUTER_MATRIX_SPEC}" ]]; then
+            echo "::error title=corporate-gifting-domain::PR touches order/rfq/recipient-list/customization service code but does not update ${AUTO_ROUTER_MATRIX_SPEC}. See .cursor/rules/corporate-gifting-domain.mdc."
+            exit 1
+          else
+            echo "::notice title=corporate-gifting-domain skipped::${AUTO_ROUTER_MATRIX_SPEC} reserved but not yet created (lands at P9b). Path-touching invariant fires from P9 onward."
+          fi
+      - name: confirm noop
+        if: steps.detect.outputs.touched_domain == 'false'
+        run: |
+          echo "::notice title=corporate-gifting-domain noop::No corporate-gifting domain paths touched in this PR."

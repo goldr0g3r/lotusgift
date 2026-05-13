@@ -1,0 +1,96 @@
+name: Bug report
+description: Report a defect in shipped behaviour (LotusGift v2 monorepo).
+title: "bug: <one-line summary>"
+labels: ["type/bug", "prio/p3-medium"]
+assignees: ["goldr0g3r"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill in every section so reproduction is reliable.
+        For security issues, do NOT open a public bug report — email **security@lotusgift.com** instead.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence statement of the defect.
+      placeholder: "Cart total ignores the volume-discount when 2+ recipient lists are uploaded."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered list. Include test data, role (vendor / admin / customer / corporate-buyer), and any feature-flag state.
+      placeholder: |
+        1. Log in as a corporate-buyer-org member.
+        2. Upload `recipient-list-A.csv` (50 rows).
+        3. Upload `recipient-list-B.csv` (30 rows).
+        4. Open cart; observe total.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should have happened (cite an ADR / sub-plan / acceptance criterion when possible).
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What actually happened. Include error messages, stack traces, screenshots.
+    validations:
+      required: true
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      description: Pick the closest workstream — matches the `Workstream` Projects-v2 field.
+      options:
+        - scaffold
+        - rules
+        - architecture
+        - ci
+        - infra
+        - design
+        - runbook
+        - auth
+        - vendor
+        - product
+        - inventory
+        - customization
+        - order
+        - rfq
+        - recipient-list
+        - payment
+        - shipping
+        - notification
+        - tax
+        - promotions
+        - insights
+        - review
+        - support
+        - gateway
+        - web-customer
+        - web-vendor
+        - web-admin
+        - web-customer-service
+        - observability
+        - release
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: App + version + browser/runtime + OS.
+      placeholder: "web-customer 0.1.0 / Chrome 124 / Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Logs, related PRs / issues, suspected root cause, screenshots, recordings.

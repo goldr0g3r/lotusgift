@@ -1,0 +1,59 @@
+# CODEOWNERS — LotusGift v2 monorepo
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+# Last-match-wins. Solo-maintainer today; expand per-team as scaling thresholds in
+# docs/runbooks/scaling-up.md are crossed (post-launch).
+
+* @goldr0g3r
+
+# Governance + rules
+/.cursor/                                @goldr0g3r
+/.cursor/rules/                          @goldr0g3r
+/.cursor/agents/                         @goldr0g3r
+/.cursor/skills/                         @goldr0g3r
+/.cursor/plans/                          @goldr0g3r
+/.github/                                @goldr0g3r
+/.github/workflows/                      @goldr0g3r
+/.github/CODEOWNERS                      @goldr0g3r
+/AGENTS.md                               @goldr0g3r
+/CLAUDE.md                               @goldr0g3r
+
+# Architecture + docs
+/docs/                                   @goldr0g3r
+/docs/adr/                               @goldr0g3r
+/docs/architecture/                      @goldr0g3r
+/docs/research/                          @goldr0g3r
+/docs/runbooks/                          @goldr0g3r
+/README.md                               @goldr0g3r
+
+# Infrastructure + deploy
+/infrastructure/                         @goldr0g3r
+/scripts/                                @goldr0g3r
+
+# Shared packages
+/packages/                               @goldr0g3r
+/packages/design-tokens/                 @goldr0g3r
+/packages/ui/                            @goldr0g3r
+/packages/api/                           @goldr0g3r
+/packages/auth-client/                   @goldr0g3r
+/packages/validators/                    @goldr0g3r
+/packages/events/                        @goldr0g3r
+/packages/database/                      @goldr0g3r
+/packages/observability/                 @goldr0g3r
+
+# Backend services
+/apps/api-gateway/                       @goldr0g3r
+/services/                               @goldr0g3r
+/services/auth-service/                  @goldr0g3r
+/services/order-service/                 @goldr0g3r
+/services/rfq-service/                   @goldr0g3r
+/services/recipient-list-service/        @goldr0g3r
+/services/customization-service/         @goldr0g3r
+/services/payment-service/               @goldr0g3r
+/services/shipping-service/              @goldr0g3r
+/services/tax-service/                   @goldr0g3r
+
+# Frontend apps
+/apps/web-customer/                      @goldr0g3r
+/apps/web-vendor/                        @goldr0g3r
+/apps/web-admin/                         @goldr0g3r
+/apps/web-customer-service/              @goldr0g3r

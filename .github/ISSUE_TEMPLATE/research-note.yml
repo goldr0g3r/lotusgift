@@ -1,0 +1,77 @@
+name: Research note
+description: Open a research-note tracking issue (per .cursor/rules/research-note-per-module.mdc).
+title: "research: <topic>"
+labels: ["type/research"]
+assignees: ["goldr0g3r"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every module / sub-plan ships with a dated research note in `docs/research/`. Open this issue when you intend to write one; close it on PR-merge.
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      description: One-line description of the research subject.
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target phase
+      options:
+        - Phase 0 - Foundation Reset
+        - Phase 1 - TS/ESLint/Jest/Prettier configs
+        - Phase 2 - types/validators/events/openapi-spec
+        - Phase 3 - database/config/utils/observability
+        - Phase 3b - analytics-sdk/feature-flags
+        - Phase 4 - api-gateway shell
+        - Phase 5 - auth-service
+        - Phase 6 - vendor-service
+        - Phase 7 - product-service
+        - Phase 8 - inventory-service
+        - Phase 8b - customization-service
+        - Phase 9 - order-service
+        - Phase 9b - rfq-service
+        - Phase 9c - recipient-list-service
+        - Phase 10 - payment-service
+        - Phase 11 - shipping-service
+        - Phase 12 - notification-service
+        - Phase 13 - tax-service
+        - Phase 14 - promotions-service
+        - Phase 15 - insights-service
+        - Phase 16 - web-customer
+        - Phase 17 - web-vendor
+        - Phase 18 - web-admin
+        - Phase 19 - web-customer-service
+        - Phase 20 - review-service + support-service
+        - Phase 21 - observability hardening
+        - Phase 22 - Launch
+    validations:
+      required: true
+  - type: textarea
+    id: questions
+    attributes:
+      label: Key questions
+      description: Numbered list of questions the research must answer.
+    validations:
+      required: true
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: Deliverable spec
+      description: Target file path, expected sections (citations + decisions + open questions + impl checklist), and the sub-plan / parent-plan link.
+      placeholder: |
+        - Path: `docs/research/phase-<N>-<topic>.md`
+        - Sections: Goal, Retrieval-dated citations (≤14d), Decisions log, Open questions, Implementation checklist, Versions, Implementation reference.
+        - Parent plan: `.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md`
+    validations:
+      required: true
+  - type: input
+    id: freshness
+    attributes:
+      label: Citation freshness target
+      description: Per .cursor/rules/always-latest-docs.mdc the retrieval window is ≤14 days. Override here only with justification.
+      value: "14 days"
+    validations:
+      required: true

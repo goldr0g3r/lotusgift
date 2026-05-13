@@ -1,0 +1,33 @@
+name: dependency-review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: dependency-review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Dependency Review
+        id: dependency-review
+        continue-on-error: true
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          vulnerability-check: true
+          license-check: true
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, CC0-1.0, 0BSD, Unlicense
+          comment-summary-in-pr: on-failure
+      - name: report dependency-review status
+        run: |
+          if [[ "${{ steps.dependency-review.outcome }}" != "success" ]]; then
+            echo "::warning title=dependency-review soft-fail::Step did not succeed (outcome=${{ steps.dependency-review.outcome }}). Most common cause: GitHub Dependency Graph is not enabled on the repo. Enable it at https://github.com/${{ github.repository }}/settings/security_analysis to make this check binding."
+          else
+            echo "::notice title=dependency-review::No vulnerable or disallowed-license dependency changes detected."
+          fi

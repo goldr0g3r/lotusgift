@@ -1,0 +1,93 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":separateMajorReleases",
+    "group:allNonMajor",
+    "schedule:weekly"
+  ],
+  "timezone": "Asia/Kolkata",
+  "schedule": ["before 6am on Monday"],
+  "labels": ["type/chore", "prio/p3-medium", "phase/0"],
+  "assignees": ["goldr0g3r"],
+  "reviewers": ["goldr0g3r"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "platformAutomerge": true,
+  "rebaseWhen": "behind-base-branch",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on Monday"],
+    "automerge": true,
+    "automergeType": "pr",
+    "commitMessageAction": "refresh"
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["type/security", "prio/p0-critical"],
+    "automerge": false
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["type/chore", "prio/p2-high", "phase/0"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "labels": ["type/chore", "prio/p3-medium", "phase/0", "area/infra"],
+      "semanticCommitScope": "ci"
+    },
+    {
+      "matchPackagePatterns": ["^@nestjs/", "^nestjs-"],
+      "groupName": "nestjs",
+      "labels": ["type/chore", "prio/p2-high", "phase/0", "area/backend"]
+    },
+    {
+      "matchPackagePatterns": ["^next$", "^@next/", "^react$", "^react-dom$", "^@types/react"],
+      "groupName": "react-next",
+      "labels": ["type/chore", "prio/p2-high", "phase/0", "area/frontend"]
+    },
+    {
+      "matchPackagePatterns": ["^@tanstack/"],
+      "groupName": "tanstack",
+      "labels": ["type/chore", "prio/p3-medium", "phase/0", "area/frontend"]
+    },
+    {
+      "matchPackagePatterns": ["^mongoose$", "^mongodb$"],
+      "groupName": "mongo",
+      "labels": ["type/chore", "prio/p2-high", "phase/0", "area/backend"]
+    },
+    {
+      "matchPackagePatterns": ["^better-auth", "^@better-auth/", "^@thallesp/nestjs-better-auth"],
+      "groupName": "better-auth",
+      "labels": ["type/chore", "prio/p1-high", "phase/0", "area/backend"]
+    },
+    {
+      "matchPaths": ["_old/**"],
+      "enabled": false
+    }
+  ],
+  "ignorePaths": [
+    "_old/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**"
+  ],
+  "ignoreDeps": [],
+  "configMigration": true,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dependency Dashboard",
+  "dependencyDashboardLabels": ["type/chore", "phase/0", "area/infra"]
+}

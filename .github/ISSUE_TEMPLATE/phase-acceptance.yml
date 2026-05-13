@@ -1,0 +1,71 @@
+name: Phase acceptance
+description: Open a phase-acceptance tracking issue with the exit-criteria checklist.
+title: "phase-acceptance: Phase <N> — <name>"
+labels: ["type/phase-acceptance"]
+assignees: ["goldr0g3r"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every phase ends with a phase-acceptance issue capturing the exit-criteria checklist. Tick items as PRs land; close on phase merge.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - Phase 0 - Foundation Reset
+        - Phase 1 - TS/ESLint/Jest/Prettier configs
+        - Phase 2 - types/validators/events/openapi-spec
+        - Phase 3 - database/config/utils/observability
+        - Phase 3b - analytics-sdk/feature-flags
+        - Phase 4 - api-gateway shell
+        - Phase 5 - auth-service
+        - Phase 6 - vendor-service
+        - Phase 7 - product-service
+        - Phase 8 - inventory-service
+        - Phase 8b - customization-service
+        - Phase 9 - order-service
+        - Phase 9b - rfq-service
+        - Phase 9c - recipient-list-service
+        - Phase 10 - payment-service
+        - Phase 11 - shipping-service
+        - Phase 12 - notification-service
+        - Phase 13 - tax-service
+        - Phase 14 - promotions-service
+        - Phase 15 - insights-service
+        - Phase 16 - web-customer
+        - Phase 17 - web-vendor
+        - Phase 18 - web-admin
+        - Phase 19 - web-customer-service
+        - Phase 20 - review-service + support-service
+        - Phase 21 - observability hardening
+        - Phase 22 - Launch
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Bullet list of every PR / module / artefact that lands in this phase.
+    validations:
+      required: true
+  - type: textarea
+    id: exit
+    attributes:
+      label: Exit criteria checklist
+      description: Markdown checkboxes. At minimum cover research note + sub-plan + PR + tests + parent-plan todo flipped + Projects-v2 item to Done.
+      placeholder: |
+        - [ ] Research note `docs/research/phase-<N>-<topic>.md` committed.
+        - [ ] Sub-plan `.cursor/plans/<phase-id>_*.plan.md` linked from the phase epic.
+        - [ ] All sub-plan todos `status: completed`.
+        - [ ] Parent-plan todo flipped to `completed`.
+        - [ ] Projects v2 board item → Done.
+        - [ ] Tier-gated coverage met (per .cursor/rules/test-coverage.mdc).
+        - [ ] No `TODO` / `HACK` / `FIXME` in production paths.
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links
+      description: Research note + epic issue + sub-plan + first/last PR.

@@ -1,0 +1,121 @@
+name: Feature request
+description: Propose a new capability or enhancement to the LotusGift v2 monorepo.
+title: "feat: <one-line summary>"
+labels: ["type/feature"]
+assignees: ["goldr0g3r"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for product / engineering feature proposals. For larger work that spans multiple PRs, open a research-note issue first.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence statement of the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Who benefits? What problem does this solve? Cite parent plan / ADRs when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: High-level design sketch. Include API shape, data model touchpoints, UX impact.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checklist of testable outcomes that mark this feature "done".
+      placeholder: |
+        - [ ] OpenAPI spec emits `POST /api/v1/recipient-lists/:id/preview`.
+        - [ ] `recipient-list.previewed` event published to OutboxPort.
+        - [ ] Vendor portal renders preview table with 100-row paging.
+        - [ ] Unit + integration coverage ≥80% on the new module.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches and why they were rejected.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target phase
+      description: Pick the phase milestone that should ship this feature.
+      options:
+        - Phase 0 - Foundation Reset
+        - Phase 1 - TS/ESLint/Jest/Prettier configs
+        - Phase 2 - types/validators/events/openapi-spec
+        - Phase 3 - database/config/utils/observability
+        - Phase 3b - analytics-sdk/feature-flags
+        - Phase 4 - api-gateway shell
+        - Phase 5 - auth-service
+        - Phase 6 - vendor-service
+        - Phase 7 - product-service
+        - Phase 8 - inventory-service
+        - Phase 8b - customization-service
+        - Phase 9 - order-service
+        - Phase 9b - rfq-service
+        - Phase 9c - recipient-list-service
+        - Phase 10 - payment-service
+        - Phase 11 - shipping-service
+        - Phase 12 - notification-service
+        - Phase 13 - tax-service
+        - Phase 14 - promotions-service
+        - Phase 15 - insights-service
+        - Phase 16 - web-customer
+        - Phase 17 - web-vendor
+        - Phase 18 - web-admin
+        - Phase 19 - web-customer-service
+        - Phase 20 - review-service + support-service
+        - Phase 21 - observability hardening
+        - Phase 22 - Launch
+    validations:
+      required: true
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      description: Matches the `Workstream` Projects-v2 field and the commit-convention scope.
+      options:
+        - scaffold
+        - rules
+        - architecture
+        - ci
+        - infra
+        - design
+        - runbook
+        - auth
+        - vendor
+        - product
+        - inventory
+        - customization
+        - order
+        - rfq
+        - recipient-list
+        - payment
+        - shipping
+        - notification
+        - tax
+        - promotions
+        - insights
+        - review
+        - support
+        - gateway
+        - web-customer
+        - web-vendor
+        - web-admin
+        - web-customer-service
+        - observability
+        - release
+    validations:
+      required: true

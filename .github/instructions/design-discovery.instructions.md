@@ -1,0 +1,47 @@
+---
+applyTo: "apps/web-*/**/*.tsx,packages/ui/**/*.tsx,docs/design/**/*.md"
+excludeAgent: "code-review"
+---
+
+# Design Discovery
+
+No frontend PR opens without an approved Design Discovery document at `docs/design/<app>-<page-family>.md` listing **at least two distinct wireframe directions** per page family (home, PLP, PDP, cart, checkout, account, etc.) and an explicit "chose direction A because…" decision.
+
+## Do
+
+- Open `docs/design/<app>-<page-family>.md` before any `apps/web-*` or `packages/ui` code lands.
+- Include ≥2 wireframe directions (sketches, Figma frames, or ASCII layouts — all work).
+- Capture the chose/rejected decision with a one-paragraph rationale tied to user goals.
+- Link the doc from the PR description; the PR template asks for it.
+
+## Don't
+
+- Skip Discovery for "small" UI changes — every new page family needs a doc.
+- Generate a single direction and call it done.
+- Land a PR whose Discovery doc is older than the implementation (re-open Discovery).
+
+## Concrete example
+
+```
+docs/design/web-customer-checkout.md
+
+# Checkout — Design Discovery
+
+## Direction A: Single-page collapsible
+[wireframe / Figma link]
+Pros: fewer clicks for repeat buyers · cleaner mobile flow
+Cons: form complexity in one viewport
+
+## Direction B: Three-step wizard with progress bar
+[wireframe / Figma link]
+Pros: matches enterprise procurement mental model · clearer GST + PO inputs
+Cons: extra clicks for retail
+
+## Decision: Direction B
+Corporate buyers are >70% of GMV; the wizard's procurement-like flow wins on
+Tier-1 KPIs (RFQ-conversion + cart-completion). Retail flow remains under 4 clicks.
+```
+
+## References
+
+[docs/research/phase-0-rules.md](../../docs/research/phase-0-rules.md) — Decisions log D2 + parent plan §7 (Phase 16 Design Discovery requirement).
