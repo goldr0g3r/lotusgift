@@ -6,15 +6,29 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./tokens.scss": "./dist/tokens.scss",
+    "./tokens.css": "./dist/tokens.css",
+    "./tokens.ts": "./dist/tokens.ts",
+    "./mixins": "./src/mixins/_index.scss",
+    "./mixins/buttons": "./src/mixins/_buttons.scss",
+    "./mixins/typography": "./src/mixins/_typography.scss",
+    "./mixins/utilities": "./src/mixins/_utilities.scss",
+    "./mixins/keyframes": "./src/mixins/_keyframes.scss"
   },
   "scripts": {
+    "build": "node ./style-dictionary.config.mjs",
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "check-types": "node ./style-dictionary.config.mjs && tsc --noEmit",
+    "prepare": "node ./style-dictionary.config.mjs"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "style-dictionary": "^5.4.0",
     "typescript": "5.9.2"
   }
 }

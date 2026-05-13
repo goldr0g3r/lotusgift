@@ -1,0 +1,80 @@
+// Utility mixins (visual primitives that don't map to a typography or button shape).
+
+@use "../../dist/tokens" as t;
+
+// Circular icon button shell (used by @repo/ui IconButton).
+// Variants: dark (default ink-on-white), light (white-on-ink).
+@mixin icon-circle($size: t.$space-10) {
+  width: $size;
+  height: $size;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: t.$radius-full;
+  border: 1px solid t.$brand-ink-200;
+  background-color: t.$brand-white;
+  color: t.$brand-ink-700;
+  cursor: pointer;
+  transition:
+    background-color t.$duration-base t.$ease-out,
+    color t.$duration-base t.$ease-out,
+    border-color t.$duration-base t.$ease-out,
+    box-shadow t.$duration-base t.$ease-out;
+  position: relative;
+
+  &:hover {
+    background-color: t.$brand-ink-50;
+    color: t.$brand-ink-900;
+    border-color: t.$brand-ink-300;
+  }
+
+  &:focus-visible {
+    outline: 2px solid t.$brand-green-500;
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+@mixin icon-circle-light($size: t.$space-10) {
+  @include icon-circle($size);
+  background-color: t.$brand-ink-900;
+  color: t.$brand-white;
+  border-color: t.$brand-ink-900;
+
+  &:hover {
+    background-color: t.$brand-ink-800;
+    color: t.$brand-white;
+    border-color: t.$brand-ink-800;
+  }
+}
+
+// Reset for elements that visually look like a button but semantically are not.
+@mixin button-reset {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+// Visually hidden but accessible to screen readers.
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

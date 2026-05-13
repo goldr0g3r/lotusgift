@@ -1,0 +1,51 @@
+@use "@repo/design-tokens/tokens.scss" as t;
+
+// Sonner exposes most of its surface as CSS custom properties on `.toaster`.
+// We override the LotusGift brand surface (success = pink, primary = green).
+:global(.toaster.toaster) {
+  --normal-bg: #{t.$brand-white};
+  --normal-text: #{t.$brand-ink-900};
+  --normal-border: #{t.$brand-ink-100};
+
+  --success-bg: #{t.$brand-pink-50};
+  --success-text: #{t.$brand-pink-900};
+  --success-border: #{t.$brand-pink-200};
+
+  --error-bg: #fef2f2;
+  --error-text: #7f1d1d;
+  --error-border: #fecaca;
+
+  --info-bg: #{t.$brand-green-50};
+  --info-text: #{t.$brand-green-900};
+  --info-border: #{t.$brand-green-100};
+}
+
+.toast {
+  font-family: t.$font-family-sans;
+  border-radius: t.$radius-2xl;
+  box-shadow: t.$shadow-pill;
+}
+
+.title {
+  font-weight: t.$font-weight-semibold;
+  color: inherit;
+}
+
+.description {
+  color: inherit;
+  opacity: 0.85;
+  font-size: t.$font-size-sm;
+}
+
+.actionButton {
+  background-color: t.$brand-green-500;
+  color: t.$brand-white;
+  border-radius: t.$radius-full;
+  font-weight: t.$font-weight-semibold;
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: t.$brand-ink-700;
+  border-radius: t.$radius-full;
+}

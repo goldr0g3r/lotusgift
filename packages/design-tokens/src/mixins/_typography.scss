@@ -1,0 +1,60 @@
+// Typography mixins.
+// Consumers: @use '@repo/design-tokens/mixins/typography' as type; @include type.h1-display;
+
+@use "../../dist/tokens" as t;
+
+@mixin eyebrow {
+  font-family: t.$font-family-sans;
+  font-size: t.$font-size-xs;
+  font-weight: t.$font-weight-semibold;
+  letter-spacing: t.$font-letter-spacing-wide;
+  line-height: t.$font-line-height-tight;
+  text-transform: uppercase;
+  color: t.$brand-ink-500;
+}
+
+@mixin h1-display {
+  font-family: t.$font-family-display;
+  font-size: t.$font-size-5xl;
+  font-weight: t.$font-weight-bold;
+  letter-spacing: t.$font-letter-spacing-tight;
+  line-height: t.$font-line-height-tight;
+  color: t.$brand-ink-900;
+
+  @media (min-width: 768px) {
+    font-size: t.$font-size-6xl;
+  }
+
+  @media (min-width: 1280px) {
+    font-size: t.$font-size-7xl;
+  }
+}
+
+@mixin h2 {
+  font-family: t.$font-family-display;
+  font-size: t.$font-size-3xl;
+  font-weight: t.$font-weight-bold;
+  letter-spacing: t.$font-letter-spacing-tight;
+  line-height: t.$font-line-height-snug;
+  color: t.$brand-ink-900;
+
+  @media (min-width: 768px) {
+    font-size: t.$font-size-4xl;
+  }
+}
+
+@mixin body {
+  font-family: t.$font-family-sans;
+  font-size: t.$font-size-base;
+  font-weight: t.$font-weight-normal;
+  line-height: t.$font-line-height-relaxed;
+  color: t.$brand-ink-700;
+}
+
+@mixin body-sm {
+  font-family: t.$font-family-sans;
+  font-size: t.$font-size-sm;
+  font-weight: t.$font-weight-normal;
+  line-height: t.$font-line-height-relaxed;
+  color: t.$brand-ink-600;
+}

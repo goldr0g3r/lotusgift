@@ -1,0 +1,48 @@
+@use "@repo/design-tokens/tokens.scss" as t;
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  border-radius: t.$radius-full;
+  border: 1px solid transparent;
+  font-family: t.$font-family-sans;
+  font-weight: t.$font-weight-semibold;
+  line-height: t.$font-line-height-tight;
+  letter-spacing: t.$font-letter-spacing-wide;
+  white-space: nowrap;
+}
+
+.size-sm {
+  padding: t.$space-1 t.$space-2-5;
+  font-size: t.$font-size-xs;
+}
+
+.size-md {
+  padding: t.$space-1-5 t.$space-3;
+  font-size: t.$font-size-sm;
+}
+
+.tone-green {
+  background-color: t.$brand-green-50;
+  color: t.$brand-green-700;
+  border-color: t.$brand-green-100;
+}
+
+.tone-pink {
+  background-color: t.$brand-pink-50;
+  color: t.$brand-pink-700;
+  border-color: t.$brand-pink-100;
+}
+
+.tone-ink {
+  background-color: t.$brand-ink-900;
+  color: t.$brand-white;
+  border-color: t.$brand-ink-900;
+}
+
+.tone-neutral {
+  background-color: t.$brand-ink-50;
+  color: t.$brand-ink-700;
+  border-color: t.$brand-ink-100;
+}

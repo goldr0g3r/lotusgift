@@ -1,0 +1,7 @@
+// Barrel forwarding all LotusGift design-system mixins.
+// Consumers: @use '@repo/design-tokens/mixins' as ds; @include ds.btn-primary;
+
+@forward "buttons" as btn-*;
+@forward "typography" as type-*;
+@forward "utilities";
+@forward "keyframes";

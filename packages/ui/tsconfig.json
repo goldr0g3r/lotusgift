@@ -1,9 +1,32 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "dist",
-    "strictNullChecks": true
+    "noEmit": true,
+    "types": ["@testing-library/jest-dom", "vitest/globals"]
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src",
+    "tests",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "playwright-ct.config.ts"
+  ],
+  "exclude": ["node_modules", "dist", "test-results", "playwright-report"]
 }

@@ -1,0 +1,14 @@
+{
+  "ease": {
+    "out":    { "value": "cubic-bezier(0.16, 1, 0.3, 1)", "type": "cubicBezier" },
+    "in-out": { "value": "cubic-bezier(0.4, 0, 0.2, 1)",  "type": "cubicBezier" },
+    "linear": { "value": "linear", "type": "cubicBezier" }
+  },
+  "duration": {
+    "fast":      { "value": "150ms", "type": "duration" },
+    "base":      { "value": "200ms", "type": "duration" },
+    "medium":    { "value": "300ms", "type": "duration" },
+    "slow":      { "value": "500ms", "type": "duration" },
+    "very-slow": { "value": "800ms", "type": "duration" }
+  }
+}
