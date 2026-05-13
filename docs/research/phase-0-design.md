@@ -95,4 +95,37 @@ Captured via `pnpm --filter @repo/design-tokens ls --depth=0` and `pnpm --filter
 
 ## 6. Implementation reference
 
-Filled after merge: PR URL + squash SHA + diff stats.
+PR-6 landed via PR [#12](https://github.com/goldr0g3r/lotusgift/pull/12) — squash merge SHA [`da04f1c4`](https://github.com/goldr0g3r/lotusgift/commit/da04f1c4fb837dbdbb15da45caf79af711f8211c).
+
+| Metric | Value |
+| --- | --- |
+| Files changed (squashed) | 80 |
+| Insertions (squashed) | +4,606 |
+| Deletions (squashed) | -150 |
+| Vitest specs (new) | 30 |
+| Playwright a11y smoke test | 1 |
+| Components shipped | 6 (Button, IconButton, Card, Pill, SectionShell, Toaster) |
+| Token JSON sources | 7 (color, typography, space, radius, shadow, motion, animation) |
+| Sass mixin partials | 5 (buttons, typography, utilities, keyframes, _index) |
+| Style Dictionary platforms emitted | 3 (scss, css, ts) |
+| New CI jobs | 1 (`a11y`) |
+| Branch-protection contexts added | 1 (`a11y`) |
+| Iterations | 3 (initial commit, color-contrast fix bumping pink-500 → pink-600 for AA, Copilot-review fix-up) |
+| Copilot review comments addressed | 7 |
+| Final CI duration | 15 jobs, longest = `a11y` at 1m4s |
+
+### Squashed commit timeline
+
+1. `5bdfec7` — initial feat commit (68 files, +4568 / -143)
+2. `d4d0cd5` — fix(design) bump pink Button + IconButton badge to pink-600 for WCAG AA (3 files, +16 / -7)
+3. `616b12e` — chore(design) address Copilot review feedback on PR-6 (9 files, +22 / -30)
+
+Squash-merged into main as the single commit `da04f1c4`.
+
+### Status-sync trail
+
+- Project board [#9](https://github.com/users/goldr0g3r/projects/9): PR item added, fields set (Status=Done, Phase=P0, Workstream=design, Layer=L3, Type=feat).
+- Epic [#4](https://github.com/goldr0g3r/lotusgift/issues/4) — PR-6 line ticked.
+- Phase-Acceptance [#5](https://github.com/goldr0g3r/lotusgift/issues/5) — `@repo/design-tokens` + `@repo/ui` baseline acceptance line ticked.
+- Parent plan `.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md` — `p0-design` todo marked completed.
+- Branch protection on `main` re-applied via `gh api ... -X PUT` with `a11y` added to `required_status_checks.contexts`.
