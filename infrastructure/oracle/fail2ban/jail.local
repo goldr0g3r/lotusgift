@@ -15,7 +15,11 @@
 # pairing: fail2ban watches logs and adds time-boxed UFW deny rules).
 
 [DEFAULT]
-# 7-day ban for repeat offenders, 1-hour for first-time.
+# 1-hour ban for the [DEFAULT] family. The sshd jail below escalates to 1 day
+# and limits aggressively (maxretry=3 over a 5m window). A separate `recidive`
+# jail with a 7-day ban for repeat offenders is deferred to the quarterly
+# review (PR-8 oracle-quarterly-review.md) once we have real attack-traffic
+# data.
 bantime  = 1h
 findtime = 10m
 maxretry = 5

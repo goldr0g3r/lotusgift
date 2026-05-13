@@ -197,10 +197,19 @@ for snippet in ssl security-headers proxy-params letsencrypt-acme connection-upg
         "/etc/nginx/snippets/${snippet}.conf"
 done
 
-# Vhost — render the ${LOTUSGIFT_API_HOST} placeholder.
-sudo sed "s/\${LOTUSGIFT_API_HOST}/api.lotusgift.com/g" \
+# Vhost — render the ${LOTUSGIFT_API_HOST} placeholder, AND temporarily
+# comment out the :443 server block. The :443 block references certs that
+# don't exist yet, so a `nginx -t` against the full file would fail. We
+# uncomment + reload after Certbot succeeds (Step 4 second half below).
+sudo sed -e "s/\${LOTUSGIFT_API_HOST}/api.lotusgift.com/g" \
     /opt/lotusgift-repo/infrastructure/oracle/nginx/sites-available/api.lotusgift.com.conf \
     | sudo tee /etc/nginx/sites-available/api.lotusgift.com.conf >/dev/null
+
+# Sentinel comment the :443 block. We restore by running `git checkout`
+# below after the certs exist.
+sudo sed -i '/^# Port :443/,$ s/^/# certbot-bootstrap-pending: /' \
+    /etc/nginx/sites-available/api.lotusgift.com.conf
+
 sudo ln -sf /etc/nginx/sites-available/api.lotusgift.com.conf \
             /etc/nginx/sites-enabled/api.lotusgift.com.conf
 
@@ -208,17 +217,13 @@ sudo ln -sf /etc/nginx/sites-available/api.lotusgift.com.conf \
 sudo mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
 sudo chown -R www-data:www-data /var/www/letsencrypt
 
-# Validate the config — MUST succeed before reloading.
+# Validate the (cert-less) config — MUST succeed now that the :443 block is
+# commented out.
 sudo nginx -t
 
-# The vhost references certs that don't exist yet; we serve :80 first so
-# Certbot can do HTTP-01, then issue + reload to bring :443 up.
+# Bring nginx up on :80 only so Certbot HTTP-01 can resolve.
 sudo systemctl enable --now nginx
 ```
-
-> Note: `nginx -t` will fail at this point because the :443 server block references missing certs. That's expected. Comment out the :443 block temporarily, reload, then run Certbot, then uncomment.
->
-> Faster alternative: edit `/etc/nginx/sites-available/api.lotusgift.com.conf` and comment the entire second `server { listen 443 ... }` block. Run `sudo nginx -t && sudo systemctl reload nginx`. Continue to Certbot below. After Certbot succeeds, uncomment the block, `sudo nginx -t && sudo systemctl reload nginx`.
 
 ### First Let's Encrypt cert issuance
 

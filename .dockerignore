@@ -1,0 +1,55 @@
+# Root-level .dockerignore — applied to docker builds whose context is the
+# repo root (e.g. `docker build -f apps/api-gateway/Dockerfile .` from CI's
+# deploy-oracle.yml `build-push` job).
+#
+# Mirrors apps/api-gateway/.dockerignore so per-image dockerignore files keep
+# working when someone invokes a build from the app directory.
+
+# Per-project artifacts.
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/.next
+**/build
+
+# OS + IDE noise.
+**/.DS_Store
+**/.idea
+**/.vscode
+**/Thumbs.db
+
+# Git history (huge, not needed at runtime).
+.git
+.gitignore
+.gitattributes
+
+# Local env files (NEVER bake into an image).
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+
+# Logs.
+**/*.log
+**/logs
+
+# Docs + CI metadata (not needed in the image).
+docs
+.github
+.cursor
+README.md
+**/README.md
+CHANGELOG.md
+LICENSE
+nursery-plan.md
+**/.markdownlint.jsonc
+
+# Old archive (PR-1 quarantine).
+_old
+
+# Infrastructure (not needed inside the image — only the workflow + host use these).
+infrastructure
+scripts

@@ -27,8 +27,13 @@ Type=oneshot
 RemainAfterExit=true
 WorkingDirectory=/opt/lotusgift/compose
 EnvironmentFile=/opt/lotusgift/.env.production
-ExecStartPre=/usr/bin/docker compose -f docker-compose.prod.yml pull
-ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d --wait --wait-timeout 60
+# IMAGE_TAG is overridden on every deploy by deploy.sh (which writes the
+# new tag to /opt/lotusgift/.env.production after the healthcheck succeeds).
+# At boot we resolve the recorded last-good tag from /opt/lotusgift/.last-good-tag
+# and feed it into compose so systemctl-driven restarts can never bypass the
+# rollback trail by silently grabbing a fresh :main.
+ExecStartPre=/bin/sh -c 'test -s /opt/lotusgift/.last-good-tag && echo "IMAGE_TAG=$(cat /opt/lotusgift/.last-good-tag)" > /opt/lotusgift/.image-tag.env'
+ExecStart=/bin/sh -c 'set -a; . /opt/lotusgift/.image-tag.env; set +a; /usr/bin/docker compose -f docker-compose.prod.yml up -d --wait --wait-timeout 60'
 ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml down
 TimeoutStartSec=180
 TimeoutStopSec=60

@@ -34,10 +34,21 @@ log "heartbeat: start (burst=${BURST_SECS}s; probe=${HEALTHZ_URL})"
 
 # Controlled CPU burst — `yes` is the canonical low-impact-but-measurable
 # workload (writes 'y\n' as fast as one core can to /dev/null).
+BURST_PID=""
+# Always reap the burst — covers SIGINT/SIGTERM/EXIT so a Ctrl-C or systemd
+# stop signal can never leave `yes` burning a core indefinitely.
+cleanup() {
+    if [[ -n "${BURST_PID}" ]]; then
+        kill "${BURST_PID}" 2>/dev/null || true
+        wait "${BURST_PID}" 2>/dev/null || true
+        BURST_PID=""
+    fi
+}
+trap cleanup EXIT INT TERM HUP
+
 yes > /dev/null & BURST_PID=$!
 sleep "${BURST_SECS}"
-kill "${BURST_PID}" 2>/dev/null || true
-wait "${BURST_PID}" 2>/dev/null || true
+cleanup
 
 # Localhost probe — exercises the api-gateway end-to-end (Docker network +
 # Node loop + Nest controller). Failure is non-fatal: heartbeat continues

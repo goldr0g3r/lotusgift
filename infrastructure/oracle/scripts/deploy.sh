@@ -63,8 +63,9 @@ for i in 1 2 3 4 5; do
     sleep $((i * 2))
 done
 
-# Persist tag so rollback.sh has a known-good target.
+# Persist tag so rollback.sh + the systemd unit have a known-good target.
 echo "${TAG}" > "${LAST_GOOD_FILE}"
+echo "IMAGE_TAG=${TAG}" > "${LOTUSGIFT_HOME}/.image-tag.env"
 log "Persisted last-good tag to ${LAST_GOOD_FILE}"
 
 # Image hygiene — remove dangling layers older than 24h (saves ~1 GB / week).
