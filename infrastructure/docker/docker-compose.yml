@@ -1,0 +1,131 @@
+# LotusGift v2 — local development stack.
+# Spin up: docker compose -f infrastructure/docker/docker-compose.yml up -d
+# Tear down: docker compose -f infrastructure/docker/docker-compose.yml down [-v]
+#
+# Pinning rationale + Mailhog -> Mailpit substitution documented in:
+#   - docs/research/phase-0-dev-stack.md
+#   - infrastructure/docker/README.md
+#
+# All ports are overridable via env vars (see README "Port-conflict workaround").
+# Renovate (renovate.json at repo root) manages within-major image tag updates.
+
+name: lotusgift-dev
+
+networks:
+  lotusgift-dev:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  redis-data:
+  mailpit-data:
+
+services:
+  # MongoDB 8.0 LTS major.
+  # Atlas M0 production currently runs the 7.0 server line; local-dev tracks
+  # latest-stable for forward-compat (see open question Q3 in
+  # docs/research/phase-0-dev-stack.md §4). Single standalone instance;
+  # replica-set upgrade lands at P10 when payment-service needs ACID
+  # transactions (research note §4 Q4).
+  mongo:
+    image: mongo:8.0
+    container_name: lotusgift-mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - lotusgift-dev
+    healthcheck:
+      test:
+        - "CMD"
+        - "mongosh"
+        - "--quiet"
+        - "--eval"
+        - "db.adminCommand({ ping: 1 })"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Redis 8 alpine variant.
+  # Used at P5+ for session storage, rate-limit counters (Upstash in prod),
+  # Razorpay idempotency keys, RFQ auto-router thresholds cache.
+  redis:
+    image: redis:8-alpine
+    container_name: lotusgift-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - lotusgift-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Mailpit — modern Mailhog replacement (Mailhog last pushed 2024-02).
+  # SMTP catcher on 1025; Web UI + REST API on 8025.
+  # Used at P12+ (notification-service) for email development.
+  # Set MP_DATABASE=/data/mailpit.db env to enable persistence across restarts.
+  mailpit:
+    image: axllent/mailpit:v1.29
+    container_name: lotusgift-mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    volumes:
+      - mailpit-data:/data
+    networks:
+      - lotusgift-dev
+    healthcheck:
+      test:
+        - "CMD"
+        - "wget"
+        - "--spider"
+        - "--quiet"
+        - "http://localhost:8025/api/v1/info"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # OpenTelemetry Collector (contrib distribution).
+  # Receives OTLP gRPC :4317 + OTLP HTTP :4318 from apps/api-gateway (P4+);
+  # batches and pretty-prints to stdout via the `debug` exporter.
+  # P21 swaps `debug` -> `otlp -> Grafana Cloud / Tempo / Loki`.
+  # Health-check extension exposes :13133 for compose / k8s probes.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.152.0
+    container_name: lotusgift-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+      - "${OTEL_METRICS_PORT:-8888}:8888"
+      - "${OTEL_HEALTH_PORT:-13133}:13133"
+    networks:
+      - lotusgift-dev
+    # NOTE: otel/opentelemetry-collector-contrib >= 0.103 ships a distroless
+    # image without wget / curl / shell, so an in-container healthcheck would
+    # always fail even when the collector is fine. We probe externally instead:
+    # `curl http://localhost:13133/` (or `docker compose ps`) verifies that the
+    # health_check extension responds. Re-enable a CMD-style healthcheck if
+    # OpenTelemetry publishes a non-distroless variant in future. Tracked in
+    # docs/research/phase-0-dev-stack.md D8.
+    healthcheck:
+      disable: true
