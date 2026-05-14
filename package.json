@@ -14,7 +14,9 @@
     "check-types": "turbo run check-types",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "dep-cruiser": "depcruise --config .dependency-cruiser.cjs --output-type err --exclude \"(^|/)(_old|node_modules|dist|.next|.turbo|coverage)(/|$)\" apps packages services",
-    "free-tier-burn": "tsx scripts/free-tier-quota-burn.ts"
+    "free-tier-burn": "tsx scripts/free-tier-quota-burn.ts",
+    "openapi:export": "tsx scripts/codegen/export-openapi.ts",
+    "api:generate": "kubb generate"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
