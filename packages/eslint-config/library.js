@@ -1,36 +1,26 @@
+import globals from "globals";
 import { config as baseConfig } from "./base.js";
 
 /**
- * A custom ESLint configuration for Node.js libraries.
+ * ESLint flat-config for plain Node.js libraries (`packages/@repo/*` that are
+ * not React, not Nest). Extends the shared base + scopes globals to the
+ * Node runtime.
  *
  * @type {import("eslint").Linter.Config[]}
- * */
+ */
 export const libraryConfig = [
   ...baseConfig,
   {
     languageOptions: {
       globals: {
-        React: true,
-        JSX: true,
+        ...globals.node,
       },
-      parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "module",
-      },
-    },
-    env: {
-      node: true,
-    },
-    settings: {
-      "import/resolver": {
-        typescript: {
-          project: "./tsconfig.json",
-        },
-      },
+      ecmaVersion: "latest",
+      sourceType: "module",
     },
   },
   {
-    ignores: [".*.js", "node_modules/", "dist/"],
+    ignores: ["dist/**", "node_modules/**", "coverage/**"],
   },
 ];
 

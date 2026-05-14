@@ -10,7 +10,7 @@ import {
 
 import type { CreateLinkDto, UpdateLinkDto } from '@repo/api';
 
-import { LinksService } from './links.service';
+import { LinksService } from './links.service.js';
 
 @Controller('links')
 export class LinksController {

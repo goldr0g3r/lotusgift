@@ -1,4 +1,6 @@
-import config from "@repo/eslint-config/prettier-base";
+import config from "@repo/prettier-config";
 
 /** @type {import("prettier").Config} */
 export default config;
+
+
