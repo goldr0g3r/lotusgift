@@ -33,15 +33,19 @@ export default {
 
 Mostly tracks [Prettier 3's recommendations](https://prettier.io/docs/configuration), with one LotusGift-specific override:
 
-| Option | Value | Source |
-| --- | --- | --- |
-| `singleQuote` | `true` | LotusGift override (tracks the wider TypeScript community preference) |
-| `printWidth` | `80` | Prettier 3 default |
-| `tabWidth` | `2` | Prettier 3 default |
-| `useTabs` | `false` | Prettier 3 default |
-| `semi` | `true` | Prettier 3 default |
-| `trailingComma` | `'all'` | Prettier 3 default |
-| `arrowParens` | `'always'` | Prettier 3 default |
+| Option          | Value      | Source                                                                |
+| --------------- | ---------- | --------------------------------------------------------------------- |
+| `singleQuote`   | `true`     | LotusGift override (tracks the wider TypeScript community preference) |
+| `printWidth`    | `80`       | Prettier 3 default (3.6.2 — lockfile-pinned)                          |
+| `tabWidth`      | `2`        | Prettier 3 default                                                    |
+| `useTabs`       | `false`    | Prettier 3 default                                                    |
+| `semi`          | `true`     | Prettier 3 default                                                    |
+| `trailingComma` | `'all'`    | Prettier 3 default                                                    |
+| `arrowParens`   | `'always'` | Prettier 3 default                                                    |
+
+## Distribution
+
+Authored as ESM `.mjs` (not `.ts`) so Node can load it natively without a compile step. Prettier reads its config via dynamic import at runtime — a TypeScript entry would fail with an `Unknown file extension ".ts"` error. The package has no build step; the published `index.mjs` is the source.
 
 Refresh quarterly via the [`docs/runbooks/oracle-quarterly-review.md`](../../docs/runbooks/oracle-quarterly-review.md) cadence as Prettier 3.x defaults evolve.
 

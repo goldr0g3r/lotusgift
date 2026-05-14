@@ -4,14 +4,14 @@ Shared `tsconfig.json` bases for every package + app in the LotusGift monorepo. 
 
 ## Choose your base
 
-| File | For | Notable options |
-| --- | --- | --- |
-| [`base.json`](base.json) | The strict foundation every other config extends. Direct use only when none of the specialised configs fit. | `module + moduleResolution: NodeNext`, `target: ES2022`, `strict: true`, `noUncheckedIndexedAccess: true`. |
-| [`library.json`](library.json) | Workspace packages under `packages/@repo/*` that emit JavaScript (consumed by apps + other packages). | Adds `outDir: dist`, `rootDir: src`, `declaration: true`, `declarationMap: true`, `sourceMap: true`. Excludes `*.test.ts` + `*.spec.ts`. |
-| [`nestjs.json`](nestjs.json) | `apps/api-gateway` and any standalone NestJS app. Carries the decorator-metadata + CommonJS interop Nest 11 expects. | `module: commonjs`, `moduleResolution: Node16` (TS 6 modernization vs the deprecated `Node10`), `emitDecoratorMetadata + experimentalDecorators`. |
-| [`nextjs.json`](nextjs.json) | The 4 Next.js apps (`web-customer`, `web-vendor`, `web-admin`, `web-customer-service`). | `module: ESNext`, `moduleResolution: Bundler`, `jsx: preserve`, `noEmit: true`, `plugins: [{ name: next }]`. |
-| [`react-library.json`](react-library.json) | Workspace packages that publish React components (`@repo/ui`, etc.). | Extends `base.json` + `jsx: react-jsx`. Pair with `library.json` overrides for emit settings. |
-| [`test.json`](test.json) | `jest` test runs via `ts-jest`. Referenced by `@repo/jest-config`. | `module: commonjs`, `moduleResolution: Node16`, `isolatedModules: true`, `types: [jest, node]`. |
+| File                                       | For                                                                                                                  | Notable options                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`base.json`](base.json)                   | The strict foundation every other config extends. Direct use only when none of the specialised configs fit.          | `module + moduleResolution: NodeNext`, `target: ES2022`, `strict: true`, `noUncheckedIndexedAccess: true`.                                                                                                                                                                                                                                                                                                         |
+| [`library.json`](library.json)             | Workspace packages under `packages/@repo/*` that emit JavaScript (consumed by apps + other packages).                | Adds `outDir: dist`, `rootDir: src`, `declaration: true`, `declarationMap: true`, `sourceMap: true`. Excludes `*.test.ts` + `*.spec.ts`.                                                                                                                                                                                                                                                                           |
+| [`nestjs.json`](nestjs.json)               | `apps/api-gateway` and any standalone NestJS app. Carries the decorator-metadata + CommonJS interop Nest 11 expects. | `module: Node16` + `moduleResolution: Node16` (TS 6 modernization vs the deprecated `Node10`; TS5110 requires the two values to match). Nest still ends up with CJS emit because consumers (`apps/api-gateway/package.json`) carry no `type: module` field, so Node16's file-extension-driven rule classifies `.ts` files as CJS. `emitDecoratorMetadata + experimentalDecorators` for Nest's reflection-based DI. |
+| [`nextjs.json`](nextjs.json)               | The 4 Next.js apps (`web-customer`, `web-vendor`, `web-admin`, `web-customer-service`).                              | `module: ESNext`, `moduleResolution: Bundler`, `jsx: preserve`, `noEmit: true`, `plugins: [{ name: next }]`.                                                                                                                                                                                                                                                                                                       |
+| [`react-library.json`](react-library.json) | Workspace packages that publish React components (`@repo/ui`, etc.).                                                 | Extends `base.json` + `jsx: react-jsx`. Pair with `library.json` overrides for emit settings.                                                                                                                                                                                                                                                                                                                      |
+| [`test.json`](test.json)                   | `jest` test runs via `ts-jest`. Referenced by `@repo/jest-config`.                                                   | `module: commonjs`, `moduleResolution: Node16`, `isolatedModules: true`, `types: [jest, node]`.                                                                                                                                                                                                                                                                                                                    |
 
 ## Use from a consumer
 
@@ -21,9 +21,9 @@ Shared `tsconfig.json` bases for every package + app in the LotusGift monorepo. 
   "extends": "@repo/typescript-config/library.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
   },
-  "include": ["src"]
+  "include": ["src"],
 }
 ```
 
@@ -31,7 +31,7 @@ For apps, override the emit destinations + paths as needed without re-declaring 
 
 ## TypeScript 6 modernization
 
-Phase 1 (PR-9) dropped the `moduleResolution: "Node10"` value from `nestjs.json` because TS 6 deprecated it (see [microsoft/TypeScript#62200](https://github.com/microsoft/TypeScript/issues/62200), 2026-05-14). Replacement value `Node16` keeps NestJS 11's CommonJS emit while picking up modern Node's `package.json` `exports`/`imports` rules. Consumers of `nestjs.json` running their own Node 20+ workloads (such as `apps/api-gateway`) must use explicit `.js` extensions on relative imports per the [NodeNext rule](https://www.typescriptlang.org/tsconfig/moduleResolution.html).
+Phase 1 (PR-9) dropped the `moduleResolution: "Node10"` value from `nestjs.json` because TS 6 deprecated it (see [microsoft/TypeScript#62200](https://github.com/microsoft/TypeScript/issues/62200), 2026-05-14). Replacement values: `module: Node16` + `moduleResolution: Node16` (TS5110 requires the two to align). NestJS 11 still emits CJS in practice because the `apps/api-gateway/package.json` carries no `type: module` field, so Node16's file-extension-driven rule classifies `.ts` files as CJS. Consumers running their own Node 20+ workloads MUST use explicit `.js` extensions on relative imports per the [NodeNext rule](https://www.typescriptlang.org/tsconfig/moduleResolution.html) (workspace imports like `@repo/api` stay extension-less — they resolve through pnpm's symlinks).
 
 `baseUrl` was also deprecated in TS 6 — consumers should drop it and use relative imports (or `paths` in their own tsconfig if absolutely required). Workspace package imports (`@repo/*`) resolve via pnpm's symlinks regardless and do not need extensions.
 
