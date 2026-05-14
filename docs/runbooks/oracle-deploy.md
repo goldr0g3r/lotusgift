@@ -419,17 +419,7 @@ Run sections 1–8 again. Atlas + Upstash hold all state — the new VM stands u
 
 ## 10. Quarterly review checklist
 
-PR-8 will land `docs/runbooks/oracle-quarterly-review.md` (forward pointer — file does not yet exist). Until then, do this list every 90 days:
-
-- [ ] `sudo certbot renew --dry-run` succeeds (cert auto-renewal healthy)
-- [ ] All audit-drift diffs in [`infrastructure/oracle/README.md`](../../infrastructure/oracle/README.md#audit--drift-detection) return empty
-- [ ] `docker image ls --digests` matches `:main` digest with the latest GHCR push
-- [ ] `systemctl list-timers lotusgift-heartbeat.timer` shows a `NEXT` entry < 6h away
-- [ ] `sudo fail2ban-client status sshd` ban-count not exploding (>50 = consider investigation)
-- [ ] Oracle billing dashboard shows < 90% of free-tier OCPU + memory hours
-- [ ] Cloudflare DNS still pointing at the VM's public IP
-- [ ] SSH key in CI rotated if approaching 90 days since last rotation
-- [ ] `docs/research/phase-0-oracle-runbook.md` versions table refreshed if any pinned action got bumped
+Every 90 days post-provisioning, run [`docs/runbooks/oracle-quarterly-review.md`](oracle-quarterly-review.md). It covers cert renewal validation, the full 14-command audit-drift diff against [`infrastructure/oracle/README.md`](../../infrastructure/oracle/README.md), fail2ban audit, Oracle billing review, SSH key rotation, Docker hygiene, and heartbeat health — plus a per-quarter findings template at `docs/quarterly-reviews/YYYY-QN.md`.
 
 ---
 

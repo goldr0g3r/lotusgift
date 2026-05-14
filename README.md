@@ -122,7 +122,16 @@ pnpm dev
 
 Ports during dev: api-gateway `:3001`, web-customer `:3000`, web-vendor `:3002`, web-admin `:3003`, web-customer-service `:3004`.
 
-A local Docker dev stack (MongoDB + Redis + Mailpit + OTEL collector) is wired via [`infrastructure/docker/docker-compose.yml`](infrastructure/docker/docker-compose.yml) — see PR-5 for the dev-stack runbook.
+## Local development
+
+LotusGift v2 supports two local-dev paths for MongoDB + Redis:
+
+1. **Host install** (team default) — `apt`/`brew`/`winget`-installed Mongo + Redis listening on `localhost:27017` + `localhost:6379`. Lowest friction, lowest RAM idle cost, matches what most contributors already have. Walkthrough at [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md).
+2. **Docker compose fallback** — the [`infrastructure/docker/docker-compose.yml`](infrastructure/docker/docker-compose.yml) stack from PR-5 spins up Mongo + Redis + Mailpit + OTEL Collector in containers. Use this for: corporate-locked workstations, clean-room reproduction, contributors who need Mailpit (P12) or the OTEL Collector (P21) locally, or anyone who prefers Docker. Reference at [`infrastructure/docker/README.md`](infrastructure/docker/README.md).
+
+Both paths bind on the same default ports, so all `.env.development` files use `mongodb://localhost:27017/lotusgift` + `redis://localhost:6379` regardless of which path you picked.
+
+The complete operational runbook index lives at [`docs/runbooks/README.md`](docs/runbooks/README.md).
 
 ## Phase roadmap
 
