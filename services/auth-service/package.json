@@ -2,7 +2,6 @@
   "name": "@lotusgift/auth-service",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
@@ -12,19 +11,17 @@
     "lint": "eslint .",
     "check-types": "tsc --noEmit"
   },
+  "dependencies": {
+    "@nestjs/common": "^11.1.11",
+    "@repo/config": "workspace:*",
+    "@repo/types": "workspace:*",
+    "reflect-metadata": "^0.2.2"
+  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "typescript": "5.9.2",
-    "@nestjs/common": "^11",
-    "@nestjs/core": "^11",
-    "reflect-metadata": "^0.2",
-    "rxjs": "^7"
-  },
-  "peerDependencies": {
-    "@nestjs/common": "^11",
-    "@nestjs/core": "^11",
-    "reflect-metadata": "^0.2",
-    "rxjs": "^7"
+    "@types/node": "^22.19.3",
+    "typescript": "5.9.2"
   }
 }
+

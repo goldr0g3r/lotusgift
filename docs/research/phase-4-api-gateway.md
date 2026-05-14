@@ -78,4 +78,14 @@ PR-13 transforms `apps/api-gateway/src/{main,app.module}.ts` from the create-nes
 
 ## 6. Implementation reference
 
-Filled after merge.
+- **PR:** [#29 — feat(gateway): polish api-gateway shell + RFC 9457 filter + OutboxPort lifecycle + Swagger + kubb scaffold](https://github.com/goldr0g3r/lotusgift/pull/29)
+- **Squash SHA on `main`:** `b8e8b2ce2005a9ebafe62499a34fcd89b10a544d` (merged 2026-05-14)
+- **Branch lifetime:** `pr-13-api-gateway` (created + deleted 2026-05-14)
+- **Commits squashed (2):** initial polish + Dockerfile fix (added 8 missing workspace `package.json` COPY entries for the new @repo/config, @repo/database, @repo/events, @repo/observability, @repo/openapi-spec, @repo/types, @repo/utils, @repo/validators deps).
+- **Issues closed:** [#27 (Phase 4 Epic)](https://github.com/goldr0g3r/lotusgift/issues/27), [#28 (Phase 4 Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/28). Phase 4 milestone (#5) closed.
+- **CI status:** all 16 required checks green on the final commit.
+- **Test counts:** 6 new tests across 4 api-gateway suites (problem-details filter 5 + trace-id middleware 4 + health-controller readiness 2 new). Pre-existing app + links specs preserved.
+- **Lessons learned:**
+  1. The Dockerfile's per-package COPY list must be expanded whenever a new workspace package is added — pnpm's workspace resolver fails on missing `package.json` files even if the actual source isn't needed (because it builds the workspace graph first).
+  2. `tsconfig.build.json` for the api-gateway must exclude `**/*.test.ts` so `nest build` (which uses tsc) doesn't compile test files + fail on the jest globals.
+  3. `getConnectionToken()` from `@nestjs/mongoose` is the correct DI token for the default Mongoose connection in `useFactory.inject: [...]` — `InjectConnection()` is a parameter decorator, not a token, and fails at module compile.

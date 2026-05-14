@@ -1,5 +1,26 @@
-# @repo/auth-client
+# `@repo/auth-client`
 
-Better-Auth client wrapper with session helpers for the 4 Next.js apps.
+LotusGift v2's L3 Better-Auth browser SDK. Thin wrapper around `better-auth/client` with the organization + admin plugins pre-configured so consuming Next.js apps don't have to re-declare them.
 
-> Scaffolded in PR-1 (chore(scaffold)) on 2026-05-12. Implementation arrives in a later phase per the parent plan.
+## Usage
+
+```ts
+// apps/web-customer/lib/auth.ts (P16)
+import { createLotusGiftAuthClient } from '@repo/auth-client';
+
+export const auth = createLotusGiftAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_API_URL!,
+});
+
+// React component:
+const { data: session } = auth.useSession();
+await auth.signIn.email({ email, password });
+```
+
+## Server side
+
+Use [`@lotusgift/auth-service`](../../services/auth-service/) instead — it owns the Better-Auth instance + Mongo adapter and is consumed via the api-gateway's `AuthGuard` + `@Session()` decorator.
+
+## L3 placement
+
+Imports `better-auth` (L0 npm). No NestJS, no React, no Next.js — those layers wrap this primitive at L4/L6.
