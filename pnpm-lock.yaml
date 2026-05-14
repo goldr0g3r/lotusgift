@@ -443,18 +443,9 @@ importers:
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: ^22.15.3
-        version: 22.19.3
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
 
   packages/types:
     devDependencies:
