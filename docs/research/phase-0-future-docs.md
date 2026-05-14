@@ -60,18 +60,18 @@ This note backs the 7 Phase-0 closeout runbooks shipped by PR-8 — 6 from the p
 
 ## 4. Implementation checklist
 
-- [ ] `docs/runbooks/local-development.md` (NEW; ~150 lines)
-- [ ] `docs/runbooks/going-to-production.md` (~180 lines)
-- [ ] `docs/runbooks/scaling-up.md` (~200 lines)
-- [ ] `docs/runbooks/free-tier-burn.md` (~150 lines)
-- [ ] `docs/runbooks/incident-response.md` (~180 lines)
-- [ ] `docs/runbooks/backup-restore.md` (~180 lines)
-- [ ] `docs/runbooks/oracle-quarterly-review.md` (~150 lines) + tiny edit to `oracle-deploy.md` §10
-- [ ] `docs/runbooks/README.md` (NEW; ~60 lines) — runbooks index
-- [ ] `README.md` + `infrastructure/docker/README.md` cross-references
-- [ ] `pnpm dlx markdownlint-cli2` on the new files — 0 errors
-- [ ] PR opened, Copilot review iterated, squash merged
-- [ ] Status sync: project board + Epic #4 + Phase-Acceptance #5 + parent plan + this note
+- [x] `docs/runbooks/local-development.md` (NEW; ~150 lines)
+- [x] `docs/runbooks/going-to-production.md` (~180 lines)
+- [x] `docs/runbooks/scaling-up.md` (~200 lines)
+- [x] `docs/runbooks/free-tier-burn.md` (~150 lines)
+- [x] `docs/runbooks/incident-response.md` (~180 lines)
+- [x] `docs/runbooks/backup-restore.md` (~180 lines)
+- [x] `docs/runbooks/oracle-quarterly-review.md` (~150 lines) + tiny edit to `oracle-deploy.md` §10
+- [x] `docs/runbooks/README.md` (NEW; ~60 lines) — runbooks index
+- [x] `README.md` + `infrastructure/docker/README.md` cross-references
+- [x] `pnpm dlx markdownlint-cli2` on the new files — 0 errors
+- [ ] PR opened, Copilot review iterated, squash merged (in progress — Section 6 captures the final SHA)
+- [ ] Status sync: project board + Epic #4 + Phase-Acceptance #5 + parent plan + this note (post-merge — Section 6 captures the trail)
 
 ## 5. Versions captured
 

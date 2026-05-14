@@ -26,7 +26,7 @@ The acceptance gate for launch is **OWASP ASVS 5.0 Level 2** (per [ASVS 5.0.0, r
 
 - [ ] Atlas storage usage from [`scripts/free-tier-quota-burn.ts`](../../scripts/free-tier-quota-burn.ts) — if > 70 %, run the M0 → M10 upgrade per [`scaling-up.md` §3](scaling-up.md#3-atlas-m0-m10-upgrade). M10 is `$0.08/hr` AWS Mumbai (~$57/month); board approval required.
 - [ ] If staying on M0: cap `mongodump` cadence to ≤ 4× / day (see [`backup-restore.md` §3](backup-restore.md#3-atlas-m0-backup)) — M0 has no continuous backups (per [Atlas free-shared-limitations, 2026-05-14](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/)).
-- [ ] Atlas Network Access list updated: Oracle Mumbai VM IP only (no `0.0.0.0/0`).
+- [ ] Atlas Network Access list updated: Oracle Mumbai VM static public IP (so the api-gateway + the on-VM backup cron can reach Atlas) + the GitHub Actions runner IP ranges (per <https://api.github.com/meta>, only if a runner ever needs to reach Atlas directly — the backup spec keeps cron on the VM specifically to avoid this). Never use `0.0.0.0/0`.
 
 ### Vercel
 
@@ -106,7 +106,7 @@ The acceptance gate for launch is **OWASP ASVS 5.0 Level 2** (per [ASVS 5.0.0, r
    ```
 
 5. **Flip the "soft launch" feature flag in PostHog** for the first batch of pilot customers (or `true` if launching to everyone).
-6. **Mark complete in `#incidents`.** Capture the go-live commit SHA on `main` for the post-mortem timeline.
+6. **Mark complete in `#incidents`.** Capture the go-live commit SHA on `main` for the post-mortem timeline (template at [`incident-response.md` §8](incident-response.md#8-post-mortem-template)).
 
 ---
 
@@ -119,7 +119,7 @@ The acceptance gate for launch is **OWASP ASVS 5.0 Level 2** (per [ASVS 5.0.0, r
 - [ ] Watch Razorpay webhook delivery — any failed deliveries get a same-day investigation (signature mismatch usually = clock skew or rotation gap).
 - [ ] Watch Atlas storage delta — first day of real traffic often spikes; if > 90 % of M0 quota, kick off the M10 upgrade ASAP.
 
-If anything fires above SEV-3, follow [`incident-response.md`](incident-response.md).
+If anything fires above SEV-3, follow [`incident-response.md`](incident-response.md). Post-mortems use the template at [`incident-response.md` §8](incident-response.md#8-post-mortem-template).
 
 ---
 

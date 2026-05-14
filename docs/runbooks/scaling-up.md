@@ -119,7 +119,7 @@ flowchart LR
 
 ## 7. Upstash Redis → self-hosted Redis on the Oracle VM
 
-**Trigger:** Upstash commands/day > 70 % of the 500K/month free cap **OR** monthly bandwidth > 70 % of 10 GB **OR** data > 200 MB (free cap = 256 MB) (per [Upstash pricing, 2026-05-14](https://upstash.com/pricing/redis)).
+**Trigger:** Upstash 30-day rolling commands > 70 % of the 500K/month free cap (~350K commands over a trailing 30-day window — about 11.7K/day sustained) **OR** monthly bandwidth > 70 % of 10 GB (~7 GB rolling 30-day) **OR** data > 200 MB (free cap = 256 MB) (per [Upstash pricing, 2026-05-14](https://upstash.com/pricing/redis)).
 
 **Cost:** self-hosted Redis on the Oracle A1.Flex VM uses ~256 MB RAM + ~0.5 OCPU — comfortably within budget. Adds ~1 hour of setup + becomes a SPOF (single point of failure: VM down = no Redis).
 

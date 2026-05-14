@@ -73,7 +73,7 @@ The script lives at [`scripts/free-tier-quota-burn.ts`](../../scripts/free-tier-
 - `0` — completed (with or without quota breaches; with or without skipped checks).
 - `1` — unexpected error (network failure, unparseable response, etc.).
 
-The workflow lives at [`.github/workflows/free-tier-burn.yml`](../../.github/workflows/free-tier-burn.yml). Trigger: `schedule: cron: "0 6 * * 1"` (every Monday 06:00 UTC = ~11:30 IST). Manual trigger via `workflow_dispatch` is also enabled.
+The workflow lives at [`.github/workflows/free-tier-burn.yml`](../../.github/workflows/free-tier-burn.yml). Trigger: `schedule: cron: "0 0 * * 1"` (every Monday 00:00 UTC = ~05:30 IST). Manual trigger via `workflow_dispatch` is also enabled.
 
 The workflow's only job:
 
@@ -83,15 +83,17 @@ The workflow's only job:
 
 Required GitHub Actions secrets (set under repo Settings → Secrets and variables → Actions):
 
-| Secret | Used by | First needed at |
-| --- | --- | --- |
-| `ATLAS_PUBLIC_KEY`, `ATLAS_PRIVATE_KEY`, `ATLAS_GROUP_ID` (optional: `ATLAS_CLUSTER_NAME`) | `checkAtlas` | P3 dev-stack populates these |
-| `VERCEL_TOKEN` (optional: `VERCEL_TEAM_ID`) | `checkVercel` | P16 web-customer launch |
-| `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID` | `checkPostHog` | P3b analytics-sdk |
-| `UPSTASH_API_TOKEN`, `UPSTASH_EMAIL` | `checkUpstash` | P5 auth-service rate-limit |
-| `GH_TOKEN` (auto from `secrets.GITHUB_TOKEN`) | issue creation | always |
+| Secret | Used by | First needed at | Wired into workflow env? |
+| --- | --- | --- | --- |
+| `ATLAS_PUBLIC_KEY`, `ATLAS_PRIVATE_KEY`, `ATLAS_GROUP_ID` (optional: `ATLAS_CLUSTER_NAME`) | `checkAtlas` | P3 dev-stack populates these | Add at P3 when the script first becomes useful |
+| `VERCEL_TOKEN` (optional: `VERCEL_TEAM_ID`) | `checkVercel` | P16 web-customer launch | Add at P16 |
+| `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID` | `checkPostHog` | P3b analytics-sdk | Add at P3b |
+| `UPSTASH_API_TOKEN`, `UPSTASH_EMAIL` | `checkUpstash` | P5 auth-service rate-limit | Add at P5 |
+| `GH_TOKEN` (auto from `secrets.GITHUB_TOKEN`) | issue creation | always | Already passed |
 
 Missing creds for any vendor → that vendor's check is skipped (logged at INFO) — the rest still run.
+
+> **Important:** adding a repo secret alone is NOT enough. The workflow YAML at [`.github/workflows/free-tier-burn.yml`](../../.github/workflows/free-tier-burn.yml) currently passes only `GH_TOKEN`. When you bootstrap a new vendor's token (per the phase column above), update the workflow's `env:` block to inject the corresponding secret(s) into the script's process environment in the same PR. Without that wiring, the script keeps reading `undefined` and the check stays skipped.
 
 ---
 
@@ -100,9 +102,10 @@ Missing creds for any vendor → that vendor's check is skipped (logged at INFO)
 ### Atlas
 
 1. Atlas Console → Organization → Access Manager → Create API Key.
-2. Scopes: `Project Read Only` for the LotusGift project.
-3. Whitelist GitHub Actions runner IPs (or `0.0.0.0/0` for the runner, since Atlas's read API isn't sensitive).
+2. Scopes: `Project Read Only` for the LotusGift project (minimum permission set — never grant `Project Owner`).
+3. Access list: add only the published GitHub Actions runner IP ranges (per <https://api.github.com/meta>, refreshed quarterly via the oracle-quarterly-review.md cadence). **Do NOT** use `0.0.0.0/0` — a leaked read-only key still exposes cluster metadata + quota information; the access-list is the second factor.
 4. Paste `Public Key`, `Private Key`, and `Project ID` as repo secrets.
+5. Set a 90-day expiry on the key; rotate via the same Access Manager UI on the quarterly review.
 
 ### Vercel
 

@@ -65,4 +65,4 @@ For the architecture context, start at the parent plan: [`.cursor/plans/lotusgif
 3. Add a row to this index in the right table.
 4. Cross-link from related runbooks (every runbook ends with a "Related runbooks" section).
 5. Open an ADR if the runbook codifies a new architecture or operational decision.
-6. PR through normal workflow; `markdownlint` is the only CI gate for docs-only changes.
+6. PR through normal workflow. The full required-checks list still runs on every PR (`typecheck`, `lint`, `test`, `a11y`, `build`, `build-push`, `markdownlint`, `actionlint`, `pr-title`, `secret-scan`, `dependency-review`, `dep-cruiser`, `openapi-drift`, `atlas-search-mapping-drift`, `corporate-gifting-domain` — see [`infrastructure/github/README.md`](../../infrastructure/github/README.md)); `markdownlint` is just the one that actively exercises the runbook content.

@@ -14,7 +14,7 @@ This runbook is a **spec** — it documents what the backup jobs MUST do. Concre
 | Redis sessions + rate-limit counters + idempotency keys | Upstash Redis (AWS Mumbai) | Manual `--rdb` export → R2 (per [Upstash backup docs](https://upstash.com/docs/redis/howto/importexport), 2026-05-14) | Yes |
 | Catalogue images + customization art files + invoices | Cloudflare R2 | Bucket versioning + 30-day lifecycle to Infrequent Access; cross-bucket replication to a separate R2 bucket for catastrophic recovery | Yes (within 10 GB free) |
 | Code | GitHub (`goldr0g3r/lotusgift`) | Git history is the backup | Yes |
-| Secrets | Vercel env vars + Oracle VM `/opt/lotusgift/.env.production` + GitHub Actions secrets | NOT backed up — rotation procedure exists in [`going-to-production.md` §8](going-to-production.md#8-rollback-trigger); secrets manager (1Password / Bitwarden) holds the canonical copy | n/a |
+| Secrets | Vercel env vars + Oracle VM `/opt/lotusgift/.env.production` + GitHub Actions secrets | NOT backed up — first-week rotation procedure documented in [`going-to-production.md` §7](going-to-production.md#7-t7--first-quarterly-review-1-week-after-launch); 90-day SSH-key rotation cadence in [`oracle-quarterly-review.md` §6](oracle-quarterly-review.md#6-ssh-key-rotation); secrets manager (1Password / Bitwarden) holds the canonical copy | n/a |
 
 ---
 
@@ -38,15 +38,15 @@ M0 free clusters have NO automatic backup feature (per [Atlas free-shared-limita
 
 ### Spec (implemented at P3)
 
-The cron job MUST:
+The cron job runs on the **Oracle VM itself** via a `systemd.timer` (NOT on GitHub Actions runners; the Atlas Network Access list only whitelists the VM's static public IP per [`going-to-production.md` §2](going-to-production.md#2-t-7--provisioning-1-week-before-launch), and GHA runner IPs are ephemeral). It MUST:
 
-1. Run on a `*/6 * * * *` schedule (every 6 hours; ≤ 4× / day).
-2. Use `mongodump --uri "${MONGO_BACKUP_URI}" --gzip --archive=/tmp/lotusgift-${ISO_TIMESTAMP}.gz` against a read-only Atlas user (NOT the app's R/W user — separate principal of least privilege).
-3. Upload to R2 at `s3://lotusgift-backups/atlas/lotusgift-${ISO_TIMESTAMP}.gz` (Cloudflare R2 supports S3 API).
-4. Verify the upload via `aws s3api head-object` (R2 S3-compat endpoint).
-5. Delete the local file from the runner.
-6. Emit a status line to the GitHub Actions summary.
-7. On failure, page via `#incidents` (treat as SEV-2; backup gap > 12 h escalates to SEV-1).
+1. Fire on a `OnCalendar=*-*-* 00/6:00:00` schedule (every 6 hours at 00:00 / 06:00 / 12:00 / 18:00 UTC — mirrors the heartbeat timer cadence; ≤ 4× / day).
+2. Run `mongodump --uri "${MONGO_BACKUP_URI}" --gzip --archive=/tmp/lotusgift-${ISO_TIMESTAMP}.gz` against a read-only Atlas user (NOT the app's R/W user — separate principal of least privilege).
+3. Upload to R2 at `s3://lotusgift-backups/atlas/lotusgift-${ISO_TIMESTAMP}.gz` via `aws --endpoint-url https://<account>.r2.cloudflarestorage.com` (R2 supports the S3 API).
+4. Verify the upload via `aws s3api head-object`.
+5. Delete the local file from `/tmp/`.
+6. Log to `/var/log/lotusgift/mongodump.log` (rotated via `logrotate.d/lotusgift-mongodump`, mirroring the heartbeat-log pattern from [`infrastructure/oracle/security/logrotate.d/lotusgift-heartbeat`](../../infrastructure/oracle/security/logrotate.d/lotusgift-heartbeat)).
+7. On non-zero exit, alert via the same path as `lotusgift-heartbeat.service` failures (systemd journal → on-call notification at P21). Treat backup gap > 12 h as SEV-2; > 24 h as SEV-1.
 
 The R2 bucket `lotusgift-backups` has a 30-day Infrequent Access lifecycle rule (per [R2 lifecycle docs, 2026-05-14](https://developers.cloudflare.com/r2/buckets/object-lifecycles)) and a Bucket Lock (per [R2 bucket locks, March 2025](https://developers.cloudflare.com/r2/buckets/bucket-locks)) preventing deletion for the first 30 days.
 
@@ -82,16 +82,20 @@ Upstash free tier supports manual RDB export from the dashboard, but provides no
 
 ### Spec (implemented at P5)
 
-1. Run on a `0 6 * * *` schedule (daily 06:00 UTC = ~11:30 IST).
-2. Hit `POST https://api.upstash.com/v2/redis/database/<id>/export` to trigger an RDB export.
+Runs on the Oracle VM via `systemd.timer` (same rationale as the Atlas job above — Upstash's allow-list points at the VM's static IP). It MUST:
+
+1. Fire on a `OnCalendar=*-*-* 02:00:00` schedule (daily 02:00 UTC = ~07:30 IST — offset 2 h from the 00:00 mongodump to spread CPU).
+2. Hit `POST https://api.upstash.com/v2/redis/database/<id>/export` (Management API) to trigger an RDB export.
 3. Poll the export status until complete (typical: < 60 s for free-tier 256 MB cap).
-4. Download the RDB file.
+4. Download the resulting `.rdb` file via the URL the API returns.
 5. Upload to R2 at `s3://lotusgift-backups/redis/lotusgift-${ISO_TIMESTAMP}.rdb`.
 6. Same lifecycle + bucket lock as Atlas backups.
 
 > Redis Functions data is NOT preserved in RDB exports (per [Upstash docs](https://upstash.com/docs/redis/howto/importexport)). We don't use Functions today, but if P5 introduces them, document them separately + back up by other means.
 
 ### Restore procedure
+
+RDB files are **binary persistence snapshots**, NOT Redis protocol input. Restoring them requires placing the file at the Redis server's `dir`/`dbfilename` path and restarting — Upstash exposes this via their dashboard import flow (you can't restore via `redis-cli`).
 
 ```bash
 # Download the most recent dump.
@@ -100,11 +104,23 @@ aws --endpoint-url https://<account>.r2.cloudflarestorage.com s3 cp \
     /tmp/restore.rdb
 
 # Provision a fresh Upstash database; capture connection URL.
-# Use redis-cli --pipe to import.
-redis-cli -h <NEW_HOST> -p <NEW_PORT> --tls --pipe < /tmp/restore.rdb
+# Use the Upstash dashboard's "Import RDB" flow (Database → Import / Restore →
+# upload the .rdb file). Alternative: Upstash CLI `upstash redis import` once
+# they ship a stable CLI command for it.
 
 # Validate.
 redis-cli -h <NEW_HOST> -p <NEW_PORT> --tls dbsize
+```
+
+If we ever migrate off Upstash to self-hosted Redis per [`scaling-up.md` §7](scaling-up.md#7-upstash-redis-self-hosted-redis-on-the-oracle-vm), the restore becomes:
+
+```bash
+# Stop redis, drop the RDB in place, start redis.
+sudo systemctl stop redis-server
+sudo cp /tmp/restore.rdb /var/lib/redis/dump.rdb
+sudo chown redis:redis /var/lib/redis/dump.rdb
+sudo systemctl start redis-server
+redis-cli -h 127.0.0.1 dbsize
 ```
 
 Most Redis state (sessions, rate-limit counters, idempotency cache) is benign-to-lose. Restore is for catastrophic loss only.

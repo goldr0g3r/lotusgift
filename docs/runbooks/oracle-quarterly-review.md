@@ -47,7 +47,7 @@ If `--dry-run` fails: open a SEV-3 issue + investigate before the cert expires. 
 
 ## 3. Audit-drift diff
 
-Re-run every diff from [`infrastructure/oracle/README.md` §Audit-drift detection](../../infrastructure/oracle/README.md#audit-drift-detection). All 14 commands MUST return empty:
+Re-run every diff from [`infrastructure/oracle/README.md` §Audit / drift detection](../../infrastructure/oracle/README.md#audit--drift-detection). All 14 commands MUST return empty:
 
 ```bash
 # Replicating the README block for at-a-glance — see the source for the full list.
