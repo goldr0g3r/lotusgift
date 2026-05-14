@@ -11,6 +11,9 @@ importers:
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:packages/prettier-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:packages/typescript-config
@@ -398,6 +401,9 @@ importers:
       '@jest/types':
         specifier: ^30.2.0
         version: 30.3.0
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       jest:
         specifier: ^30.2.0
         version: 30.3.0(@types/node@22.19.3)(ts-node@10.9.2(@types/node@22.19.3)(typescript@5.8.2))
@@ -437,12 +443,9 @@ importers:
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
 
   packages/types:
     devDependencies:

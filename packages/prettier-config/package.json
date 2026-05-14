@@ -3,18 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./index.mjs",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./index.mjs"
   },
+  "files": [
+    "index.mjs"
+  ],
   "scripts": {
-    "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "prettier": "^3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "typescript": "5.9.2"
+    "prettier": "^3.6.2"
   }
 }
+
+

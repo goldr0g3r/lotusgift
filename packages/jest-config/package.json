@@ -19,6 +19,11 @@
       "require": "./dist/base.js",
       "types": "./dist/base.d.ts"
     },
+    "./library": {
+      "import": "./dist/library.js",
+      "require": "./dist/library.js",
+      "types": "./dist/library.d.ts"
+    },
     "./nest": {
       "import": "./dist/nest.js",
       "require": "./dist/nest.js",
@@ -32,6 +37,7 @@
   },
   "devDependencies": {
     "@jest/types": "^30.2.0",
+    "@repo/typescript-config": "workspace:*",
     "jest": "^30.2.0",
     "next": "16.2.0",
     "typescript": "^5.8.2"
@@ -40,3 +46,4 @@
     "build": "tsc"
   }
 }
+

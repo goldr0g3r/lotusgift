@@ -45,6 +45,7 @@ COPY apps/api-gateway/package.json ./apps/api-gateway/
 COPY packages/api/package.json ./packages/api/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/jest-config/package.json ./packages/jest-config/
+COPY packages/prettier-config/package.json ./packages/prettier-config/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Frozen-lockfile install across the workspace so every transitive dep is
@@ -70,6 +71,7 @@ COPY apps/api-gateway ./apps/api-gateway
 COPY packages/api ./packages/api
 COPY packages/eslint-config ./packages/eslint-config
 COPY packages/jest-config ./packages/jest-config
+COPY packages/prettier-config ./packages/prettier-config
 COPY packages/typescript-config ./packages/typescript-config
 
 # Run turbo build for the api-gateway and its dependency graph.

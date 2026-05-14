@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { LinksService } from './links.service';
-import { LinksController } from './links.controller';
+import { LinksService } from './links.service.js';
+import { LinksController } from './links.controller.js';
 
 @Module({
   controllers: [LinksController],
