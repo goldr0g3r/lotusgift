@@ -2,19 +2,32 @@
   "name": "@repo/feature-flags",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./src/server.ts",
+  "types": "./src/server.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/server.ts",
+    "./server": "./src/server.ts",
+    "./browser": "./src/browser.ts"
   },
   "scripts": {
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "lru-cache": "^11.2.2",
+    "posthog-js": "^1.372.0",
+    "posthog-node": "^5.34.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
+    "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.19.3",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
     "typescript": "5.9.2"
   }
 }
