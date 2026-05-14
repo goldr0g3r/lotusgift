@@ -161,7 +161,12 @@ describe('InProcessOutboxPort', () => {
 
     expect(repo.failed).toHaveLength(1);
     expect(repo.failed[0]!.id).toBe('evt-fail');
-    expect(repo.failed[0]!.error).toMatch(/handler broke/);
+    // The relayer now wraps per-listener errors in an AggregateError so the
+    // recorded `error` string is the AggregateError's `.toString()` form,
+    // which lists the count but not the individual listener message. The
+    // listener cause is preserved on the AggregateError's `.errors[]` —
+    // not surfaced into the `failed` row at this layer.
+    expect(repo.failed[0]!.error).toMatch(/listener\(s\) failed/);
     expect(repo.published).toEqual([]);
   });
 

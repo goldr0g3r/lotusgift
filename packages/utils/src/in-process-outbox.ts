@@ -13,6 +13,10 @@ import {
 import { MongoOutboxRepository } from './mongo-outbox-repository.js';
 import { retry } from './retry.js';
 
+// Polyfill for environments missing AggregateError (Node < 15). Our floor
+// is Node 22 so this is informational; declared for the type system.
+declare const AggregateError: typeof globalThis.AggregateError;
+
 export interface InProcessOutboxOptions {
   /**
    * Poll interval in milliseconds. Default 250 ms — matches Stripe +
@@ -52,7 +56,7 @@ export class InProcessOutboxPort implements OutboxPort {
   private readonly staleClaimMs: number;
   private readonly log: (message: string, meta?: Record<string, unknown>) => void;
   private pollHandle: NodeJS.Timeout | null = null;
-  private polling = false;
+  private currentTick: Promise<void> | null = null;
 
   constructor(connection: Connection, opts: InProcessOutboxOptions = {}) {
     this.repository = new MongoOutboxRepository(connection);
@@ -109,14 +113,27 @@ export class InProcessOutboxPort implements OutboxPort {
       clearInterval(this.pollHandle);
       this.pollHandle = null;
     }
-    // Drain a final tick so in-flight publishes get committed.
+    // First drain any in-flight tick (don't short-circuit it), THEN
+    // run one final drain pass so any rows committed between the last
+    // interval and stop() get published.
+    if (this.currentTick) {
+      await this.currentTick;
+    }
     await this.tick();
     this.emitter.removeAllListeners();
   }
 
   private async tick(): Promise<void> {
-    if (this.polling) return;
-    this.polling = true;
+    if (this.currentTick) return;
+    this.currentTick = this.runTick();
+    try {
+      await this.currentTick;
+    } finally {
+      this.currentTick = null;
+    }
+  }
+
+  private async runTick(): Promise<void> {
     try {
       const claimed = await this.repository.claim(this.batchSize);
       for (const row of claimed) {
@@ -137,12 +154,7 @@ export class InProcessOutboxPort implements OutboxPort {
           occurredAt: row.createdAt.toISOString(),
         };
         try {
-          await retry(
-            async () => {
-              await this.emitListeners(row.eventType, event);
-            },
-            { attempts: 3, baseDelayMs: 100 },
-          );
+          await this.emitListenersWithRetry(row.eventType, event);
           this.dedup.set(row.idempotencyKey, true);
           await this.repository.markPublished(row._id);
         } catch (err) {
@@ -152,20 +164,40 @@ export class InProcessOutboxPort implements OutboxPort {
       }
     } catch (err) {
       this.log('outbox: poll tick error', { error: String(err) });
-    } finally {
-      this.polling = false;
     }
   }
 
-  private async emitListeners(
+  /**
+   * Emit to each subscriber with PER-LISTENER retry. A failing listener
+   * is retried in isolation; previously-successful listeners are NOT
+   * re-invoked. This is critical because the alternative (retry around
+   * the whole listener loop) would re-trigger side-effects on every
+   * already-successful subscriber whenever a single one fails.
+   *
+   * Service-author contract: handlers MUST be idempotent within the LRU
+   * dedup window even with per-listener retry, because we can't
+   * distinguish "transient error" from "permanent error" at this layer.
+   */
+  private async emitListenersWithRetry(
     eventType: string,
     event: Parameters<OutboxEventHandler>[0],
   ): Promise<void> {
     const listeners = this.emitter.listeners(eventType) as Array<
       (e: typeof event) => Promise<void> | void
     >;
+    const errors: unknown[] = [];
     for (const listener of listeners) {
-      await listener(event);
+      try {
+        await retry(() => Promise.resolve(listener(event)), {
+          attempts: 3,
+          baseDelayMs: 100,
+        });
+      } catch (err) {
+        errors.push(err);
+      }
+    }
+    if (errors.length > 0) {
+      throw new AggregateError(errors, `${errors.length} listener(s) failed for ${eventType}`);
     }
   }
 }
