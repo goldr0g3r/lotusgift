@@ -79,4 +79,16 @@ Refreshed after merge via the same `pnpm ls --depth=0 -r --filter` invocation.
 
 ## 6. Implementation reference
 
-Filled after merge: PR URL + squash SHA + diff stats + iteration timeline.
+- **PR:** [#20 — feat(infra): polish L1 leaf packages + RFC 9457 ProblemDetails + 16-service skeleton](https://github.com/goldr0g3r/lotusgift/pull/20)
+- **Squash SHA on `main`:** `921d51ec2c0fab73f32f59cc280473f44fe0f058` (merged 2026-05-14)
+- **Branch lifetime:** `pr-10-l1-packages` (created 2026-05-14 from `main`; deleted local + remote after squash merge)
+- **Commits squashed (1):** single `feat(infra)` commit. Copilot review returned zero comments.
+- **CI status:** all 16 required checks green on the final commit (`f52e049`): `a11y`, `actionlint`, `atlas-search-mapping-drift`, `build`, `build-push`, `corporate-gifting-domain`, `dep-cruiser`, `dependency-review`, `lint`, `markdownlint`, `openapi-drift`, `pr-title`, `secret-scan`, `test`, `typecheck`, `action-semantic-pull-request`.
+- **Issues closed by this PR:** [#18 (Phase 2 Epic)](https://github.com/goldr0g3r/lotusgift/issues/18), [#19 (Phase 2 Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/19). Phase 2 is single-PR per parent plan.
+- **Branch-protection update:** none required (no new required checks introduced).
+- **Diff stats (squashed commit):** 82 files changed, +3,000+ insertions (4 new READMEs + 4 new test suite files + 4 jest configs + 32 per-service skeleton shells + the L1 source modules + the research note + the lockfile entries).
+- **Test counts:** 96 individual tests across 8 suites (validators 3 suites / 59 tests; events 2 suites / 18 tests; openapi-spec 3 suites / 19 tests). Coverage on tested files: 100%/100%/100% per package.
+- **Iteration trail:**
+  1. Initial commit hit `pr-title` failure ("scope `packages` not allowed"). Renamed PR title `feat(packages)` → `feat(infra)` to match the allow-list (`packages` is the path, `infra` is the workstream scope).
+  2. Local jest setup needed two iterations: (a) Drop `"type": "module"` from the 4 L1 package.json files because ts-jest emits CJS by default and the ESM marker conflicts; (b) Add explicit `tsconfig.json` override in jest configs (`module: 'commonjs'`, `moduleResolution: 'node'`) so ts-jest doesn't inherit the source-tree `module: 'NodeNext'` value.
+  3. `IsoDateSchema` round-trip refinement added to catch impossible calendar dates (e.g. `2026-02-30`) — JS `Date` rolls over invalid dates rather than throwing.
