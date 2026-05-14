@@ -1,3 +1,3 @@
-// Entry point for @lotusgift/feature-flags.
-// Implementation arrives in a later phase (see parent plan section 7).
-export {};
+// Default export (server). Browser callers MUST subpath-import
+// `@repo/feature-flags/browser`.
+export * from './server.js';
