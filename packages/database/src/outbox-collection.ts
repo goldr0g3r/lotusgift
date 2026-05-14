@@ -1,7 +1,5 @@
 import { Schema, type Connection, type Model } from 'mongoose';
 
-import { namespace } from './namespace.js';
-
 /**
  * Mongo schema for the `outbox` collection consumed by
  * `@repo/utils/InProcessOutboxPort`. Wire shape matches
@@ -72,7 +70,3 @@ export function getOutboxModel(connection: Connection): Model<OutboxDoc> {
 }
 
 export type { OutboxDoc };
-
-// Verify the namespace helper is available + signals failure for the
-// `outbox.events` synthetic collection name (NOT a real service).
-void namespace; // referenced so consumers see it via the barrel.

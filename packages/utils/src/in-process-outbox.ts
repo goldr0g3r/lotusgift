@@ -71,9 +71,11 @@ export class InProcessOutboxPort implements OutboxPort {
   }
 
   subscribe(eventType: string, handler: OutboxEventHandler): Subscription {
+    // Dedup happens at the per-event boundary in `tick()` (keyed on
+    // idempotencyKey), NOT inside this wrapper. This wrapper just runs
+    // the handler. Multiple subscribers per eventType therefore each
+    // receive every event exactly once.
     const wrapped = async (event: Parameters<OutboxEventHandler>[0]) => {
-      if (this.dedup.has(event.idempotencyKey)) return;
-      this.dedup.set(event.idempotencyKey, true);
       await handler(event);
     };
     this.emitter.on(eventType, wrapped);
@@ -118,6 +120,15 @@ export class InProcessOutboxPort implements OutboxPort {
     try {
       const claimed = await this.repository.claim(this.batchSize);
       for (const row of claimed) {
+        // Cross-subscriber dedup: if we've already emitted an event with
+        // this idempotencyKey in this process recently (LRU window),
+        // skip emit + mark published. Keyed at the per-event boundary
+        // so every subscriber for the same eventType still runs once on
+        // first delivery.
+        if (this.dedup.has(row.idempotencyKey)) {
+          await this.repository.markPublished(row._id);
+          continue;
+        }
         const event = {
           type: row.eventType,
           payload: row.payload,
@@ -132,6 +143,7 @@ export class InProcessOutboxPort implements OutboxPort {
             },
             { attempts: 3, baseDelayMs: 100 },
           );
+          this.dedup.set(row.idempotencyKey, true);
           await this.repository.markPublished(row._id);
         } catch (err) {
           await this.repository.markFailed(row._id, String(err));

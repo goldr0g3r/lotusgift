@@ -73,17 +73,21 @@ export function pinoRedactionConfig(extraPaths: readonly string[] = []): {
  *
  * Handles dot-notation paths only (`req.headers.authorization`); not
  * wildcard paths (use pino's redact for those).
+ *
+ * Uses `structuredClone` (Node 17+; we require Node 22) so `Date`,
+ * `Map`, `Set`, and circular references survive the clone intact —
+ * `JSON.parse(JSON.stringify(...))` silently mangles those.
  */
 export function redact<T>(input: T, paths: readonly string[] = defaultRedactionPaths): T {
   if (input === null || typeof input !== 'object') {
     return input;
   }
-  const clone: unknown = JSON.parse(JSON.stringify(input));
+  const clone = structuredClone(input);
   for (const path of paths) {
     if (path.includes('*')) continue; // wildcards handled by pino, skip here
     setAtPath(clone as Record<string, unknown>, path.split('.'), REDACTED);
   }
-  return clone as T;
+  return clone;
 }
 
 function setAtPath(
