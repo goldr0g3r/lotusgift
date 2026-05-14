@@ -1,8 +1,10 @@
-# Local development stack
+# Local development stack (Docker compose)
+
+> **Who is this for?** Use this stack if you prefer Docker over host-installed Mongo + Redis. The team default is the **host install** path (apt / brew / winget) documented at [`docs/runbooks/local-development.md`](../../docs/runbooks/local-development.md) — faster startup, lower idle RAM, no Docker Desktop license. The compose stack here is the documented fallback for: corporate-locked machines, clean-room reproduction, contributors who need Mailpit (P12 notification-service development) or the OTEL Collector (P21 observability hardening) locally, or anyone who simply prefers Docker.
 
 Spin up Mongo, Redis, Mailpit (modern Mailhog replacement) and an OpenTelemetry Collector with a single `docker compose` command. Used by `apps/api-gateway` (from P4 onwards) and every Nest service library so contributors can run the full backend stack without provisioning anything cloud-side.
 
-Pinning rationale + Mailhog -> Mailpit substitution decisions are captured in [`docs/research/phase-0-dev-stack.md`](../../docs/research/phase-0-dev-stack.md). The production stack (Oracle A1.Flex + nginx + Certbot) lives in `infrastructure/oracle/docker-compose.prod.yml` and ships in PR-7.
+Pinning rationale + Mailhog -> Mailpit substitution decisions are captured in [`docs/research/phase-0-dev-stack.md`](../../docs/research/phase-0-dev-stack.md). The production stack (Oracle A1.Flex + nginx + Certbot) lives in [`infrastructure/oracle/compose/docker-compose.prod.yml`](../oracle/compose/docker-compose.prod.yml) (shipped in PR-7).
 
 ## Prerequisites
 
