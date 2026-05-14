@@ -33,6 +33,9 @@ out/
 build
 dist
 
+# TypeScript incremental build cache (regenerated on every `tsc -b` / `nest build`)
+*.tsbuildinfo
+
 # Design-tokens generated artifacts (regenerated on `pnpm install` + `pnpm build`)
 packages/design-tokens/dist/
 
