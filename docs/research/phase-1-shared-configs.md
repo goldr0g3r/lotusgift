@@ -86,4 +86,15 @@ Refreshed table after merge via the same `pnpm ls --depth=0 -r --json` invocatio
 
 ## 6. Implementation reference
 
-Filled after merge: PR URL + squash SHA + diff stats + iteration timeline.
+- **PR:** [#17 — feat(infra): polish shared configs + TS 6 modernization + api-gateway .js-extension cascade](https://github.com/goldr0g3r/lotusgift/pull/17)
+- **Squash SHA on `main`:** `b1edea2e6be154bc216d89082b1eb0408e473975` (merged 2026-05-14)
+- **Branch lifetime:** `pr-9-shared-configs` (created 2026-05-14 from `main`; deleted local + remote after squash merge)
+- **Commits squashed (4):**
+  1. `feat(infra): polish shared configs (typescript-config + eslint-config + prettier-config + jest-config) + TS 6 modernization + api-gateway .js-extension cascade` — the bulk of the change (37 files).
+  2. `fix(infra): include packages/prettier-config in api-gateway Dockerfile` — surfaced by `build-push` CI: pnpm's workspace resolver couldn't find the new `@repo/prettier-config` because the Dockerfile only `COPY`'d 4 workspace `package.json` files.
+  3. `fix(infra): address Copilot review on PR-9` — 5 items: (a) revert over-eager `.js` extension on `next/jest` package-subpath import; (b) convert `@repo/prettier-config` from TS entry to `.mjs` so Node can load it natively; (c) align `typescript-config/README.md` with the shipped `module: Node16` value; (d) match the research-note prettier version to the lockfile (3.6.2); (e) reword the TS 6 modernization paragraph.
+  4. `fix(infra): re-sync pnpm-lock.yaml after prettier-config trim` — the Copilot-fix commit slimmed `@repo/prettier-config` devDependencies but didn't regenerate the lockfile; CI failed with `ERR_PNPM_OUTDATED_LOCKFILE`. Trimmed manually then verified via `pnpm install --frozen-lockfile` returning "Lockfile is up to date".
+- **CI status:** all 16 required checks green on the final commit (`4c0cd73`): `a11y`, `actionlint`, `atlas-search-mapping-drift`, `build`, `build-push`, `corporate-gifting-domain`, `dep-cruiser`, `dependency-review`, `lint`, `markdownlint`, `openapi-drift`, `pr-title`, `secret-scan`, `test`, `typecheck`, `action-semantic-pull-request`.
+- **Issues closed by this PR:** [#15 (Phase 1 Epic)](https://github.com/goldr0g3r/lotusgift/issues/15), [#16 (Phase 1 Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/16). Phase 1 is single-PR per parent plan.
+- **Branch-protection update:** none required (no new required checks introduced).
+- **Diff stats (approx, on the squashed commit):** 38 files changed, ~590 insertions, ~110 deletions (incl. 4 new READMEs + 3 new TS configs + 1 new jest config + 4 new lockfile entries; offset by the `prettier-base.js` + `tsconfig.json` + `src/index.ts` deletions).
