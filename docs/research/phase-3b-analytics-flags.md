@@ -66,4 +66,11 @@ PR-12 populates `@repo/analytics-sdk` (PostHog browser + server wrappers) + `@re
 
 ## 6. Implementation reference
 
-Filled after merge.
+- **PR:** [#26 — feat(infra): polish L3 analytics-sdk + feature-flags + event taxonomy](https://github.com/goldr0g3r/lotusgift/pull/26)
+- **Squash SHA on `main`:** `9088eee1e2906ebbb225d52dafd4908448c4c35d` (merged 2026-05-14)
+- **Branch lifetime:** `pr-12-l3-analytics` (created + deleted 2026-05-14)
+- **Commits squashed (2):** initial 22-file polish + markdownlint MD022 fix on the sub-plan markdown.
+- **Issues closed:** [#24 (Phase 3b Epic)](https://github.com/goldr0g3r/lotusgift/issues/24), [#25 (Phase 3b Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/25). Phase 3 milestone (#4) closed.
+- **CI status:** all 16 required checks green on the final commit.
+- **Test counts:** 33 individual tests across 3 suites (analytics-sdk event-name 14 + server 12, feature-flags server 7). 100% line coverage on event-name + server.ts.
+- **Lesson:** CI `markdownlint-cli2 "**/*.md"` glob picks up `.cursor/plans/*.md` sub-plans. Future sub-plans must include blank lines around H3 headings (MD022).
