@@ -43,10 +43,18 @@ WORKDIR /workspace
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY apps/api-gateway/package.json ./apps/api-gateway/
 COPY packages/api/package.json ./packages/api/
+COPY packages/config/package.json ./packages/config/
+COPY packages/database/package.json ./packages/database/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/events/package.json ./packages/events/
 COPY packages/jest-config/package.json ./packages/jest-config/
+COPY packages/observability/package.json ./packages/observability/
+COPY packages/openapi-spec/package.json ./packages/openapi-spec/
 COPY packages/prettier-config/package.json ./packages/prettier-config/
+COPY packages/types/package.json ./packages/types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/validators/package.json ./packages/validators/
 
 # Frozen-lockfile install across the workspace so every transitive dep is
 # resolved exactly as committed. Cache-mount keeps the pnpm store warm across
@@ -69,10 +77,18 @@ COPY --from=deps /workspace ./
 # Bring in the source we actually compile.
 COPY apps/api-gateway ./apps/api-gateway
 COPY packages/api ./packages/api
+COPY packages/config ./packages/config
+COPY packages/database ./packages/database
 COPY packages/eslint-config ./packages/eslint-config
+COPY packages/events ./packages/events
 COPY packages/jest-config ./packages/jest-config
+COPY packages/observability ./packages/observability
+COPY packages/openapi-spec ./packages/openapi-spec
 COPY packages/prettier-config ./packages/prettier-config
+COPY packages/types ./packages/types
 COPY packages/typescript-config ./packages/typescript-config
+COPY packages/utils ./packages/utils
+COPY packages/validators ./packages/validators
 
 # Run turbo build for the api-gateway and its dependency graph.
 # Output: apps/api-gateway/dist/*.
