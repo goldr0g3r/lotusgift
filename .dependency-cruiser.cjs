@@ -34,6 +34,10 @@ module.exports = {
           "(^|/)next[.]config[.](js|cjs|mjs|ts)$",
           "(^|/)turbo[.]json$",
           "(^|/)nest-cli[.]json$",
+          "(^|/)\\.prettierrc\\.(js|cjs|mjs|ts)$",
+          // P2 (PR-10): per-service skeleton shells in @repo/validators +
+          // @repo/events. Empty by design; populated in P5+ service phases.
+          "^packages/(validators|events)/src/[a-z-]+/index[.]ts$",
         ],
       },
       to: {},

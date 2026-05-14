@@ -2,19 +2,46 @@
   "name": "@repo/events",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./customization": "./src/customization/index.ts",
+    "./insights": "./src/insights/index.ts",
+    "./inventory": "./src/inventory/index.ts",
+    "./notification": "./src/notification/index.ts",
+    "./order": "./src/order/index.ts",
+    "./payment": "./src/payment/index.ts",
+    "./product": "./src/product/index.ts",
+    "./promotions": "./src/promotions/index.ts",
+    "./recipient-list": "./src/recipient-list/index.ts",
+    "./review": "./src/review/index.ts",
+    "./rfq": "./src/rfq/index.ts",
+    "./shipping": "./src/shipping/index.ts",
+    "./support": "./src/support/index.ts",
+    "./tax": "./src/tax/index.ts",
+    "./vendor": "./src/vendor/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@repo/types": "workspace:*",
+    "@repo/validators": "workspace:*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
+    "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
     "typescript": "5.9.2"
   }
 }
+
