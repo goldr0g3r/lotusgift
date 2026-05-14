@@ -79,4 +79,50 @@ PR-8 ships no code — there's no `pnpm ls` table for this PR. The runbooks refe
 
 ## 6. Implementation reference
 
-Filled after merge: PR URL + squash SHA + diff stats + iteration timeline.
+PR-8 landed via PR [#14](https://github.com/goldr0g3r/lotusgift/pull/14) — squash merge SHA [`4f1545e6`](https://github.com/goldr0g3r/lotusgift/commit/4f1545e61de5cc4f8c2ceab91bd6be63755a60fd).
+
+| Metric | Value |
+| --- | --- |
+| Files changed (squashed) | 13 |
+| Insertions (squashed) | +1,730 |
+| Deletions (squashed) | -33 |
+| Runbooks shipped | 7 (6 from parent plan + 1 `local-development.md`) |
+| Runbooks index | 1 (`docs/runbooks/README.md`) |
+| Cross-reference edits | 3 (`README.md` + `infrastructure/docker/README.md` + `oracle-deploy.md` §10) |
+| Research notes | 1 (this file) |
+| New CI jobs | 0 (docs-only) |
+| Branch-protection contexts added | 0 |
+| Final CI duration | 16 jobs, longest = `a11y` at 58s |
+| Iterations (squashed) | 2 (initial 13-file commit + 7-file Copilot-review fix commit) |
+| Copilot review comments addressed | 13 / 13 |
+
+### Squashed commit timeline (chronological inside the PR)
+
+1. `fe808de`/`8c1e2a8` — `docs(runbook)` initial 13-file commit (7 runbooks + index + 3 cross-refs + this research note + parent-plan in-progress flag).
+2. `d4795b2` — `fix(runbook)` Copilot review pass: 13 separate issues addressed in a single commit (61 insertions, 42 deletions across 7 files).
+
+Squash-merged into main as the single commit `4f1545e6`.
+
+### Status-sync trail
+
+- Project board [#9](https://github.com/users/goldr0g3r/projects/9): PR item added (`PVTI_lAHOB9XnOc4BXcKjzgsswU4`), fields set (Status=Done, Phase=P0, Workstream=docs, Layer=L0, Type=docs).
+- Epic [#4](https://github.com/goldr0g3r/lotusgift/issues/4) — PR-8 line ticked with PR URL + squash SHA + 13-Copilot-fix summary. Issue closed (state_reason=completed) as part of the same status sync: all 8 Phase-0 PRs landed.
+- Phase-Acceptance [#5](https://github.com/goldr0g3r/lotusgift/issues/5) — all 6 future-docs lines ticked + bonus line for `local-development.md` + runbooks index. Issue closed (state_reason=completed); all Phase-0 acceptance criteria met.
+- Parent plan `.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md` — `p0-future-docs` todo marked completed with full attribution note.
+- **Branch protection unchanged** — PR-8 added no new required-status-check contexts.
+- `pr-8-future-docs` branch deleted local + remote.
+
+### Followup parked items
+
+- **Q1** (PostHog India DPDP self-host pre-emptive ADR) — open at P21 if no enterprise customer surfaces the requirement first.
+- **Q2** (status-page vendor selection) — pick at P22 launch with the first paying customer.
+- **Q4** (Ansible re-apply playbook for Oracle infra) — build at P22 when there's a 2nd VM target.
+- **Q5** (Atlas doc-count + Atlas Search index-count checks in `scripts/free-tier-quota-burn.ts`) — file `chore(infra)` PR immediately after PR-8 lands (small script enhancement).
+- Vercel `buildMinutes` + `functionDurationGbSec` quota checks in the script — currently TODO at lines 213+ of `scripts/free-tier-quota-burn.ts`.
+- Cloudflare R2 storage + Class-A-operations quota check — currently manual; automate with the Cloudflare API at P22.
+
+### Phase 0 closeout
+
+PR-8 was the last Phase-0 PR. All 8 Phase-0 PRs landed; all infrastructure in place; all 9 runbooks shipped (github-setup + oracle-deploy from prior PRs + the 7 new from PR-8). Epic [#4](https://github.com/goldr0g3r/lotusgift/issues/4) + Phase-Acceptance [#5](https://github.com/goldr0g3r/lotusgift/issues/5) both closed.
+
+Phase 1 (`@repo/typescript-config` + `@repo/eslint-config` + `@repo/jest-config` + `@repo/prettier-config` polish) is up next.
