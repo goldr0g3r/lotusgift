@@ -48,6 +48,7 @@ Autonomous execution per user direction. Decisions baked from past PR patterns +
 ## Files (~30 across 2 packages + tests + research note + GitHub)
 
 ### `@repo/analytics-sdk`
+
 - `src/server.ts` — `createServerAnalytics({ apiKey, host, flushAt, flushInterval })` returns `{ capture, identify, shutdown, flush }`. Wraps `posthog-node`. `capture()` runs `properties` through `@repo/utils/redact()` first. Event name validator asserts `[object] [verb]` lowercase format.
 - `src/browser.ts` — `initBrowserAnalytics({ apiKey, host, defaults? })` calls `posthog.init` once + returns the client. `capture` + `identify` re-exports.
 - `src/event-name.ts` — `assertValidEventName(name)` throws if name doesn't match `^[a-z][a-z0-9 ]+ [a-z]+$` (object + space + verb). Used by both entries.
@@ -56,6 +57,7 @@ Autonomous execution per user direction. Decisions baked from past PR patterns +
 - `README.md` — recipe per `.cursor/rules/analytics-instrumentation.mdc`.
 
 ### `@repo/feature-flags`
+
 - `src/server.ts` — `createServerFlagClient({ apiKey, host })`. Wraps `posthog-node`'s `isFeatureEnabled` + `getFeatureFlag` + `getAllFlags`. Includes a 60-second in-memory cache keyed on `(flag, distinctId, propertiesHash)` so per-request resolution doesn't hit PostHog every time.
 - `src/browser.ts` — `subscribeFlags(handler)` wires PostHog's `onFeatureFlags` callback into a reactive store; consumers (Next.js apps) wrap it in their own React hook.
 - `src/index.ts` — barrel.
@@ -63,16 +65,20 @@ Autonomous execution per user direction. Decisions baked from past PR patterns +
 - `README.md` — usage recipe + cache semantics.
 
 ### `docs/analytics/events.md`
+
 - Catalog of LotusGift v2 events with their payload schemas (refs to `@repo/events/<service>` from P2). Format: `Event name | Trigger | Producer service | Consumer services | Required properties`. Covers corporate-gifting deltas (`order routed-to-rfq`, `mockup approved`, `recipient-list uploaded`, etc.).
 
 ### Tests
+
 - `packages/analytics-sdk/src/event-name.test.ts` — `assertValidEventName` accepts canonical names, rejects camelCase, missing verb, etc.
 - `packages/analytics-sdk/src/server.test.ts` — `capture()` redacts PII before forwarding to a stub `posthog-node`; `shutdown()` calls `client.shutdown()`.
 - `packages/feature-flags/src/server.test.ts` — `isFlagEnabled()` caches results within TTL; cache-miss calls underlying client.
 
 ### Research note + GitHub
+
 - `docs/research/phase-3b-analytics-flags.md` with ~10 retrieval-dated 2026-05-14 citations.
 - Phase 3b Epic + Phase-Acceptance issues under milestone #4 (Phase 3 — L2 Infra + Analytics; P3b shares the milestone with P3 per milestone title).
 
 ### Post-merge
+
 - Status sync via gh + MCP (project board fields, issue close, parent plan flip, research note §6).
