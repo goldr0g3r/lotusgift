@@ -67,4 +67,13 @@ DEFERRED to P5b (separate PR): Passkey/WebAuthn, 2FA TOTP + backup codes, Phone 
 
 ## 6. Implementation reference
 
-Filled after merge.
+- **PR (SCAFFOLD slice):** [#32 — feat(auth): scaffold services/auth-service + @repo/auth-client](https://github.com/goldr0g3r/lotusgift/pull/32)
+- **Squash SHA on `main`:** `96868817e7f2a7aca2781419eeea1309f41553aa` (merged 2026-05-14)
+- **Issues closed:** [#31 (Phase 5 Epic)](https://github.com/goldr0g3r/lotusgift/issues/31), [#30 (Phase 5 Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/30). Phase 5 milestone (#6) stays open until P5b ships.
+- **Commits squashed (2):** initial scaffold + lockfile re-sync after dep trim.
+- **CI status:** all 16 required checks green.
+- **Lessons learned:**
+  1. Better-Auth is ESM-only — its `better-auth/node`, `better-auth/adapters/mongodb`, and `better-auth/plugins` subpaths all reject `require()` from a CJS-typed file under `module: Node16`. Either the consuming module needs `"type": "module"` (which cascades through ts-jest) or the consumer must use dynamic `await import('better-auth')`. P5b picks the pattern.
+  2. The admin + organization plugin types' user-shape intersection isn't expressible cleanly — admin tightens `email` to required, organization keeps it optional. Workaround: cast the options bag to `any` at the `betterAuth(options)` callsite. We shipped the options BUILDER (typed) here so consumers do the cast once at their own callsite.
+  3. The first `gh issue create` for the Epic failed with "could not add label: 'area/auth' not found" — only `area/infra` exists in the label set. P6+ should add `area/auth` if we want per-service labels.
+- **What's actually ready for consumer use today:** the 3 decorators + 2 DI tokens + `buildBetterAuthOptions(env)` + `OrgKind` type + the `@repo/auth-client` browser SDK. Controllers in future PRs can already decorate `@AllowAnonymous()` / `@Session() session`. The decorators are no-ops at runtime until P5b registers the actual AuthGuard — which is fine for forward-compatibility.
