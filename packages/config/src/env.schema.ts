@@ -87,6 +87,19 @@ const baseEnv = z
 
     // ---- OutboxPort relayer (P3) ----
     OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().min(50).max(60_000).default(250),
+
+    // ---- OSM Nominatim (P6 vendor-service warehouse geocoding) ----
+    // The OSM Foundation Nominatim instance enforces a 1 req/sec hard limit
+    // and requires a User-Agent that identifies the application. We default
+    // to the public OSM endpoint for dev convenience; in production we
+    // expect a self-hosted Nominatim or MapMyIndia upgrade per
+    // `docs/runbooks/scaling-up.md`.
+    NOMINATIM_BASE_URL: z
+      .string()
+      .url()
+      .default('https://nominatim.openstreetmap.org/search'),
+    NOMINATIM_USER_AGENT: z.string().min(1).default('LotusGift-v2-Dev/0.1'),
+    GEOCODE_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(2_592_000).default(86_400),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;
@@ -126,6 +139,14 @@ const baseEnv = z
         path: ['OTEL_EXPORTER_OTLP_ENDPOINT'],
         message:
           'OTEL_EXPORTER_OTLP_ENDPOINT must be set to the Grafana Cloud OTLP endpoint in production',
+      });
+    }
+    if (env.NOMINATIM_USER_AGENT === 'LotusGift-v2-Dev/0.1') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['NOMINATIM_USER_AGENT'],
+        message:
+          'NOMINATIM_USER_AGENT must be set to a contact-identifying value in production per OSM policy (https://operations.osmfoundation.org/policies/nominatim/)',
       });
     }
   });

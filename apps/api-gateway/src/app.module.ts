@@ -6,6 +6,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
 import { AuthServiceModule } from '@lotusgift/auth-service';
+import { VendorServiceModule } from '@lotusgift/vendor-service';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
@@ -44,6 +45,9 @@ const env: Env = loadEnv(process.env);
     // parent providers into imported children — see Nest fundamentals
     // docs on dynamic modules.
     AuthServiceModule.forRoot(env),
+    // Same forRoot(env) pattern — VendorServiceModule's GeocoderService
+    // and PostHog analytics factory inject the typed `Env`.
+    VendorServiceModule.forRoot(env),
     LinksModule,
   ],
   controllers: [AppController, HealthController],

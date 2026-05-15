@@ -15,3 +15,7 @@ export type { OutboxRow } from './outbox.js';
 
 export { defineEvent } from './builders.js';
 export type { DefinedEvent } from './builders.js';
+
+// Per-service event re-exports (P6 onwards each service phase populates
+// the matching subpath shell + adds it to the top-level barrel).
+export * from './vendor/index.js';

@@ -35,6 +35,9 @@ importers:
       '@lotusgift/auth-service':
         specifier: workspace:*
         version: link:../../services/auth-service
+      '@lotusgift/vendor-service':
+        specifier: workspace:*
+        version: link:../../services/vendor-service
       '@nestjs/common':
         specifier: ^11.1.11
         version: 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -50,6 +53,9 @@ importers:
       '@nestjs/swagger':
         specifier: ^11.2.1
         version: 11.2.6(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.11(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
+      '@repo/analytics-sdk':
+        specifier: workspace:*
+        version: link:../../packages/analytics-sdk
       '@repo/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -1326,25 +1332,77 @@ importers:
         version: 5.9.2
 
   services/vendor-service:
+    dependencies:
+      '@nestjs/mongoose':
+        specifier: ^11.0.3
+        version: 11.0.4(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2))(mongoose@8.23.0(gcp-metadata@8.1.2))(rxjs@7.8.2)
+      '@repo/analytics-sdk':
+        specifier: workspace:*
+        version: link:../../packages/analytics-sdk
+      '@repo/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@repo/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@repo/events':
+        specifier: workspace:*
+        version: link:../../packages/events
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      '@repo/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
+      lru-cache:
+        specifier: ^11.2.7
+        version: 11.3.6
     devDependencies:
       '@nestjs/common':
-        specifier: ^11
+        specifier: ^11.1.11
         version: 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
-        specifier: ^11
-        version: 11.1.11(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^11.1.11
+        version: 11.1.21(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/testing':
+        specifier: ^11.1.11
+        version: 11.1.11(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21))
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
+      '@repo/jest-config':
+        specifier: workspace:*
+        version: link:../../packages/jest-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      '@types/node':
+        specifier: ^22.19.3
+        version: 22.19.3
+      jest:
+        specifier: ^30.2.0
+        version: 30.3.0(@types/node@22.19.3)(ts-node@10.9.2(@types/node@22.19.3)(typescript@5.9.2))
+      mongoose:
+        specifier: ^8.23.0
+        version: 8.23.0(gcp-metadata@8.1.2)
       reflect-metadata:
-        specifier: ^0.2
+        specifier: ^0.2.2
         version: 0.2.2
       rxjs:
-        specifier: ^7
+        specifier: ^7.8.2
         version: 7.8.2
+      ts-jest:
+        specifier: ^29.4.6
+        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(jest-util@30.3.0)(jest@30.3.0(@types/node@22.19.3)(ts-node@10.9.2(@types/node@22.19.3)(typescript@5.9.2)))(typescript@5.9.2)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.19.3)(typescript@5.9.2)
       typescript:
         specifier: 5.9.2
         version: 5.9.2
@@ -9578,6 +9636,13 @@ snapshots:
     dependencies:
       '@nestjs/common': 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.11(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      mongoose: 8.23.0(gcp-metadata@8.1.2)
+      rxjs: 7.8.2
+
+  '@nestjs/mongoose@11.0.4(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2))(mongoose@8.23.0(gcp-metadata@8.1.2))(rxjs@7.8.2)':
+    dependencies:
+      '@nestjs/common': 11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.21(@nestjs/common@11.1.18(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       mongoose: 8.23.0(gcp-metadata@8.1.2)
       rxjs: 7.8.2
 

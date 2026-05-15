@@ -42,6 +42,7 @@ WORKDIR /workspace
 # pnpm-lock.yaml + every package.json is required for the workspace resolver.
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY apps/api-gateway/package.json ./apps/api-gateway/
+COPY packages/analytics-sdk/package.json ./packages/analytics-sdk/
 COPY packages/api/package.json ./packages/api/
 COPY packages/config/package.json ./packages/config/
 COPY packages/database/package.json ./packages/database/
@@ -56,6 +57,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/validators/package.json ./packages/validators/
 COPY services/auth-service/package.json ./services/auth-service/
+COPY services/vendor-service/package.json ./services/vendor-service/
 
 # Frozen-lockfile install across the workspace so every transitive dep is
 # resolved exactly as committed. Cache-mount keeps the pnpm store warm across
@@ -77,6 +79,7 @@ COPY --from=deps /workspace ./
 
 # Bring in the source we actually compile.
 COPY apps/api-gateway ./apps/api-gateway
+COPY packages/analytics-sdk ./packages/analytics-sdk
 COPY packages/api ./packages/api
 COPY packages/config ./packages/config
 COPY packages/database ./packages/database
@@ -91,6 +94,7 @@ COPY packages/typescript-config ./packages/typescript-config
 COPY packages/utils ./packages/utils
 COPY packages/validators ./packages/validators
 COPY services/auth-service ./services/auth-service
+COPY services/vendor-service ./services/vendor-service
 
 # Run turbo build for the api-gateway and its dependency graph.
 # Output: apps/api-gateway/dist/*.

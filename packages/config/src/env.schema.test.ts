@@ -24,8 +24,25 @@ describe('loadEnv', () => {
       BETTER_AUTH_URL: 'https://api.lotusgift.com',
       FRONTEND_URL: 'https://lotusgift.com',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otlp-gateway-prod-ap-south-1.grafana.net/otlp',
+      // OSM Nominatim policy requires an identifying User-Agent in prod
+      // — see env.schema.ts superRefine. Sentinel default is rejected.
+      NOMINATIM_USER_AGENT: 'lotusgift-prod ops@lotusgift.com',
     });
     expect(env.NODE_ENV).toBe('production');
+    expect(env.NOMINATIM_BASE_URL).toMatch(/^https:\/\//);
+  });
+
+  it('rejects production env that leaves NOMINATIM_USER_AGENT at the dev default', () => {
+    expect(() =>
+      loadEnv({
+        NODE_ENV: 'production',
+        MONGODB_URI: 'mongodb+srv://prod/lotusgift',
+        BETTER_AUTH_SECRET: 'a-32-character-or-longer-prod-secret',
+        BETTER_AUTH_URL: 'https://api.lotusgift.com',
+        FRONTEND_URL: 'https://lotusgift.com',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otlp.example/otlp',
+      }),
+    ).toThrow(/NOMINATIM_USER_AGENT/);
   });
 
   it('rejects production env with dev-default BETTER_AUTH_SECRET', () => {
