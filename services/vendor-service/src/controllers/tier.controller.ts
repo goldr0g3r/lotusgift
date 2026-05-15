@@ -1,9 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
 
 import { TierUpgradeRequestSchema, type TierMatrixResponse } from '@repo/validators';
 
 import { CurrentUser, type CurrentUserPayload } from '../session.types.js';
+import { VendorOwnershipGuard } from '../decorators/index.js';
 import { TierService } from '../services/tier.service.js';
+
+export class TierUpgradeDto extends createZodDto(TierUpgradeRequestSchema) {}
 
 @Controller()
 export class TierController {
@@ -15,6 +19,7 @@ export class TierController {
   }
 
   @Get('vendors/:id/tier')
+  @UseGuards(VendorOwnershipGuard)
   async getCurrent(@Param('id') id: string): Promise<{
     vendorId: string;
     tier: string;
@@ -29,20 +34,20 @@ export class TierController {
   }
 
   @Post('vendors/:id/tier')
+  @UseGuards(VendorOwnershipGuard)
   async upgrade(
     @Param('id') id: string,
     @CurrentUser() user: CurrentUserPayload,
-    @Body() raw: unknown,
+    @Body() dto: TierUpgradeDto,
   ): Promise<{
     vendorId: string;
     fromTier: string | null;
     toTier: string;
     effectiveAt: string;
   }> {
-    const parsed = TierUpgradeRequestSchema.parse(raw);
     const result = await this.tierService.changeTier({
       vendorId: id,
-      toTier: parsed.toTier,
+      toTier: dto.toTier,
       actorId: user.id,
     });
     return {
@@ -54,6 +59,7 @@ export class TierController {
   }
 
   @Get('vendors/:id/commission-rate')
+  @UseGuards(VendorOwnershipGuard)
   async getCommission(
     @Param('id') id: string,
     @Query('categoryBucket') categoryBucket: string,

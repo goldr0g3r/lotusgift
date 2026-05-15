@@ -1,12 +1,13 @@
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 
 import { ulid, type OutboxPort, OUTBOX_PORT } from '@repo/utils';
+import { withTransaction } from '@repo/database';
 import { VendorWarehouseAddedV1 } from '@repo/events';
 import type { ServerAnalytics } from '@repo/analytics-sdk';
 import { WarehouseCreateRequestSchema, type WarehouseCreateRequest } from '@repo/validators';
-import type { InStateCode } from '@repo/types';
+import type { InStateCode, VendorTierKey } from '@repo/types';
 
 import {
   WAREHOUSE_MODEL,
@@ -20,6 +21,13 @@ import { ANALYTICS_TOKEN } from '../vendor-service.tokens.js';
 export interface CreateWarehouseInput extends WarehouseCreateRequest {
   vendorId: string;
   actorId: string;
+  /**
+   * Override tier used for the warehouse-count cap. Used by the
+   * onboarding wizard's WAREHOUSES step so vendors selecting a higher
+   * tier on the upcoming TIER step aren't blocked by their current
+   * default STARTER cap (D27 — Q3 fix).
+   */
+  tierOverride?: VendorTierKey;
 }
 
 /**
@@ -33,6 +41,7 @@ export class WarehouseService {
     private readonly warehouseModel: Model<WarehouseDocument>,
     @InjectModel(VENDOR_MODEL)
     private readonly vendorModel: Model<VendorDocument>,
+    @InjectConnection() private readonly connection: Connection,
     private readonly geocoder: GeocoderService,
     @Inject(OUTBOX_PORT) private readonly outbox: OutboxPort,
     @Inject(ANALYTICS_TOKEN) private readonly analytics: ServerAnalytics,
@@ -61,53 +70,88 @@ export class WarehouseService {
       });
     }
 
-    const currentCount = await this.warehouseModel.countDocuments({
-      vendorId: input.vendorId,
-      enabled: true,
-    });
-    if (!canAddWarehouse(vendor.tier, currentCount)) {
-      const cap = TIER_LIMITS[vendor.tier].maxWarehouses;
-      throw new UnprocessableEntityException({
-        message: `Tier ${vendor.tier} allows at most ${cap} warehouse(s); vendor has ${currentCount}`,
-        code: 'WAREHOUSE_TIER_LIMIT_EXCEEDED',
-        currentCount,
-        tierMax: cap,
-      });
-    }
-
+    // Geocode OUTSIDE the transaction (network I/O + Nominatim's 1
+    // req/sec semaphore — keeping the Mongo transaction short avoids
+    // holding write locks while the HTTP round-trip runs).
     const addressLine = this.buildAddressLine(parsed.address);
     const location = await this.geocoder.geocode(addressLine);
-
     const docId = ulid();
-    const created = await this.warehouseModel.create({
-      id: docId,
-      vendorId: input.vendorId,
-      orgId: vendor.orgId,
-      displayName: parsed.displayName,
-      ownerType: parsed.ownerType,
-      address: parsed.address,
-      contact: parsed.contact ?? null,
-      location: location
-        ? { type: 'Point' as const, coordinates: location.coordinates }
-        : null,
-      operatingHours: parsed.operatingHours,
-      carrierCutoffs: parsed.carrierCutoffs ?? {},
-      serviceZone: parsed.serviceZone,
-      pickupSlaHours: parsed.pickupSlaHours,
-      enabled: parsed.enabled,
-      createdBy: input.actorId,
+
+    // Atomic dual-write: cap-check (inside tx for serialization
+    // safety) + warehouse insert + outbox publish. The tier override
+    // is consumed by the onboarding wizard's WAREHOUSES step so a
+    // vendor onboarding into GROWTH can register 2-5 warehouses up
+    // front instead of being blocked by their current default STARTER
+    // cap of 1 (Q3 / D24 / D27 in the research note).
+    const effectiveTier = input.tierOverride ?? vendor.tier;
+    let created!: WarehouseDocument;
+    await withTransaction(this.connection, async (session) => {
+      const currentCount = await this.warehouseModel.countDocuments(
+        { vendorId: input.vendorId, enabled: true },
+        { session },
+      );
+      if (!canAddWarehouse(effectiveTier, currentCount)) {
+        const cap = TIER_LIMITS[effectiveTier].maxWarehouses;
+        throw new UnprocessableEntityException({
+          message: `Tier ${effectiveTier} allows at most ${cap} warehouse(s); vendor has ${currentCount}`,
+          code: 'WAREHOUSE_TIER_LIMIT_EXCEEDED',
+          currentCount,
+          tierMax: cap,
+        });
+      }
+      const docs = await this.warehouseModel.create(
+        [
+          {
+            id: docId,
+            vendorId: input.vendorId,
+            orgId: vendor.orgId,
+            displayName: parsed.displayName,
+            ownerType: parsed.ownerType,
+            address: parsed.address,
+            contact: parsed.contact ?? null,
+            location: location
+              ? { type: 'Point' as const, coordinates: location.coordinates }
+              : null,
+            operatingHours: parsed.operatingHours,
+            carrierCutoffs: parsed.carrierCutoffs ?? {},
+            serviceZone: parsed.serviceZone,
+            pickupSlaHours: parsed.pickupSlaHours,
+            enabled: parsed.enabled,
+            createdBy: input.actorId,
+          },
+        ],
+        { session },
+      );
+      created = docs[0] as WarehouseDocument;
+      await this.outbox.publish(
+        {
+          type: VendorWarehouseAddedV1.name,
+          idempotencyKey: `vendor:${input.vendorId}:warehouse-added:${docId}`,
+          payload: {
+            orgId: vendor.orgId,
+            vendorId: input.vendorId,
+            warehouseId: docId,
+            state: parsed.address.state,
+            pincode: parsed.address.pincode,
+          },
+        },
+        { session },
+      );
     });
 
-    await this.emitWarehouseAdded({
-      vendorId: input.vendorId,
-      orgId: vendor.orgId,
-      warehouseId: docId,
-      state: parsed.address.state,
-      pincode: parsed.address.pincode,
-      actorId: input.actorId,
+    // Analytics POST-commit (D18).
+    this.analytics.capture({
+      distinctId: input.actorId,
+      event: 'warehouse added',
+      properties: {
+        vendor_id: input.vendorId,
+        org_id: vendor.orgId,
+        warehouse_id: docId,
+        state: parsed.address.state,
+      },
     });
 
-    return created as WarehouseDocument;
+    return created;
   }
 
   async findByVendor(vendorId: string): Promise<WarehouseDocument[]> {
@@ -163,42 +207,5 @@ export class WarehouseService {
     ]
       .filter((p) => typeof p === 'string' && p.length > 0)
       .join(', ');
-  }
-
-  private async emitWarehouseAdded(args: {
-    vendorId: string;
-    orgId: string;
-    warehouseId: string;
-    state: InStateCode;
-    pincode: string;
-    actorId: string;
-  }): Promise<void> {
-    await this.outbox
-      .publish(
-        {
-          type: VendorWarehouseAddedV1.name,
-          idempotencyKey: `vendor:${args.vendorId}:warehouse-added:${args.warehouseId}`,
-          payload: {
-            orgId: args.orgId,
-            vendorId: args.vendorId,
-            warehouseId: args.warehouseId,
-            state: args.state,
-            pincode: args.pincode,
-          },
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { session: undefined as any },
-      )
-      .catch(() => {});
-    this.analytics.capture({
-      distinctId: args.actorId,
-      event: 'warehouse added',
-      properties: {
-        vendor_id: args.vendorId,
-        org_id: args.orgId,
-        warehouse_id: args.warehouseId,
-        state: args.state,
-      },
-    });
   }
 }

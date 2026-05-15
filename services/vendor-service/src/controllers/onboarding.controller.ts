@@ -1,9 +1,18 @@
-import { BadRequestException, Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post } from '@nestjs/common';
 
 import { OnboardingRequestSchema, type OnboardingStatusResponse } from '@repo/validators';
 
 import { CurrentUser, Session, type CurrentUserPayload, type SessionPayload } from '../session.types.js';
 import { OnboardingService } from '../services/onboarding.service.js';
+
+/**
+ * Note: `OnboardingRequestSchema` is a discriminated union over `step`
+ * which `createZodDto` cannot represent as a class (TS 2509). The body
+ * is parsed manually via `OnboardingRequestSchema.parse`. The global
+ * `ZodValidationPipe` skips bodies typed as `unknown` so the manual
+ * parse owns validation. Kubb OpenAPI gen picks the schema up via the
+ * `@repo/validators` barrel.
+ */
 
 interface OnboardingStartResponse {
   vendorId: string;
@@ -62,11 +71,17 @@ export class OnboardingController {
     });
   }
 
+  /**
+   * Get the current onboarding status. ALWAYS scopes to the
+   * authenticated session's active organization — the `vendorId` query
+   * parameter is intentionally ignored to prevent a signed-in user from
+   * reading another vendor's wizard state by guessing the id (Copilot
+   * security comment fix).
+   */
   @Get('status')
   async getStatus(
     @Session() session: SessionPayload,
     @CurrentUser() user: CurrentUserPayload,
-    @Query('vendorId') vendorIdQuery?: string,
   ): Promise<OnboardingStatusResponse> {
     const orgId = session.activeOrganizationId;
     if (!orgId) {
@@ -75,11 +90,7 @@ export class OnboardingController {
         code: 'VALIDATION_FAILED',
       });
     }
-    let vendorId = vendorIdQuery;
-    if (!vendorId) {
-      const start = await this.onboardingService.start({ orgId, startedBy: user.id });
-      vendorId = start.vendorId;
-    }
-    return this.onboardingService.getStatus(vendorId);
+    const start = await this.onboardingService.start({ orgId, startedBy: user.id });
+    return this.onboardingService.getStatus(start.vendorId);
   }
 }

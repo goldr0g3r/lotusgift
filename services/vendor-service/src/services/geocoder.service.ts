@@ -136,13 +136,34 @@ export class GeocoderService implements OnModuleInit {
 
     const userAgent = this.env.NOMINATIM_USER_AGENT ?? 'LotusGift-v2-Dev/0.1';
 
-    const response = await this.fetchImpl(url.toString(), {
-      method: 'GET',
-      headers: {
-        'User-Agent': userAgent,
-        Accept: 'application/json',
-      },
-    });
+    // 10s timeout so a stalled Nominatim response doesn't block the
+    // warehouse-create request indefinitely (and via the rate-limit
+    // semaphore, every subsequent geocode call behind it). The OSM
+    // public endpoint normally responds in ≤500 ms; anything past 10s
+    // is likely network failure.
+    const ac = new AbortController();
+    const timeoutHandle = setTimeout(() => ac.abort(), 10_000);
+    let response: Response;
+    try {
+      response = await this.fetchImpl(url.toString(), {
+        method: 'GET',
+        headers: {
+          'User-Agent': userAgent,
+          Accept: 'application/json',
+        },
+        signal: ac.signal,
+      });
+    } catch (err) {
+      const aborted = err instanceof Error && err.name === 'AbortError';
+      this.logger.warn(
+        aborted
+          ? `Nominatim request aborted after 10s for "${addressLine}"`
+          : `Nominatim fetch failed for "${addressLine}": ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return null;
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
 
     if (response.status === 429) {
       this.logger.warn('Nominatim returned 429 — rate-limited; skipping this address');

@@ -1,8 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 
 import { ulid, type OutboxPort, OUTBOX_PORT } from '@repo/utils';
+import { withTransaction } from '@repo/database';
 import { VendorActivatedV1 } from '@repo/events';
 import type { ServerAnalytics } from '@repo/analytics-sdk';
 import type { VendorStatus, VendorTierKey } from '@repo/types';
@@ -30,6 +31,7 @@ interface ListVendorsResult {
 export class VendorService {
   constructor(
     @InjectModel(VENDOR_MODEL) private readonly vendorModel: Model<VendorDocument>,
+    @InjectConnection() private readonly connection: Connection,
     @Inject(OUTBOX_PORT) private readonly outbox: OutboxPort,
     @Inject(ANALYTICS_TOKEN) private readonly analytics: ServerAnalytics,
   ) {}
@@ -95,14 +97,16 @@ export class VendorService {
       // rejected vendors after the vendor re-submits.
     }
 
+    // Atomic dual-write — status flip + outbox row commit together so
+    // a failed outbox insert aborts the status flip (and vice versa).
+    // Per `.cursor/rules/event-driven-discipline.mdc`.
     const activatedAt = new Date();
-    vendor.status = 'ACTIVATED';
-    vendor.activatedAt = activatedAt;
-    vendor.updatedBy = args.approvedBy;
-    await vendor.save();
-
-    await this.outbox
-      .publish(
+    await withTransaction(this.connection, async (session) => {
+      vendor.status = 'ACTIVATED';
+      vendor.activatedAt = activatedAt;
+      vendor.updatedBy = args.approvedBy;
+      await vendor.save({ session });
+      await this.outbox.publish(
         {
           type: VendorActivatedV1.name,
           idempotencyKey: `vendor:${args.vendorId}:activated:${activatedAt.toISOString()}`,
@@ -113,11 +117,12 @@ export class VendorService {
             activatedAt: activatedAt.toISOString(),
           },
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { session: undefined as any },
-      )
-      .catch(() => {});
+        { session },
+      );
+    });
 
+    // Analytics fires AFTER commit so a failed transaction never
+    // ghost-emits (D18 in docs/research/phase-6-vendor-service.md).
     this.analytics.capture({
       distinctId: args.approvedBy,
       event: 'vendor activated',

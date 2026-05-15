@@ -1,4 +1,11 @@
-import { Logger, Module, type DynamicModule, type Provider } from '@nestjs/common';
+import {
+  Inject,
+  Logger,
+  Module,
+  type DynamicModule,
+  type OnApplicationShutdown,
+  type Provider,
+} from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import type { Env } from '@repo/config';
@@ -13,7 +20,7 @@ import {
   VendorController,
   WarehouseController,
 } from './controllers/index.js';
-import { RoleGuard } from './decorators/index.js';
+import { RoleGuard, VendorOwnershipGuard } from './decorators/index.js';
 import {
   KYC_SUBMISSION_MODEL,
   KycSubmissionSchema,
@@ -76,7 +83,22 @@ const FETCH_PROVIDER: Provider = {
 };
 
 @Module({})
-export class VendorServiceModule {
+export class VendorServiceModule implements OnApplicationShutdown {
+  constructor(@Inject(ANALYTICS_TOKEN) private readonly analytics: ServerAnalytics) {}
+
+  /**
+   * Drain the PostHog Node SDK's in-memory queue before the gateway
+   * exits — otherwise queued vendor events (onboarding-started,
+   * kyc-submitted, activated, warehouse-added, tier-upgraded) drop on
+   * hard exit per `.cursor/rules/analytics-instrumentation.mdc`. No-op
+   * fallback (when `POSTHOG_KEY` is unset) returns immediately.
+   */
+  async onApplicationShutdown(signal?: string): Promise<void> {
+    log.log(`Flushing vendor-service analytics on ${signal ?? '<no signal>'}…`);
+    await this.analytics.shutdown();
+    log.log('vendor-service analytics shut down');
+  }
+
   static forRoot(env: Env): DynamicModule {
     return {
       module: VendorServiceModule,
@@ -112,6 +134,7 @@ export class VendorServiceModule {
         PayoutService,
         SlaScoringService,
         RoleGuard,
+        VendorOwnershipGuard,
       ],
       exports: [
         VendorService,
@@ -122,6 +145,7 @@ export class VendorServiceModule {
         PayoutService,
         SlaScoringService,
         RoleGuard,
+        VendorOwnershipGuard,
         ENV_TOKEN,
         ANALYTICS_TOKEN,
       ],

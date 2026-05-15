@@ -1,8 +1,9 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 
 import { ulid, type OutboxPort, OUTBOX_PORT } from '@repo/utils';
+import { withTransaction } from '@repo/database';
 import { VendorOnboardingStartedV1 } from '@repo/events';
 import type { ServerAnalytics } from '@repo/analytics-sdk';
 import {
@@ -41,13 +42,27 @@ interface OnboardingState {
   kyc?: unknown;
   bank?: unknown;
   warehouses?: unknown;
-  tier?: unknown;
+  /**
+   * Selected tier from the TIER step. Captured here EARLY (during the
+   * WAREHOUSES step body validation) so the warehouse cap-check honors
+   * the upcoming tier instead of the current default STARTER. Fixes
+   * Copilot review comment on the WAREHOUSES → TIER ordering edge.
+   */
+  tier?: { selectedTier: import('@repo/types').VendorTierKey };
+  /**
+   * Optional override populated when the user pre-declares their tier
+   * before the WAREHOUSES step (web-vendor UX). The wizard accepts
+   * `selectedTier` upfront and persists here so the WAREHOUSES step's
+   * cap-check honors it.
+   */
+  pendingTier?: import('@repo/types').VendorTierKey;
 }
 
 @Injectable()
 export class OnboardingService {
   constructor(
     @InjectModel(VENDOR_MODEL) private readonly vendorModel: Model<VendorDocument>,
+    @InjectConnection() private readonly connection: Connection,
     private readonly kycService: KycService,
     private readonly warehouseService: WarehouseService,
     private readonly tierService: TierService,
@@ -71,39 +86,48 @@ export class OnboardingService {
         status: this.buildStatusResponse(existing),
       };
     }
+    // Atomic dual-write: DRAFT vendor row + onboarding-started outbox
+    // event commit together per
+    // `.cursor/rules/event-driven-discipline.mdc`.
     const vendorId = ulid();
-    const created = await this.vendorModel.create({
-      id: vendorId,
-      orgId: args.orgId,
-      displayName: '(pending)',
-      contactEmail: 'pending@pending.invalid',
-      contactPhone: '+910000000000',
-      status: 'DRAFT',
-      tier: 'STARTER',
-      activatedAt: null,
-      onboardingState: { completedSteps: [] } satisfies OnboardingState,
-      createdBy: args.startedBy,
-    });
-
-    await this.outbox
-      .publish(
+    let created!: VendorDocument;
+    await withTransaction(this.connection, async (session) => {
+      const docs = await this.vendorModel.create(
+        [
+          {
+            id: vendorId,
+            orgId: args.orgId,
+            displayName: '(pending)',
+            contactEmail: 'pending@pending.invalid',
+            contactPhone: '+910000000000',
+            status: 'DRAFT',
+            tier: 'STARTER',
+            activatedAt: null,
+            onboardingState: { completedSteps: [] } satisfies OnboardingState,
+            createdBy: args.startedBy,
+          },
+        ],
+        { session },
+      );
+      created = docs[0] as VendorDocument;
+      await this.outbox.publish(
         {
           type: VendorOnboardingStartedV1.name,
           idempotencyKey: `vendor:${vendorId}:onboarding-started:1`,
           payload: { orgId: args.orgId, vendorId, startedBy: args.startedBy },
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { session: undefined as any },
-      )
-      .catch(() => {});
+        { session },
+      );
+    });
 
+    // Analytics POST-commit (D18).
     this.analytics.capture({
       distinctId: args.startedBy,
       event: 'vendor onboarding-started',
       properties: { vendor_id: vendorId, org_id: args.orgId },
     });
 
-    return { vendorId, status: this.buildStatusResponse(created as VendorDocument) };
+    return { vendorId, status: this.buildStatusResponse(created) };
   }
 
   /**
@@ -232,11 +256,17 @@ export class OnboardingService {
       }
       case 'WAREHOUSES': {
         const data = WarehousesStepSchema.parse(args.payload);
+        // Honor the upcoming tier (from the TIER step or pre-declared
+        // via `pendingTier`) so a GROWTH onboarding can register 2-5
+        // warehouses up front. Fix for Copilot review on the
+        // WAREHOUSES → TIER step ordering.
+        const tierOverride = state.pendingTier ?? state.tier?.selectedTier ?? undefined;
         for (const wh of data.warehouses) {
           await this.warehouseService.create({
             ...wh,
             vendorId: args.vendorId,
             actorId: args.actorId,
+            tierOverride,
           });
         }
         next.warehouses = { count: data.warehouses.length };

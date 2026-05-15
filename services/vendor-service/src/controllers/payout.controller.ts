@@ -1,28 +1,40 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
+import { VendorOwnershipGuard } from '../decorators/index.js';
 import { PayoutService } from '../services/payout.service.js';
 
+/** Pagination query DTO with safe bounds (page≥1, limit 1-100). */
+export class PayoutListQueryDto extends createZodDto(
+  z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  }),
+) {}
+
 /**
- * Vendor payout READ-ONLY endpoints. Always returns an empty list at
- * MVP until P10 payment-service ships the writer.
+ * Vendor payout READ-ONLY endpoints. Ownership-gated: only the vendor's
+ * active organization (or admin role) can read payouts. Always returns
+ * an empty list at MVP until P10 payment-service ships the writer.
  */
 @Controller('vendors/:id/payouts')
+@UseGuards(VendorOwnershipGuard)
 export class PayoutController {
   constructor(private readonly payoutService: PayoutService) {}
 
   @Get()
   async list(
     @Param('id') vendorId: string,
-    @Query('page') pageRaw?: string,
-    @Query('limit') limitRaw?: string,
+    @Query() query: PayoutListQueryDto,
   ): Promise<{
     items: ReturnType<typeof mapPayoutRow>[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {
     const result = await this.payoutService.listByVendor({
       vendorId,
-      page: pageRaw ? Number(pageRaw) : undefined,
-      limit: limitRaw ? Number(limitRaw) : undefined,
+      page: query.page,
+      limit: query.limit,
     });
     return {
       items: result.items.map(mapPayoutRow),

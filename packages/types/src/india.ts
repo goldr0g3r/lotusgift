@@ -1,13 +1,26 @@
 import type { Brand } from './brand.js';
 
 /**
- * India-specific shared types: ISO 3166-2:IN state + UT codes, vendor +
- * warehouse + KYC discriminators, and 3 branded scalars used by vendor +
- * tax + shipping services downstream.
+ * India-specific shared constants + types: ISO 3166-2:IN state + UT
+ * codes, vendor + warehouse + KYC discriminators, and 3 branded scalars
+ * used by vendor + tax + shipping services downstream.
  *
- * Per `.cursor/rules/architecture-layers.mdc`, this module is L1 type-level
- * only — no runtime values. The paired Zod parsers live in
- * `@repo/validators/vendor/india.ts`.
+ * Note on layer placement: `@repo/types` is the L1 type-vocabulary
+ * package per `.cursor/rules/architecture-layers.mdc`. Most existing
+ * modules in this package are type-level only, but this file deliberately
+ * ships paired runtime `const` arrays alongside the literal-union types
+ * (e.g. `IN_STATE_CODES` next to `InStateCode`). Reasoning:
+ *
+ *  - Zod parsers in `@repo/validators/vendor/india.ts` consume the same
+ *    arrays via `z.enum(IN_STATE_CODES)` — keeping the array here is the
+ *    only way to guarantee the type and the parser cover the exact same
+ *    set of values.
+ *  - Display-name lookups (`IN_STATE_NAMES`) belong adjacent to the codes
+ *    they describe.
+ *
+ * The runtime values are tiny constant arrays + a Record — there's no
+ * business logic in this file. If you need to add runtime logic, push
+ * it to `@repo/validators` (L1 with Zod) or `@repo/utils` (L2) instead.
  *
  * Citations (retrieval-dated 2026-05-15):
  * - ISO 3166-2:IN (28 states + 8 UTs):

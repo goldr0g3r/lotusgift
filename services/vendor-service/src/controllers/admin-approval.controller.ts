@@ -1,11 +1,22 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
 
-import { AdminApprovalDecisionSchema } from '@repo/validators';
+import { AdminApprovalDecisionSchema, VendorListQuerySchema } from '@repo/validators';
 
 import { CurrentUser, type CurrentUserPayload } from '../session.types.js';
 import { RequireRole, RoleGuard } from '../decorators/index.js';
 import { VendorService } from '../services/vendor.service.js';
 import { mapVendorToResponse } from './mappers/vendor-response.mapper.js';
+
+/**
+ * Note: `AdminApprovalDecisionSchema` is a discriminated union, which
+ * `createZodDto` cannot represent as a class (TS 2509). The decide
+ * endpoint parses the raw body via `AdminApprovalDecisionSchema.parse`
+ * instead — the global `ZodValidationPipe` skips bodies typed as
+ * `unknown` so the manual parse owns validation. Kubb OpenAPI gen
+ * picks the schema up via the `@repo/validators` barrel.
+ */
+export class AdminVendorListQueryDto extends createZodDto(VendorListQuerySchema) {}
 
 /**
  * Admin-only vendor-approval queue. The hard gate per D8 + D25 (Q4
@@ -21,19 +32,15 @@ export class AdminApprovalController {
    * List vendors awaiting admin review (defaults to `PENDING_REVIEW`).
    */
   @Get()
-  async list(
-    @Query('status') status?: string,
-    @Query('page') pageRaw?: string,
-    @Query('limit') limitRaw?: string,
-  ): Promise<{
+  async list(@Query() query: AdminVendorListQueryDto): Promise<{
     items: ReturnType<typeof mapVendorToResponse>[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {
-    const effectiveStatus = status ?? 'PENDING_REVIEW';
     const result = await this.vendorService.list({
-      status: effectiveStatus as never,
-      page: pageRaw ? Number(pageRaw) : undefined,
-      limit: limitRaw ? Number(limitRaw) : undefined,
+      status: query.status ?? 'PENDING_REVIEW',
+      tier: query.tier,
+      page: query.page,
+      limit: query.limit,
     });
     return {
       items: result.items.map(mapVendorToResponse),

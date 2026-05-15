@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 
 import {
   assertGstinChecksumValid,
@@ -13,6 +13,7 @@ import {
   type BankAccount,
 } from '@repo/validators';
 import { ulid, type OutboxPort, OUTBOX_PORT } from '@repo/utils';
+import { withTransaction } from '@repo/database';
 import type { ServerAnalytics } from '@repo/analytics-sdk';
 import { VendorKycSubmittedV1 } from '@repo/events';
 import type { PanEntityKind } from '@repo/types';
@@ -57,6 +58,7 @@ export class KycService {
   constructor(
     @InjectModel(KYC_SUBMISSION_MODEL)
     private readonly kycModel: Model<KycSubmissionDocument>,
+    @InjectConnection() private readonly connection: Connection,
     @Inject(OUTBOX_PORT) private readonly outbox: OutboxPort,
     @Inject(ANALYTICS_TOKEN) private readonly analytics: ServerAnalytics,
   ) {}
@@ -130,36 +132,39 @@ export class KycService {
       });
     }
 
+    // Atomic dual-write — kyc submission row + outbox event commit
+    // together per `.cursor/rules/event-driven-discipline.mdc`.
     const docId = ulid();
-    const kycSubmissionId = ulid();
-    const created = await this.kycModel.create({
-      id: docId,
-      vendorId: input.vendorId,
-      orgId: input.orgId,
-      gstin: input.gstin.toUpperCase(),
-      pan: input.pan.toUpperCase(),
-      entityKind: input.entityKind,
-      bankSnapshot: {
-        accountNumber: input.bankAccount.accountNumber,
-        ifsc: input.bankAccount.ifsc.toUpperCase(),
-        holderName: input.bankAccount.holderName,
-        accountType: input.bankAccount.accountType,
-        upiVpa: input.upiVpa ?? null,
-      },
-      supportingDocsR2Keys: input.supportingDocsR2Keys ?? [],
-      status: 'PENDING',
-      createdBy: input.actorId,
-    });
-
-    // Outbox emit happens immediately (without transaction wrapping)
-    // because we don't have a sibling write to atomically pair with at
-    // MVP — the onboarding service may opt to wrap submit + state-flip
-    // in a withTransaction call when both are needed.
-    await this.outbox
-      .publish(
+    let created!: KycSubmissionDocument;
+    await withTransaction(this.connection, async (session) => {
+      const docs = await this.kycModel.create(
+        [
+          {
+            id: docId,
+            vendorId: input.vendorId,
+            orgId: input.orgId,
+            gstin: input.gstin.toUpperCase(),
+            pan: input.pan.toUpperCase(),
+            entityKind: input.entityKind,
+            bankSnapshot: {
+              accountNumber: input.bankAccount.accountNumber,
+              ifsc: input.bankAccount.ifsc.toUpperCase(),
+              holderName: input.bankAccount.holderName,
+              accountType: input.bankAccount.accountType,
+              upiVpa: input.upiVpa ?? null,
+            },
+            supportingDocsR2Keys: input.supportingDocsR2Keys ?? [],
+            status: 'PENDING',
+            createdBy: input.actorId,
+          },
+        ],
+        { session },
+      );
+      created = docs[0] as KycSubmissionDocument;
+      await this.outbox.publish(
         {
           type: VendorKycSubmittedV1.name,
-          idempotencyKey: `vendor:${input.vendorId}:kyc-submitted:${kycSubmissionId}`,
+          idempotencyKey: `vendor:${input.vendorId}:kyc-submitted:${docId}`,
           payload: {
             orgId: input.orgId,
             vendorId: input.vendorId,
@@ -168,20 +173,12 @@ export class KycService {
             panEntityKind: input.entityKind,
           },
         },
-        // session=undefined cast — see comment above. Outside-transaction
-        // publish keeps the MVP write path simple; tightening to
-        // withTransaction lands when the onboarding service composes the
-        // submit + state-flip in one atomic op.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { session: undefined as any },
-      )
-      .catch(() => {
-        // The outbox repository writes to Mongo; a failure here means
-        // we lost the event. Re-throwing would force the user to
-        // resubmit the whole KYC form, so we log + swallow at MVP.
-        // P10 reconciliation back-fills via the kyc_submissions table.
-      });
+        { session },
+      );
+    });
 
+    // Analytics AFTER outbox commit — failed transactions never
+    // ghost-emit downstream PostHog events (D18).
     this.analytics.capture({
       distinctId: input.actorId,
       event: 'vendor kyc-submitted',
@@ -193,6 +190,6 @@ export class KycService {
       },
     });
 
-    return created as KycSubmissionDocument;
+    return created;
   }
 }

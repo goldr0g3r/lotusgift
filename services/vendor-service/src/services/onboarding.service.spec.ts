@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 
 import { OUTBOX_PORT, type OutboxPort } from '@repo/utils';
 
@@ -10,6 +10,14 @@ import { TierService } from './tier.service.js';
 import { NO_OP_ANALYTICS } from './analytics.helper.js';
 import { ANALYTICS_TOKEN } from '../vendor-service.tokens.js';
 import { VENDOR_MODEL } from '../schemas/vendor.schema.js';
+
+const fakeConnection = {
+  startSession: () =>
+    Promise.resolve({
+      withTransaction: async (fn: () => Promise<unknown>) => fn(),
+      endSession: () => Promise.resolve(),
+    }),
+};
 
 describe('OnboardingService.nextExpectedStep (pure)', () => {
   let service: OnboardingService;
@@ -23,6 +31,7 @@ describe('OnboardingService.nextExpectedStep (pure)', () => {
       providers: [
         OnboardingService,
         { provide: getModelToken(VENDOR_MODEL), useValue: fakeModel },
+        { provide: getConnectionToken(), useValue: fakeConnection },
         { provide: KycService, useValue: {} as KycService },
         { provide: WarehouseService, useValue: {} as WarehouseService },
         { provide: TierService, useValue: {} as TierService },

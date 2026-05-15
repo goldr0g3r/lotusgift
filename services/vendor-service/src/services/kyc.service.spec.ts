@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { BadRequestException } from '@nestjs/common';
 
 import { OUTBOX_PORT, type OutboxPort } from '@repo/utils';
@@ -13,11 +13,29 @@ import {
   computeGstinCheckChar,
 } from '@repo/validators';
 
+/**
+ * Stub Mongoose connection — `withTransaction` calls `connection.startSession()`
+ * then `session.withTransaction(fn)`. The stub immediately invokes the
+ * callback (no actual transaction) so tests can run without a real
+ * Mongo instance.
+ */
+const fakeConnection = {
+  startSession: () =>
+    Promise.resolve({
+      withTransaction: async (fn: () => Promise<unknown>) => fn(),
+      endSession: () => Promise.resolve(),
+    }),
+};
+
 describe('KycService.validate', () => {
   let service: KycService;
   const outboxPublish = jest.fn().mockResolvedValue(undefined);
   const fakeModel = {
-    create: jest.fn().mockImplementation((doc: unknown) => Promise.resolve(doc)),
+    create: jest
+      .fn()
+      .mockImplementation((docs: unknown[]) =>
+        Promise.resolve(Array.isArray(docs) ? docs : [docs]),
+      ),
   };
 
   beforeEach(async () => {
@@ -26,6 +44,7 @@ describe('KycService.validate', () => {
       providers: [
         KycService,
         { provide: getModelToken(KYC_SUBMISSION_MODEL), useValue: fakeModel },
+        { provide: getConnectionToken(), useValue: fakeConnection },
         {
           provide: OUTBOX_PORT,
           useValue: { publish: outboxPublish } as unknown as OutboxPort,

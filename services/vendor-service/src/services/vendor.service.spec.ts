@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
 
 import { OUTBOX_PORT, type OutboxPort } from '@repo/utils';
@@ -8,6 +8,15 @@ import { VendorService } from './vendor.service.js';
 import { NO_OP_ANALYTICS } from './analytics.helper.js';
 import { ANALYTICS_TOKEN } from '../vendor-service.tokens.js';
 import { VENDOR_MODEL } from '../schemas/vendor.schema.js';
+
+/** Stub Mongo connection — `withTransaction` invokes the callback inline. */
+const fakeConnection = {
+  startSession: () =>
+    Promise.resolve({
+      withTransaction: async (fn: () => Promise<unknown>) => fn(),
+      endSession: () => Promise.resolve(),
+    }),
+};
 
 describe('VendorService.approve', () => {
   const findOne = jest.fn();
@@ -32,6 +41,7 @@ describe('VendorService.approve', () => {
       providers: [
         VendorService,
         { provide: getModelToken(VENDOR_MODEL), useValue: fakeModel },
+        { provide: getConnectionToken(), useValue: fakeConnection },
         {
           provide: OUTBOX_PORT,
           useValue: { publish: outboxPublish } as unknown as OutboxPort,
@@ -79,11 +89,15 @@ describe('VendorService.approve', () => {
     expect(vendor.status).toBe('ACTIVATED');
     expect(vendor.activatedAt).toBeInstanceOf(Date);
     expect(outboxPublish).toHaveBeenCalledTimes(1);
-    const [eventArg] = outboxPublish.mock.calls[0] as [{ type: string; payload: unknown }];
+    const [eventArg, opts] = outboxPublish.mock.calls[0] as [
+      { type: string; payload: unknown },
+      { session: unknown },
+    ];
     expect(eventArg.type).toBe('vendor.activated.v1');
     const payload = eventArg.payload as Record<string, unknown>;
     expect(payload.vendorId).toBe('v1');
     expect(payload.orgId).toBe('o1');
     expect(payload.approvedBy).toBe('admin-1');
+    expect(opts.session).toBeDefined();
   });
 });

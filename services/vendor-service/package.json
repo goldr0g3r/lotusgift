@@ -21,7 +21,9 @@
     "@repo/types": "workspace:*",
     "@repo/utils": "workspace:*",
     "@repo/validators": "workspace:*",
-    "lru-cache": "^11.2.7"
+    "lru-cache": "^11.2.7",
+    "nestjs-zod": "^5.3.0",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "@nestjs/common": "^11",
