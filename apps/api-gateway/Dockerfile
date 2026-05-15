@@ -55,6 +55,7 @@ COPY packages/types/package.json ./packages/types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/validators/package.json ./packages/validators/
+COPY services/auth-service/package.json ./services/auth-service/
 
 # Frozen-lockfile install across the workspace so every transitive dep is
 # resolved exactly as committed. Cache-mount keeps the pnpm store warm across
@@ -89,6 +90,7 @@ COPY packages/types ./packages/types
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/utils ./packages/utils
 COPY packages/validators ./packages/validators
+COPY services/auth-service ./services/auth-service
 
 # Run turbo build for the api-gateway and its dependency graph.
 # Output: apps/api-gateway/dist/*.

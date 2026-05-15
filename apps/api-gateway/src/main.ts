@@ -3,11 +3,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 import cookieParser from 'cookie-parser';
-import express from 'express';
+import express, { type Express } from 'express';
 import helmet from 'helmet';
+
+import type { RequestHandler } from 'express';
 
 import { loadEnv, ConfigValidationError } from '@repo/config';
 import { bootstrapOtel, shutdownOtel } from '@repo/observability';
+import { AUTH_NODE_HANDLER } from '@lotusgift/auth-service';
 
 import { AppModule } from './app.module.js';
 
@@ -22,11 +25,15 @@ import { AppModule } from './app.module.js';
  *   3. NestFactory.create with `bodyParser: false` + `rawBody: true` so
  *      the Razorpay webhook (P10) can verify the signature against the
  *      exact bytes the carrier signed.
- *   4. Mount cookie-parser + helmet + CORS + JSON body parser on the
- *      Express adapter (the webhook route can opt OUT of JSON parsing
- *      via per-route middleware in P10).
- *   5. Swagger doc setup with `cleanupOpenApiDoc` for nestjs-zod DTOs.
- *   6. `app.listen(env.PORT)` + register SIGTERM/SIGINT for graceful
+ *   4. Mount cookie-parser + helmet on the Express adapter, then mount
+ *      Better-Auth's `toNodeHandler` BEFORE `express.json()` — Better-Auth
+ *      manages its own body parsing per its docs; mounting after
+ *      `express.json()` drains the stream and breaks the handler.
+ *   5. Re-enable JSON body parsing for all other Nest routes (the
+ *      webhook route at P10 will opt OUT via per-route middleware so
+ *      Razorpay HMAC verification sees the original bytes).
+ *   6. Swagger doc setup with `cleanupOpenApiDoc` for nestjs-zod DTOs.
+ *   7. `app.listen(env.PORT)` + register SIGTERM/SIGINT for graceful
  *      shutdown of OTEL + the Nest app.
  */
 async function bootstrap(): Promise<void> {
@@ -83,16 +90,27 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
-  // Re-enable JSON parsing for every non-webhook route. The /api/payments/webhook
-  // route (P10) will opt OUT via per-route raw-body capture so Razorpay
-  // HMAC verification sees the original bytes.
+  // ─── Better-Auth mount ───────────────────────────────────────────────
+  // The AUTH_NODE_HANDLER provider in @lotusgift/auth-service does the
+  // dynamic `await import('better-auth/node')` internally + binds the
+  // handler to the AUTH_INSTANCE, keeping the gateway free of any
+  // direct better-auth dependency. Mounted BEFORE express.json() because
+  // Better-Auth owns its own body parsing — letting express.json()
+  // drain the stream first breaks the handler. See
+  // docs/research/phase-5b-auth-runtime.md citations 4 + 11 + D1 + D5.
+  const authHandler = app.get<RequestHandler>(AUTH_NODE_HANDLER);
+  const expressApp = app.getHttpAdapter().getInstance() as Express;
+  expressApp.all('/api/auth/{*any}', authHandler);
+
+  // Re-enable JSON parsing for every non-webhook + non-auth route. The
+  // /api/payments/webhook route (P10) will opt OUT via per-route raw-body
+  // capture so Razorpay HMAC verification sees the original bytes.
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
   app.setGlobalPrefix('api');
   app.enableShutdownHooks();
 
-  // Swagger spec.
   const swaggerConfig = new DocumentBuilder()
     .setTitle('LotusGift API')
     .setDescription('LotusGift v2 modular-monolith API (gateway shell)')
@@ -110,6 +128,7 @@ async function bootstrap(): Promise<void> {
   log.log(`LotusGift API gateway listening on :${env.PORT}`);
   log.log(`Swagger UI: http://localhost:${env.PORT}/api/docs`);
   log.log(`OpenAPI JSON: http://localhost:${env.PORT}/api/docs-json`);
+  log.log(`Better-Auth: http://localhost:${env.PORT}/api/auth`);
 
   const shutdown = async (signal: string) => {
     log.log(`Received ${signal}, shutting down gracefully…`);

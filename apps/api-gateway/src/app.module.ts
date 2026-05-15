@@ -5,10 +5,10 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
+import { AuthServiceModule, ENV_TOKEN_NAME } from '@lotusgift/auth-service';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-import { AuthModule } from './auth/auth.module.js';
 import { GlobalProblemDetailsFilter } from './common/problem-details.filter.js';
 import { TraceIdMiddleware } from './common/trace-id.middleware.js';
 import { OUTBOX_PROVIDER, OutboxLifecycle } from './common/outbox.provider.js';
@@ -18,7 +18,7 @@ import { LinksModule } from './links/links.module.js';
 
 /**
  * Cached env instance. Loaded once at module construction time so every
- * provider (Mongo, Pino, Outbox) sees the same typed Env.
+ * provider (Mongo, Pino, Outbox, Better-Auth) sees the same typed Env.
  *
  * Throws `ConfigValidationError` synchronously if any required env var
  * is missing/invalid — gateway fails fast at bootstrap instead of
@@ -38,13 +38,17 @@ const env: Env = loadEnv(process.env);
       autoIndex: env.NODE_ENV !== 'production',
       serverSelectionTimeoutMS: 5_000,
     }),
-    AuthModule,
+    AuthServiceModule,
     LinksModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
     AppService,
     { provide: ENV_TOKEN, useValue: env },
+    // String-token alias consumed by AuthServiceModule's async factories
+    // (Symbol tokens can't be re-exported across package boundaries
+    // without coupling Nest DI to the package's symbol identity).
+    { provide: ENV_TOKEN_NAME, useValue: env },
     { provide: APP_FILTER, useClass: GlobalProblemDetailsFilter },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
