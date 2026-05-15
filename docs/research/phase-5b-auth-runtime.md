@@ -63,25 +63,26 @@ PR-15 finishes what PR-14 scaffolded: registers the real Better-Auth instance as
 ## 4. Implementation checklist
 
 - [x] research note
-- [ ] Phase 5b Epic + Phase-Acceptance issues created under milestone #6
-- [ ] `services/auth-service/src/build-better-auth-instance.ts` — async factory wiring all 6 plugins + Google + email stubs
-- [ ] `services/auth-service/src/auth-service.module.ts` — async providers + APP_GUARD + OnApplicationShutdown
-- [ ] `services/auth-service/src/auth.guard.ts` — Reflector + getSession + sets request.session/user
-- [ ] `services/auth-service/src/msg91.ts` — sendMsg91Otp helper
-- [ ] `services/auth-service/package.json` — add `better-auth`, `@better-auth/passkey`, `mongodb`, `@nestjs/core`, `express`
-- [ ] `services/auth-service/src/index.ts` — barrel re-exports
-- [ ] `packages/config/src/env.schema.ts` — 5 new optional env entries
-- [ ] `.env.example` — 5 new entries
-- [ ] `apps/api-gateway/src/main.ts` — replace stub with `toNodeHandler(auth)` mount + dynamic `better-auth/node` import
-- [ ] `apps/api-gateway/src/app.module.ts` — import AuthServiceModule + drop AuthModule stub + bind ENV_TOKEN_NAME
-- [ ] DELETE `apps/api-gateway/src/auth/auth.controller.ts` + `auth.module.ts`
-- [ ] `apps/api-gateway/package.json` — add `@lotusgift/auth-service: workspace:*`
-- [ ] `apps/api-gateway/Dockerfile` — add `services/auth-service` to deps + build stages
-- [ ] `services/auth-service/src/auth.guard.spec.ts`
-- [ ] `services/auth-service/src/auth-service.module.spec.ts`
-- [ ] `services/auth-service/src/msg91.spec.ts`
-- [ ] Local smoke pipeline (check-types + lint + test + build + dep-cruiser + markdownlint)
-- [ ] PR-15 squash-merged + status sync
+- [x] Phase 5b Epic + Phase-Acceptance issues created under milestone #6 (#33 + #34)
+- [x] `services/auth-service/src/build-better-auth-instance.ts` — async factory wiring all 6 plugins + Google + email stubs
+- [x] `services/auth-service/src/auth-service.module.ts` — `.forRoot(env)` dynamic module + 3 async providers + APP_GUARD + OnApplicationShutdown
+- [x] `services/auth-service/src/auth.guard.ts` — Reflector + getSession + sets request.session/user
+- [x] `services/auth-service/src/msg91.ts` — sendMsg91Otp helper with partial-config + production fail-fast
+- [x] `services/auth-service/package.json` — adds `better-auth ^1.6.11`, `@better-auth/passkey ^1.6.11`, `mongodb ^6.21.0`; Nest framework packages as `peerDependencies` (per D14)
+- [x] `services/auth-service/src/index.ts` — barrel re-exports
+- [x] `packages/config/src/env.schema.ts` — 5 new optional env entries
+- [x] `.env.example` — 5 new entries
+- [x] `apps/api-gateway/src/main.ts` — mounts `AUTH_NODE_HANDLER` on Express adapter before `express.json()`
+- [x] `apps/api-gateway/src/app.module.ts` — imports `AuthServiceModule.forRoot(env)` + drops the old AuthModule stub
+- [x] DELETED `apps/api-gateway/src/auth/auth.controller.ts` + `auth.module.ts`
+- [x] `apps/api-gateway/package.json` — adds `@lotusgift/auth-service: workspace:*`
+- [x] `apps/api-gateway/Dockerfile` — adds `services/auth-service` to deps + build stages
+- [x] `@AllowAnonymous()` added to HealthController + AppController + LinksController so the global guard doesn't 401 public probes
+- [x] `services/auth-service/src/auth.guard.spec.ts` — 5 tests
+- [x] `services/auth-service/src/auth-service.module.spec.ts` — 4 tests
+- [x] `services/auth-service/src/msg91.spec.ts` — 5 tests (incl. partial-config + production fail-fast)
+- [x] Local smoke pipeline — 33/33 check-types + 36/36 lint + 15/15 turbo test + 8/8 build + 0 dep-cruiser + 0 markdownlint errors
+- [x] PR-15 squash-merged (1f0d27c0) + status sync
 
 ## 5. Versions captured
 
@@ -116,9 +117,19 @@ rxjs ^7
 
 ## 6. Implementation reference
 
-- **PR:** TBD — backfill after `gh pr create`
-- **Squash SHA on `main`:** TBD — backfill after `gh pr merge --squash --admin`
-- **Issues closed:** TBD — Phase 5b Epic + Phase-Acceptance + also closes Phase 5 MVP epic/acceptance (already closed in PR-14)
-- **CI status:** TBD — 16 required checks expected green
-- **Lessons learned:** TBD — backfill post-merge
-- **What's actually ready for consumer use today:** TBD — backfill post-merge
+- **PR:** [#35 — feat(auth): wire Better-Auth runtime + AuthGuard + Passkey + 2FA + Phone OTP + Google social](https://github.com/goldr0g3r/lotusgift/pull/35)
+- **Squash SHA on `main`:** `1f0d27c0a2ceda7e6b4d79699e1e0f590f4ffe7b` (merged 2026-05-15)
+- **Issues closed:** [#33 (Phase 5b Epic)](https://github.com/goldr0g3r/lotusgift/issues/33), [#34 (Phase 5b Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/34). Phase 5 milestone (#6) closed (P5 + P5b ship as a logical pair).
+- **Commits squashed (3):**
+  1. `3c69371` — initial implementation: AuthServiceModule + AuthGuard + build-better-auth-instance + msg91 + main.ts + Dockerfile + tests + research note + sub-plan + Epic + Acceptance issues.
+  2. `4ee4abd` — Jest VM fix: stub `AUTH_NODE_HANDLER` in `auth-service.module.spec.ts` so `await import('better-auth/node')` doesn't fail under Jest's CJS VM without `--experimental-vm-modules`.
+  3. `686a8fa` — Copilot review fixes (all 15 inline comments): peer-deps for Nest framework packages so DI singletons are shared; `.forRoot(env)` dynamic module to fix ENV_TOKEN_NAME visibility; `lotusgift_auth` database isolation for Better-Auth-owned collections; adapter-agnostic `AuthNodeHandler` type (drops Express coupling); `serverSelectionTimeoutMS: 5_000` on the dedicated MongoClient; MSG91 validates all 3 env vars together + fails-fast in production; email + verification stubs no longer log token-bearing URLs; `LotusGiftAuthClient` typed via a project-owned interface instead of `any`; browser SDK adds passkey/twoFactor/phoneNumber client plugins; `@AllowAnonymous()` on Health + App + Links controllers to keep the global AuthGuard from 401-ing public probes; TODO comments point at the actual `@lotusgift/notification-service` package name.
+- **CI status:** all 16 required checks green on the merge SHA. `build-push` (multi-arch Docker) took 10m17s on the final commit. The first attempt on commit 4ee4abd hung past 1.5h (likely a transient GHA worker stall); cancel + auto-rerun on the same SHA completed cleanly in 6m46s, then the Copilot-fix commit's build-push completed in 10m17s.
+- **Lessons learned:**
+  1. **Peer-deps for Nest framework packages are mandatory in service libraries.** Plain `dependencies` double-installed `@nestjs/core` (11.1.21 in auth-service + 11.1.11 in api-gateway via pnpm's strict-store), which would have made `Reflector` + `APP_GUARD` symbols come from different module instances and DI would have failed to resolve at runtime. Caught by Copilot pre-merge.
+  2. **`.forRoot(env)` is required when an imported module's async providers need a parent-supplied value.** Nest's module-scoping does NOT flow parent providers into imported children — providing `ENV_TOKEN_NAME` in `AppModule` was invisible to `AuthServiceModule`'s factories. The dynamic-module pattern bundles the binding inside the child module's scope. Caught by Copilot pre-merge.
+  3. **Better-Auth collection isolation needs a separate database.** The adapter doesn't expose a collection-prefix option; bare `user` / `session` / `account` / `verification` collections would have collided with the repo's service-namespaced convention. Solution: dedicated `lotusgift_auth` database (Atlas M0 permits multi-db on a single cluster — no cost impact).
+  4. **Stub callbacks must redact tokens.** Logging the reset / verification URL (which contains a single-use bearer token) is a credentials-in-logs leak even for "temporary" stubs. Always log redacted email + nothing else. Caught by Copilot pre-merge.
+  5. **Multi-arch Docker builds on GHA can hang transiently.** The first build-push attempt for commit 4ee4abd ran >1.5h without progress; cancelling + auto-rerun (no code change) completed in 6m46s. Suspected GHA runner stall during QEMU emulation. Worth retrying once before treating it as a workflow bug.
+  6. **`useDefineForClassFields: false` is required for Nest `@Inject()` parameter decorators under TS 5.9 + ES2022 target.** With the default (`true`), parameter-property decorators emit as stage-3 class fields and TS rejects the decorator placement (TS1206). Set explicitly in `services/auth-service/tsconfig.json` alongside `experimentalDecorators: true`.
+- **What's actually ready for consumer use today:** the full Better-Auth runtime mounted at `/api/auth/*` (sign-in/sign-up via email+password, organization plugin for vendor-org / corporate-buyer-org / internal-staff-org, admin plugin for impersonation + listUsers, passkey + 2FA + phoneNumber plugins with MSG91 callback, Google social provider gated on env presence, email-verify + password-reset stubs), the `AuthGuard` global default-deny (controllers either decorate `@AllowAnonymous()` or get an authenticated session via `@Session() session`), and the browser `createLotusGiftAuthClient(opts)` SDK with the matching client plugin surface. Real email delivery + per-feature mandatory-or-optional enforcement (admin must register passkey, etc.) lands at P12 (notification-service) + P17/P18 (onboarding wizards).

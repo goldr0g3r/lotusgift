@@ -69,11 +69,19 @@ DEFERRED to P5b (separate PR): Passkey/WebAuthn, 2FA TOTP + backup codes, Phone 
 
 - **PR (SCAFFOLD slice):** [#32 — feat(auth): scaffold services/auth-service + @repo/auth-client](https://github.com/goldr0g3r/lotusgift/pull/32)
 - **Squash SHA on `main`:** `96868817e7f2a7aca2781419eeea1309f41553aa` (merged 2026-05-14)
-- **Issues closed:** [#31 (Phase 5 Epic)](https://github.com/goldr0g3r/lotusgift/issues/31), [#30 (Phase 5 Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/30). Phase 5 milestone (#6) stays open until P5b ships.
+- **Issues closed (Phase 5 MVP):** [#31 (Phase 5 Epic)](https://github.com/goldr0g3r/lotusgift/issues/31), [#30 (Phase 5 Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/30).
 - **Commits squashed (2):** initial scaffold + lockfile re-sync after dep trim.
 - **CI status:** all 16 required checks green.
 - **Lessons learned:**
-  1. Better-Auth is ESM-only — its `better-auth/node`, `better-auth/adapters/mongodb`, and `better-auth/plugins` subpaths all reject `require()` from a CJS-typed file under `module: Node16`. Either the consuming module needs `"type": "module"` (which cascades through ts-jest) or the consumer must use dynamic `await import('better-auth')`. P5b picks the pattern.
+  1. Better-Auth is ESM-only — its `better-auth/node`, `better-auth/adapters/mongodb`, and `better-auth/plugins` subpaths all reject `require()` from a CJS-typed file under `module: Node16`. Either the consuming module needs `"type": "module"` (which cascades through ts-jest) or the consumer must use dynamic `await import('better-auth')`. P5b picks the dynamic-import pattern (see [`docs/research/phase-5b-auth-runtime.md`](phase-5b-auth-runtime.md) D1).
   2. The admin + organization plugin types' user-shape intersection isn't expressible cleanly — admin tightens `email` to required, organization keeps it optional. Workaround: cast the options bag to `any` at the `betterAuth(options)` callsite. We shipped the options BUILDER (typed) here so consumers do the cast once at their own callsite.
   3. The first `gh issue create` for the Epic failed with "could not add label: 'area/auth' not found" — only `area/infra` exists in the label set. P6+ should add `area/auth` if we want per-service labels.
-- **What's actually ready for consumer use today:** the 3 decorators + 2 DI tokens + `buildBetterAuthOptions(env)` + `OrgKind` type + the `@repo/auth-client` browser SDK. Controllers in future PRs can already decorate `@AllowAnonymous()` / `@Session() session`. The decorators are no-ops at runtime until P5b registers the actual AuthGuard — which is fine for forward-compatibility.
+- **What's actually ready for consumer use today:** the 3 decorators + 2 DI tokens + `buildBetterAuthOptions(env)` + `OrgKind` type + the `@repo/auth-client` browser SDK. Controllers in future PRs can already decorate `@AllowAnonymous()` / `@Session() session`. The decorators were no-ops at runtime until P5b registered the actual AuthGuard — fine for forward-compatibility.
+
+### Phase 5b runtime — followed up in PR-15
+
+- **PR:** [#35 — feat(auth): wire Better-Auth runtime + AuthGuard + Passkey + 2FA + Phone OTP + Google social](https://github.com/goldr0g3r/lotusgift/pull/35)
+- **Squash SHA on `main`:** `1f0d27c0a2ceda7e6b4d79699e1e0f590f4ffe7b` (merged 2026-05-15)
+- **Issues closed (Phase 5b):** [#33 (Phase 5b Epic)](https://github.com/goldr0g3r/lotusgift/issues/33), [#34 (Phase 5b Phase-Acceptance)](https://github.com/goldr0g3r/lotusgift/issues/34).
+- **Phase 5 milestone:** [#6 — Phase 5 - Auth Service](https://github.com/goldr0g3r/lotusgift/milestone/6) — **CLOSED**.
+- **Research note (P5b):** [`docs/research/phase-5b-auth-runtime.md`](phase-5b-auth-runtime.md) — 15 retrieval-dated 2026-05-15 citations, 18 logged decisions, 5 open questions.
