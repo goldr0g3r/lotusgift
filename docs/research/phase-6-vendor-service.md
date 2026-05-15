@@ -288,8 +288,70 @@ TBD — output of `pnpm ls --depth=0 --filter @lotusgift/vendor-service` after i
 
 ## 7. Post-merge backfill (lessons learned)
 
-Backfilled after PR-16 squash-merges to `main`. Will include the squash SHA, the Copilot iteration
-timeline, any new CI lessons, and anything worth carrying forward into P7 product-service.
+**Merged:** 2026-05-15. PR <https://github.com/goldr0g3r/lotusgift/pull/38>. Squash SHA
+`0456d4c439e6efd8878a9103e798ab23527d4e7e`. Delivered: 84 files / +6264 / -49 across 2 commits
+squashed.
+
+### Copilot iteration timeline
+
++ **Commit 1 — `0382144`** (initial wire, 81 files / +5721 LOC): types/india + validators/vendor
+  (12 files including inline GSTIN mod-36) + events/vendor (5 v1 events) + services/vendor-service
+  (6 Mongoose schemas + 8 services + 7 controllers + RoleGuard + RequireRole + 6 spec files) +
+  api-gateway wiring + Dockerfile workspace COPY additions + research note + README. All 16 required
+  CI checks green on this commit alone.
++ **Copilot review** (state `COMMENTED`, 26 inline comments): grouped into four themes — transactional
+  outbox (6 comments), authorization on every vendor-scoped endpoint (7 comments), createZodDto pattern
+  per `api-type-safety.mdc` (7 comments), and 6 misc (Nominatim timeout, PostHog shutdown, query-param
+  validation, applyStep test, comment doc clarification on india.ts, race on warehouse cap).
++ **Commit 2 — `d0a6bb7`** (Copilot fixes, 25 files / +840 -300): all 5 write services rewritten to use
+  `withTransaction(connection, ...)` so the domain write + outbox publish commit together (D18 enforced
+  at the schema layer); new `@Global() OutboxModule` so vendor-service can `@Inject(OUTBOX_PORT)` (root
+  AppModule providers aren't visible to imported modules without `@Global()`); new `VendorOwnershipGuard`
+  wired across 8 endpoints (vendor read + warehouse create/list + tier read/upgrade + commission lookup +
+  payout list + SLA score) so any signed-in user can't read/write another vendor's data by guessing the id;
+  `createZodDto` DTOs on 6 mutation/query endpoints (warehouse create + tier upgrade + admin vendor list +
+  vendor list + payout pagination + SLA score days-window); onboarding-wizard tier-ordering fix so
+  GROWTH-onboarding can register 2-5 warehouses up front (passed `tierOverride` into the warehouse
+  cap-check); 10s `AbortController` timeout on Nominatim fetch; `OnApplicationShutdown` drains the
+  PostHog Node SDK queue; new `onboarding.apply-step.spec.ts` covering forward/backward/skip transitions;
+  query-param Zod DTOs replace ad-hoc `Number(raw)` casts. All 16 required CI checks green on this commit.
+
+### Numbers
+
++ Test count: 42 individual tests across 7 spec files (was 38 pre-Copilot-fix). 16/16 turbo `pnpm test`
+  tasks green.
++ check-types: 33/33. lint: 36/36 (warnings only). build: 8/8. dep-cruiser: 0 errors. markdownlint:
+  0 errors.
++ CI runtime: ~14 min per cycle (build-push multi-arch image is the long pole at 11-13 min).
+
+### Lessons worth carrying into P7 product-service
+
+1. **`@Global()` OutboxModule is required when imported service modules inject `OUTBOX_PORT`.** The
+   inline `providers: [OUTBOX_PROVIDER]` in AppModule (P4 PR-13) was sufficient for the gateway's own
+   controllers but NOT for L4 service modules — they live in a separate DI scope. Now wrapped in
+   `apps/api-gateway/src/common/outbox.module.ts`; P7+ services inherit it automatically.
+2. **`createZodDto` can't extend discriminated unions** (TS 2509 "base constructor return type is not
+   an object type or intersection"). The admin-approval decision endpoint + onboarding wizard endpoint
+   keep manual `Schema.parse(raw)` parsing with explanatory comments. P7 should design discriminated
+   request shapes as separate routes when possible, or accept the manual-parse trade-off.
+3. **`withTransaction` + `session` is the only correct outbox pattern.** The pre-Copilot pattern of
+   "emit outside transaction + swallow failures" violates `event-driven-discipline.mdc`. Every P7+
+   write must wrap the domain insert + `OutboxPort.publish({ session })` in a single
+   `withTransaction(this.connection, async (session) => { ... })`.
+4. **Analytics capture fires POST-commit, not inside the transaction.** Otherwise a Mongo abort can
+   ghost-emit PostHog events. D18 enforced — keep this discipline.
+5. **Per-endpoint ownership guards are required** for any vendor-scoped read/write endpoint that
+   returns PII or accepts mutations. The `VendorOwnershipGuard` pattern (resolve `:vendorId` →
+   look up vendor → check `session.activeOrganizationId` match OR admin role) is the template for
+   P7 product-service (each product belongs to a vendor → same gate applies).
+6. **Nominatim + any external HTTP must have an `AbortController` timeout.** A stalled response
+   without a timeout blocks every queued request behind the 1 req/sec rate-limit semaphore.
+7. **Test spec files MUST provide `getConnectionToken()` stubs** when the SUT uses
+   `withTransaction()`. The stub: `{ startSession: () => Promise.resolve({ withTransaction: fn =>
+   fn(), endSession: () => Promise.resolve() }) }`. Add this pattern to the test scaffolding for P7+.
+8. **`@nestjs/mongoose` 11 at L4** is the established pattern. `MongooseModule.forFeature([...])`
+   inside `forRoot(env)` dynamic module. `@repo/database` stays raw Mongoose 8 at L2 so worker/Lambda
+   contexts can consume it (D20).
 
 ## Appendix — Q1–Q5 answers (user-confirmed pre-execution)
 
