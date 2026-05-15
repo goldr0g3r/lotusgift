@@ -9,9 +9,15 @@ import {
 } from '@nestjs/common';
 
 import type { CreateLinkDto, UpdateLinkDto } from '@repo/api';
+import { AllowAnonymous } from '@lotusgift/auth-service';
 
 import { LinksService } from './links.service.js';
 
+// Demo CRUD scaffold from the NestJS CLI generator. Anonymous-allowed
+// until a real authz model lands at P6 (per-controller @Session() guard
+// + RBAC). Kept here as the integration smoke test for `@repo/api` Kubb
+// hooks.
+@AllowAnonymous()
 @Controller('links')
 export class LinksController {
   constructor(private readonly linksService: LinksService) {}

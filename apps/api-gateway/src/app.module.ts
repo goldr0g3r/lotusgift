@@ -5,10 +5,10 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
+import { AuthServiceModule } from '@lotusgift/auth-service';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-import { AuthModule } from './auth/auth.module.js';
 import { GlobalProblemDetailsFilter } from './common/problem-details.filter.js';
 import { TraceIdMiddleware } from './common/trace-id.middleware.js';
 import { OUTBOX_PROVIDER, OutboxLifecycle } from './common/outbox.provider.js';
@@ -18,7 +18,7 @@ import { LinksModule } from './links/links.module.js';
 
 /**
  * Cached env instance. Loaded once at module construction time so every
- * provider (Mongo, Pino, Outbox) sees the same typed Env.
+ * provider (Mongo, Pino, Outbox, Better-Auth) sees the same typed Env.
  *
  * Throws `ConfigValidationError` synchronously if any required env var
  * is missing/invalid — gateway fails fast at bootstrap instead of
@@ -38,7 +38,12 @@ const env: Env = loadEnv(process.env);
       autoIndex: env.NODE_ENV !== 'production',
       serverSelectionTimeoutMS: 5_000,
     }),
-    AuthModule,
+    // forRoot(env) binds the Env provider INSIDE the AuthServiceModule's
+    // DI scope so the async MongoClient + AUTH_INSTANCE + AUTH_NODE_HANDLER
+    // factories can inject it. Nest's module-scoping does not flow
+    // parent providers into imported children — see Nest fundamentals
+    // docs on dynamic modules.
+    AuthServiceModule.forRoot(env),
     LinksModule,
   ],
   controllers: [AppController, HealthController],

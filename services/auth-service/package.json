@@ -9,19 +9,36 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.11",
+    "@better-auth/passkey": "^1.6.11",
     "@repo/config": "workspace:*",
     "@repo/types": "workspace:*",
-    "reflect-metadata": "^0.2.2"
+    "better-auth": "^1.6.11",
+    "mongodb": "^6.21.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11",
+    "@nestjs/core": "^11",
+    "reflect-metadata": "^0.2",
+    "rxjs": "^7"
   },
   "devDependencies": {
+    "@nestjs/common": "^11.1.11",
+    "@nestjs/core": "^11.1.11",
+    "@nestjs/testing": "^11.1.11",
     "@repo/eslint-config": "workspace:*",
+    "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.19.3",
+    "jest": "^30.2.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
     "typescript": "5.9.2"
   }
 }
-

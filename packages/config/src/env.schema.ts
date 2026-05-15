@@ -54,6 +54,19 @@ const baseEnv = z
     SMTP_PASS: z.string().optional(),
     MAIL_FROM: z.string().optional(),
 
+    // ---- MSG91 phone OTP (P5b) — production callback for Better-Auth's
+    // phoneNumber plugin. P12 notification-service migration replaces
+    // the inline sendMsg91Otp helper.
+    MSG91_AUTH_KEY: z.string().optional(),
+    MSG91_TEMPLATE_ID: z.string().optional(),
+    MSG91_SENDER_ID: z.string().optional(),
+
+    // ---- Google OAuth (P5b) — Better-Auth socialProviders.google.
+    // Plugin is gated by presence: missing => the social provider is
+    // not registered at startup.
+    GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
+    GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+
     // ---- Upstash Redis (P4 rate-limit, P8 inventory reservations) ----
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),

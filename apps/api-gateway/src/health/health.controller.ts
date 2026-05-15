@@ -1,10 +1,12 @@
-import { Controller, Get, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Connection } from 'mongoose';
 
 import { recordHealth } from '@repo/observability';
+import { AllowAnonymous } from '@lotusgift/auth-service';
 
+@AllowAnonymous()
 @ApiTags('Health')
 @Controller()
 export class HealthController {

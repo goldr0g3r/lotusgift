@@ -12,7 +12,8 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "better-auth": "^1.5.0"
+    "@better-auth/passkey": "^1.6.11",
+    "better-auth": "^1.6.11"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
