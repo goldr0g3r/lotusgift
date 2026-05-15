@@ -6,11 +6,9 @@ import cookieParser from 'cookie-parser';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 
-import type { RequestHandler } from 'express';
-
 import { loadEnv, ConfigValidationError } from '@repo/config';
 import { bootstrapOtel, shutdownOtel } from '@repo/observability';
-import { AUTH_NODE_HANDLER } from '@lotusgift/auth-service';
+import { AUTH_NODE_HANDLER, type AuthNodeHandler } from '@lotusgift/auth-service';
 
 import { AppModule } from './app.module.js';
 
@@ -98,7 +96,7 @@ async function bootstrap(): Promise<void> {
   // Better-Auth owns its own body parsing — letting express.json()
   // drain the stream first breaks the handler. See
   // docs/research/phase-5b-auth-runtime.md citations 4 + 11 + D1 + D5.
-  const authHandler = app.get<RequestHandler>(AUTH_NODE_HANDLER);
+  const authHandler = app.get<AuthNodeHandler>(AUTH_NODE_HANDLER);
   const expressApp = app.getHttpAdapter().getInstance() as Express;
   expressApp.all('/api/auth/{*any}', authHandler);
 

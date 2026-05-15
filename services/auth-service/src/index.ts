@@ -5,9 +5,10 @@ export { AUTH_INSTANCE, AUTH_MONGO_CLIENT, AUTH_NODE_HANDLER } from './auth.toke
 export { ENV_TOKEN_NAME } from './env.token.js';
 
 export { AuthGuard, nodeHeadersToFetchHeaders } from './auth.guard.js';
-export { AuthServiceModule } from './auth-service.module.js';
+export { AuthServiceModule, type AuthNodeHandler } from './auth-service.module.js';
 export {
   buildBetterAuthInstance,
+  AUTH_DB_NAME,
   type BetterAuthInstance,
 } from './build-better-auth-instance.js';
 export { sendMsg91Otp } from './msg91.js';

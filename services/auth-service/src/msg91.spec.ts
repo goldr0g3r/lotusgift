@@ -24,11 +24,31 @@ describe('sendMsg91Otp', () => {
     globalThis.fetch = realFetch;
   });
 
-  it('skips delivery when MSG91_AUTH_KEY is unset', async () => {
+  it('skips delivery when ALL MSG91_* env vars are unset in dev/test', async () => {
     const fetchSpy = jest.fn();
     globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
     await sendMsg91Otp(stubEnv(), '+919999999999', '123456');
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('throws when only some MSG91_* env vars are set (partial config)', async () => {
+    await expect(
+      sendMsg91Otp(
+        stubEnv({ MSG91_AUTH_KEY: 'auth-key' } as Partial<Env>),
+        '+919999999999',
+        '123456',
+      ),
+    ).rejects.toThrow(/MSG91 misconfigured.*missing MSG91_TEMPLATE_ID.*MSG91_SENDER_ID/);
+  });
+
+  it('throws in production when MSG91_* vars are unset (fail-fast)', async () => {
+    await expect(
+      sendMsg91Otp(
+        stubEnv({ NODE_ENV: 'production' } as Partial<Env>),
+        '+919999999999',
+        '123456',
+      ),
+    ).rejects.toThrow(/MSG91 misconfigured.*all MSG91_\* vars unset in production/);
   });
 
   it('POSTs to MSG91 v5 endpoint with authkey header when keys are set', async () => {
@@ -76,7 +96,11 @@ describe('sendMsg91Otp', () => {
 
     await expect(
       sendMsg91Otp(
-        stubEnv({ MSG91_AUTH_KEY: 'bad' } as Partial<Env>),
+        stubEnv({
+          MSG91_AUTH_KEY: 'bad',
+          MSG91_TEMPLATE_ID: 'tmpl_123',
+          MSG91_SENDER_ID: 'LOTUSG',
+        } as Partial<Env>),
         '+919999999999',
         '123456',
       ),

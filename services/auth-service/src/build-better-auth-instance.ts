@@ -25,6 +25,21 @@ export interface BetterAuthInstance {
 }
 
 /**
+ * Database name used for Better-Auth-owned collections (`user`, `session`,
+ * `account`, `verification`, plus plugin-specific tables). Isolated from
+ * the application's primary `lotusgift` database so:
+ *
+ *  - Better-Auth's bare collection names don't collide with our
+ *    service-namespaced convention (`<service>.<entity>`) per
+ *    `.cursor/rules/deployment-mode.mdc`.
+ *  - Atlas backup-restore can scope auth data independently if needed.
+ *
+ * Atlas M0 free tier permits multiple databases on a single cluster
+ * (the 512 MB quota is cluster-wide, not per-database) — no extra cost.
+ */
+export const AUTH_DB_NAME = 'lotusgift_auth';
+
+/**
  * Async factory that builds the Better-Auth instance.
  *
  * Why dynamic imports?
@@ -110,25 +125,33 @@ export async function buildBetterAuthInstance(
     baseURL: baseOptions.baseURL,
     secret: baseOptions.secret,
     trustedOrigins: baseOptions.trustedOrigins,
-    database: mongodbAdapter(client.db(), { client }),
+    // Isolated `lotusgift_auth` database keeps Better-Auth's bare
+    // collection names from colliding with our service-namespaced
+    // convention. See AUTH_DB_NAME doc-comment above.
+    database: mongodbAdapter(client.db(AUTH_DB_NAME), { client }),
     emailAndPassword: {
       enabled: baseOptions.emailAndPassword.enabled,
       minPasswordLength: baseOptions.emailAndPassword.minPasswordLength,
       requireEmailVerification: baseOptions.emailAndPassword.requireEmailVerification,
       // TODO(P12): replace these stubs with real Resend/Mailgun calls via
-      // @repo/notification-service. For now we log so dev still sees the
-      // signal in the console.
-      sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
+      // @lotusgift/notification-service. The current stub deliberately
+      // does NOT log the full reset URL — that URL contains a single-use
+      // bearer token that can complete the password reset; logging it
+      // would leak credentials to anyone with log access. Once P12 wires
+      // real delivery the stub disappears entirely.
+      sendResetPassword: async ({ user }: { user: { email: string } }) => {
         log.log(
-          `[stub] sendResetPassword to ${user.email}: ${url} — wire real delivery at P12 notification-service.`,
+          `[stub] sendResetPassword to ${redactEmail(user.email)} — TODO(P12) @lotusgift/notification-service`,
         );
       },
     },
     emailVerification: {
       sendOnSignUp: true,
-      sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
+      // Same redaction rationale as sendResetPassword above — the
+      // verification URL token is a single-use credential.
+      sendVerificationEmail: async ({ user }: { user: { email: string } }) => {
         log.log(
-          `[stub] sendVerificationEmail to ${user.email}: ${url} — wire real delivery at P12 notification-service.`,
+          `[stub] sendVerificationEmail to ${redactEmail(user.email)} — TODO(P12) @lotusgift/notification-service`,
         );
       },
     },
@@ -161,4 +184,16 @@ function rpIdFromUrl(url: string): string {
   } catch {
     return 'localhost';
   }
+}
+
+/**
+ * Redact an email to its first character + domain so log lines
+ * remain useful for correlation without exposing PII.
+ *
+ *  `alice@example.com` → `a***@example.com`
+ */
+function redactEmail(email: string): string {
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0) return '***';
+  return `${email[0]}***${email.slice(atIndex)}`;
 }

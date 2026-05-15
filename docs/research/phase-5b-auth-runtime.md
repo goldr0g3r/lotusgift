@@ -25,7 +25,7 @@ PR-15 finishes what PR-14 scaffolded: registers the real Better-Auth instance as
 | 10 | Better-Auth Email verification docs | <https://www.better-auth.com/docs/concepts/email> | `emailVerification.sendVerificationEmail({ user, url, token }, request)` + `emailVerification.sendOnSignUp: true`. `emailAndPassword.sendResetPassword({ user, url, token }, request)` + `emailAndPassword.onPasswordReset({ user }, request)`. Tokens expire after 1 hour by default. |
 | 11 | NestJS dynamic-import (ESM-from-CJS) FAQ | <https://github.com/nestjs/docs.nestjs.com/issues/3093> | Pattern: `{ provide: TOKEN, useFactory: async () => (await import('esm-package')) }`. Requires `tsconfig.module: Node16` or `NodeNext` so TypeScript emits real `import()` instead of `require`. Our `@repo/typescript-config/nestjs.json` already uses Node16. |
 | 12 | Better-Auth v1.6.0 release notes | <https://github.com/better-auth/better-auth/releases/tag/v1.6.0> | OpenTelemetry instrumentation (parked to P21 per `docs/research/phase-5b-auth-runtime.md` D-log D10), new social providers (WeChat ignored for MVP), improved session management, bug fixes. |
-| 13 | MSG91 send-OTP REST API | <https://docs.msg91.com/otp> | `https://api.msg91.com/api/v5/otp` — POST with `authkey` header, `mobile` / `otp` / `template_id` / `sender` body. Returns `{ type: 'success' \| 'error' }`. 4-9 digit OTP length, 1-min to 1-day expiry. |
+| 13 | MSG91 send-OTP REST API | <https://docs.msg91.com/otp> | `https://control.msg91.com/api/v5/otp` — POST with `authkey` header, `mobile` / `otp` / `template_id` / `sender` body. Returns `{ type: 'success' \| 'error' }`. 4-9 digit OTP length, 1-min to 1-day expiry. |
 | 14 | NestJS Lifecycle events (`OnApplicationShutdown`) | <https://docs.nestjs.com/fundamentals/lifecycle-events> | `enableShutdownHooks()` (already called in `main.ts`) wires SIGTERM/SIGINT → `OnApplicationShutdown.onApplicationShutdown(signal)`. We close the `MongoClient` driving Better-Auth here. |
 | 15 | `mongodb` driver on npm | <https://www.npmjs.com/package/mongodb> | Latest 6.20.x. `new MongoClient(uri).connect()` + `.db(name?)` + `.close()`. Lazy-connects on first op; explicit `connect()` warms the pool. |
 
@@ -46,6 +46,11 @@ PR-15 finishes what PR-14 scaffolded: registers the real Better-Auth instance as
 | D11 | Google `clientId` shape | Single string (string \| string-array supported in v1.6) | Array (web + iOS + Android upfront) | No mobile apps in MVP. Parent plan's mobile-apps section in `docs/runbooks/scaling-up.md` is the trigger for adding iOS + Android client IDs. Single string keeps the env-var simpler today. |
 | D12 | Cross-subdomain SSO | No change — already wired in PR-14's `auth.factory.ts` via `advanced.crossSubDomainCookies` | Add Playwright E2E test here | E2E test lands at P16 (web-customer phase) when there's an actual second subdomain to assert against. Tracked as Open Question Q2. |
 | D13 | Phase 5 + Phase 5b shipping pair | Close BOTH the Phase 5 MVP epic/acceptance + the new Phase 5b epic/acceptance at the end of PR-15. Close Phase 5 milestone (#6). Parent plan `p5` flips to `completed`. | Keep P5 todo `in_progress` until a separate P5b sub-todo lands | The parent prompt explicitly directs `p5 → completed` at PR-15 merge — Phase 5 + Phase 5b are a logical pair. |
+| D14 | Nest framework deps as peer | `@nestjs/common`, `@nestjs/core`, `reflect-metadata`, `rxjs` declared as `peerDependencies` (mirrored as `devDependencies` for typechecking) | Plain `dependencies` | Plain deps double-installed `@nestjs/core` (11.1.21 in auth-service + 11.1.11 in api-gateway), which means `Reflector` + `APP_GUARD` symbols came from different module instances and DI failed to resolve. Peer-deps force the consumer to provide a single shared copy. Matches the pattern in `services/notification-service/package.json` + `services/order-service/package.json`. |
+| D15 | Better-Auth collection isolation | Separate database `lotusgift_auth` for Better-Auth-owned collections (`user`, `session`, `account`, `verification`, plugin tables) | Inline collection-prefix override via schema | Better-Auth's mongo adapter doesn't expose a collection-prefix option; the cleanest isolation is a separate database. Atlas M0 free tier allows multiple databases on a single cluster (the 512 MB quota is cluster-wide, not per-database), so no cost impact. Keeps Better-Auth's bare collection names from colliding with the repo's service-namespaced convention (`<service>.<entity>` per `.cursor/rules/deployment-mode.mdc`). |
+| D16 | MSG91 partial-config handling | All three of `MSG91_AUTH_KEY` / `MSG91_TEMPLATE_ID` / `MSG91_SENDER_ID` required together. Silent dev-skip only when ALL THREE are unset AND NODE_ENV ≠ production. Production with any unset → fail-fast with descriptive error. | Silent skip on `MSG91_AUTH_KEY` alone | Silently dropping `template_id` / `sender` would cause every MSG91 API call to 4xx with a confusing error. Fail-fast at config time is operator-friendlier. |
+| D17 | Email + verification stub redaction | Stubs log only the redacted user email (`a***@example.com`), never the URL containing the token | Log the full reset/verification URL | The URL contains a single-use bearer token that completes the action; logging it leaks credentials to anyone with log access. Even temporary stubs need to respect the secrets-handling rule. |
+| D18 | Adapter-agnostic node-handler type | `AuthNodeHandler` defined as `(req, res, next?) => void \| Promise<void>` with `req`/`res` as `unknown` | `Express.RequestHandler` import | The auth-service library shouldn't depend on the gateway's chosen platform adapter (Express today, possibly Fastify later). The narrow signature matches both. Removes the `express` runtime dep from `services/auth-service`. |
 
 ## 3. Open questions (parked)
 
@@ -84,14 +89,29 @@ PR-15 finishes what PR-14 scaffolded: registers the real Better-Auth instance as
 | --- | --- | --- |
 | `better-auth` | `^1.6.11` | Core Better-Auth + organization + admin + twoFactor + phoneNumber plugins (all built-in via `better-auth/plugins`) |
 | `@better-auth/passkey` | `^1.6.11` | Passkey/WebAuthn plugin (separate package per source #5) |
-| `mongodb` | `^6.20.0` | Raw driver for the Better-Auth Mongo adapter |
-| `@nestjs/core` | `^11.1.11` | Needed inside services/auth-service for `APP_GUARD` token + `Reflector` |
-| `express` | `^4.21.x` | `Request` type for AuthGuard; matches the version already in `apps/api-gateway` via `@nestjs/platform-express` |
+| `mongodb` | `^6.21.0` | Raw driver for the Better-Auth Mongo adapter (pinned to 6.x to match `@repo/database` mongoose transitive) |
+| `@nestjs/common` | `^11` (peer) | Peer-dep so the service library shares Nest singletons with the gateway (decision D14 below) |
+| `@nestjs/core` | `^11` (peer) | Same; peer-dep avoids double-install of `Reflector` + `APP_GUARD` |
+| `reflect-metadata` | `^0.2` (peer) | Same |
+| `rxjs` | `^7` (peer) | Same |
 
 `pnpm ls --depth=0 --filter @lotusgift/auth-service` output (backfilled post-CLI-install):
 
 ```text
-TBD — paste output here after `pnpm install` in step 5 of the workflow.
+@lotusgift/auth-service@0.0.0 services/auth-service
+
+dependencies:
+@better-auth/passkey ^1.6.11
+@repo/config workspace:* -> ../../packages/config
+@repo/types workspace:* -> ../../packages/types
+better-auth ^1.6.11
+mongodb ^6.21.0
+
+peerDependencies:
+@nestjs/common ^11
+@nestjs/core ^11
+reflect-metadata ^0.2
+rxjs ^7
 ```
 
 ## 6. Implementation reference

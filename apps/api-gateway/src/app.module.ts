@@ -5,7 +5,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
-import { AuthServiceModule, ENV_TOKEN_NAME } from '@lotusgift/auth-service';
+import { AuthServiceModule } from '@lotusgift/auth-service';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
@@ -38,17 +38,18 @@ const env: Env = loadEnv(process.env);
       autoIndex: env.NODE_ENV !== 'production',
       serverSelectionTimeoutMS: 5_000,
     }),
-    AuthServiceModule,
+    // forRoot(env) binds the Env provider INSIDE the AuthServiceModule's
+    // DI scope so the async MongoClient + AUTH_INSTANCE + AUTH_NODE_HANDLER
+    // factories can inject it. Nest's module-scoping does not flow
+    // parent providers into imported children — see Nest fundamentals
+    // docs on dynamic modules.
+    AuthServiceModule.forRoot(env),
     LinksModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
     AppService,
     { provide: ENV_TOKEN, useValue: env },
-    // String-token alias consumed by AuthServiceModule's async factories
-    // (Symbol tokens can't be re-exported across package boundaries
-    // without coupling Nest DI to the package's symbol identity).
-    { provide: ENV_TOKEN_NAME, useValue: env },
     { provide: APP_FILTER, useClass: GlobalProblemDetailsFilter },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
