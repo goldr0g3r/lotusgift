@@ -3,7 +3,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import type { Env } from '@repo/config';
 
 import { AuthServiceModule } from './auth-service.module.js';
-import { AUTH_INSTANCE, AUTH_MONGO_CLIENT } from './auth.tokens.js';
+import { AUTH_INSTANCE, AUTH_MONGO_CLIENT, AUTH_NODE_HANDLER } from './auth.tokens.js';
 import { ENV_TOKEN_NAME } from './env.token.js';
 import type { BetterAuthInstance } from './build-better-auth-instance.js';
 
@@ -47,6 +47,11 @@ describe('AuthServiceModule', () => {
       .useValue(stubMongoClient)
       .overrideProvider(AUTH_INSTANCE)
       .useValue(stubAuth)
+      // AUTH_NODE_HANDLER's real factory does `await import('better-auth/node')`,
+      // which Jest's CJS VM can't execute without --experimental-vm-modules.
+      // The stub here keeps the test environment-portable.
+      .overrideProvider(AUTH_NODE_HANDLER)
+      .useValue(((_req: unknown, _res: unknown, next?: () => void) => next?.()) as unknown)
       .compile();
   });
 
