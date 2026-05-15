@@ -41,3 +41,6 @@ export {
   ProblemDetailsSchema,
 } from './error.js';
 export type { LotusGiftErrorCode, ProblemDetails, ProblemDetailsFieldError } from './error.js';
+
+// Vendor + warehouse + KYC schemas (P6 — populates the empty P2 shell).
+export * from './vendor/index.js';

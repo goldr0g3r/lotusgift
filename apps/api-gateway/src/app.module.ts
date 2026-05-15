@@ -6,12 +6,13 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
 import { AuthServiceModule } from '@lotusgift/auth-service';
+import { VendorServiceModule } from '@lotusgift/vendor-service';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { GlobalProblemDetailsFilter } from './common/problem-details.filter.js';
 import { TraceIdMiddleware } from './common/trace-id.middleware.js';
-import { OUTBOX_PROVIDER, OutboxLifecycle } from './common/outbox.provider.js';
+import { OutboxModule } from './common/outbox.module.js';
 import { ENV_TOKEN } from './common/config.tokens.js';
 import { HealthController } from './health/health.controller.js';
 import { LinksModule } from './links/links.module.js';
@@ -44,6 +45,16 @@ const env: Env = loadEnv(process.env);
     // parent providers into imported children — see Nest fundamentals
     // docs on dynamic modules.
     AuthServiceModule.forRoot(env),
+    // Global OutboxModule MUST be imported BEFORE any service module
+    // that injects `OUTBOX_PORT` (vendor-service + every P7+ service).
+    // Nest resolves @Global() providers across module boundaries; without
+    // the @Global() wrapper the AppModule-scoped provider isn't visible
+    // to imported children.
+    OutboxModule,
+    // Same forRoot(env) pattern as AuthServiceModule —
+    // VendorServiceModule's GeocoderService + PostHog analytics factory
+    // inject the typed `Env`.
+    VendorServiceModule.forRoot(env),
     LinksModule,
   ],
   controllers: [AppController, HealthController],
@@ -53,8 +64,6 @@ const env: Env = loadEnv(process.env);
     { provide: APP_FILTER, useClass: GlobalProblemDetailsFilter },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
-    OUTBOX_PROVIDER,
-    OutboxLifecycle,
   ],
 })
 export class AppModule implements NestModule {
