@@ -18,6 +18,8 @@ import {
   ProductUpdateRequestSchema,
 } from '@repo/validators';
 
+import { VendorService } from '@lotusgift/vendor-service';
+
 import { ImageService } from '../services/image.service.js';
 import { ProductService } from '../services/product.service.js';
 import {
@@ -48,6 +50,7 @@ export class ProductController {
   constructor(
     private readonly products: ProductService,
     private readonly images: ImageService,
+    private readonly vendors: VendorService,
   ) {}
 
   @Get()
@@ -92,9 +95,19 @@ export class ProductController {
         code: 'AUTH_FORBIDDEN',
       });
     }
+    // `vendorId` is the P6 vendor ULID (`vendor.vendors.id`), not the
+    // Better-Auth org id — see product.schema.ts field docs.
+    const vendor = await this.vendors.getByOrgId(orgId);
+    if (!vendor) {
+      throw new ForbiddenException({
+        message: `No vendor profile bound to active organization ${orgId}`,
+        code: 'VENDOR_NOT_FOUND',
+        activeOrgId: orgId,
+      });
+    }
     const product = await this.products.create({
       ...(body as unknown as Parameters<ProductService['create']>[0]),
-      vendorId: orgId,
+      vendorId: vendor.id as unknown as string,
       orgId,
       actorId: user.id,
     });
