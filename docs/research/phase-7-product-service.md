@@ -210,19 +210,53 @@ Free-text tags or controlled vocabulary? **Defer until UX research surfaces a ne
 
 ## 6. Implementation reference
 
-To be backfilled post-merge with:
+**Merged:** 2026-05-16. PR <https://github.com/goldr0g3r/lotusgift/pull/41>. Squash SHA
+`1a045daf410bbe5f90337c5b47ed488143600b7e`. Delivered: 86 files / +7472 / -55 across 3 commits
+squashed.
 
-- PR-17 URL
-- Squash SHA
-- Copilot review iteration count + themes
-- Lessons learned for P8 inventory-service (especially around StockReadPort impl)
+### Copilot iteration timeline
+
+- **Commit 1 — `981687f`** (initial wire, 86 files): product-service module + P2 shell population +
+  StockReadPort + cross-service-contracts doc + Atlas mapping + gateway wiring. All 16 required CI
+  checks green on first push.
+- **Copilot review** (state `COMMENTED`, 6 inline comments): duplicate barrel exports (validators +
+  events), plain `Error` → RFC 9457 in product controller, duplicate `VendorServiceModule.forRoot`
+  registration, variant update/remove missing searchVersion bump, search `$regex` case sensitivity.
+- **Commit 2 — `c655a9b`**: all 6 inline comments addressed.
+- **Commit 3 — `2d42164`**: `vendorId` on product create now resolves `VendorService.getByOrgId()`
+  → `vendor.id` (P6 ULID) instead of incorrectly using the Better-Auth `orgId` (Copilot
+  low-confidence review + schema field docs).
+
+### Lessons learned for P8 inventory-service
+
+1. **Cross-module ports bind at the owning module** — P8 should register `InventoryStockReadPort`
+   inside `InventoryServiceModule.forRoot` and remove the gateway-level `StubStockReadPort` binding
+   (see P8 sub-plan lesson #8).
+2. **`vendorId` ≠ `orgId`** — every FK onto P6 vendor aggregates must use the domain ULID (`vendor.id`),
+   not the Better-Auth organization id; denormalize `orgId` separately for ownership-guard lookups.
+3. **`withTransaction` + outbox** — carry forward from P6/P7; inventory ledger appends are financial-grade
+   writes and must publish outbox events inside the same Mongo session.
+4. **Duplicate `forRoot` is silent breakage** — only one module should call `VendorServiceModule.forRoot`;
+   transitive imports register controllers once.
+5. **Atlas Search M0** — denormalized `search_index` snapshot + `searchVersion` dedup is the correct
+   pattern; inventory availability should NOT join live stock in the search snapshot (read via
+   `StockReadPort` at query time instead).
+6. **R2 presign** — production `EnvSchema.superRefine` must list all four R2 keys; test fixtures need
+   valid URLs (no angle-bracket placeholders — Zod `.url()` rejects them).
 
 ## 7. Versions captured
 
-Captured via `pnpm ls --depth=0 --filter @lotusgift/product-service` after PR-17 lockfile sync:
+Captured via `pnpm ls --depth=0 --filter @lotusgift/product-service` on 2026-05-16 post-merge:
 
 ```text
-(captured post-install)
+@lotusgift/product-service@0.0.0
+@aws-sdk/client-s3 3.1048.0
+@aws-sdk/s3-request-presigner 3.1048.0
+@nestjs/mongoose 11.0.4
+nestjs-zod 5.3.0
+zod 4.4.3
+mongoose 8.23.0
+lru-cache 11.3.6
+typescript 5.9.2
+jest 30.3.0
 ```
-
-To be filled after the local smoke run.
