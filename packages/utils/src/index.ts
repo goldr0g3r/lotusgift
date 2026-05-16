@@ -27,3 +27,10 @@ export { MongoOutboxRepository } from './mongo-outbox-repository.js';
 
 export { InProcessOutboxPort } from './in-process-outbox.js';
 export type { InProcessOutboxOptions } from './in-process-outbox.js';
+
+export {
+  STOCK_READ_PORT,
+  StubStockReadPort,
+  type StockReadPort,
+  type StockSnapshot,
+} from './stock-read-port.js';

@@ -1,0 +1,68 @@
+{
+  "$comment": "Atlas Search index mapping for the product.search_index collection. Registered with the M0 cluster via the existing .github/workflows/atlas-search-mapping-drift.yml workflow (enforces the 3-index M0 budget per ADR-0006). NOTE: the runtime read path in P7 product-service uses a regex+aggregate against product.search_index rather than $search, per docs/research/phase-7-product-service.md D11 — the 10K queries / 7-day rolling quota on M0 makes burning into $search from a public faceted-search endpoint risky at launch. Swap the read path to $search post-M10 tier upgrade per docs/runbooks/scaling-up.md; this mapping registration becomes load-bearing then.",
+  "name": "product_search",
+  "collectionName": "search_index",
+  "database": "product",
+  "type": "search",
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "title": [
+        {
+          "type": "autocomplete",
+          "tokenization": "edgeGram",
+          "minGrams": 2,
+          "maxGrams": 15,
+          "foldDiacritics": true
+        },
+        {
+          "type": "string",
+          "analyzer": "lucene.standard"
+        }
+      ],
+      "descriptionPlain": {
+        "type": "string",
+        "analyzer": "lucene.standard"
+      },
+      "categoryL1": {
+        "type": "stringFacet"
+      },
+      "categoryL2": {
+        "type": "stringFacet"
+      },
+      "occasions": [
+        {
+          "type": "stringFacet"
+        },
+        {
+          "type": "token"
+        }
+      ],
+      "recipientTypes": [
+        {
+          "type": "stringFacet"
+        },
+        {
+          "type": "token"
+        }
+      ],
+      "vendorId": {
+        "type": "stringFacet"
+      },
+      "customizable": {
+        "type": "boolean"
+      },
+      "status": {
+        "type": "token"
+      },
+      "moq": {
+        "type": "number",
+        "representation": "int64"
+      },
+      "basePricePaise": {
+        "type": "number",
+        "representation": "int64"
+      }
+    }
+  }
+}

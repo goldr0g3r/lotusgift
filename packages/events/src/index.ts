@@ -19,3 +19,5 @@ export type { DefinedEvent } from './builders.js';
 // Per-service event re-exports (P6 onwards each service phase populates
 // the matching subpath shell + adds it to the top-level barrel).
 export * from './vendor/index.js';
+export * from './product/index.js';
+export * from './product/index.js';

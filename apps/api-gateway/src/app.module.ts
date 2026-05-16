@@ -5,7 +5,9 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
+import { STOCK_READ_PORT, StubStockReadPort } from '@repo/utils';
 import { AuthServiceModule } from '@lotusgift/auth-service';
+import { ProductServiceModule } from '@lotusgift/product-service';
 import { VendorServiceModule } from '@lotusgift/vendor-service';
 
 import { AppController } from './app.controller.js';
@@ -55,6 +57,12 @@ const env: Env = loadEnv(process.env);
     // VendorServiceModule's GeocoderService + PostHog analytics factory
     // inject the typed `Env`.
     VendorServiceModule.forRoot(env),
+    // ProductServiceModule (P7) — corporate-gifting taxonomy + R2
+    // presigned image uploads + Atlas Search snapshot sync + admin
+    // review moderation. Imports VendorServiceModule internally via
+    // its own forRoot(env) call so `VendorActiveGuard` can resolve
+    // `VendorService` (cross-module dependency legal per P7 D13).
+    ProductServiceModule.forRoot(env),
     LinksModule,
   ],
   controllers: [AppController, HealthController],
@@ -64,6 +72,11 @@ const env: Env = loadEnv(process.env);
     { provide: APP_FILTER, useClass: GlobalProblemDetailsFilter },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
+    // First formalized cross-module port (P7 D12). Binds the stub at
+    // MVP; P8 inventory-service swaps in `RedisStockReadPort` by
+    // changing only this `useClass` entry. Documented in
+    // `docs/architecture/cross-service-contracts.md`.
+    { provide: STOCK_READ_PORT, useClass: StubStockReadPort },
   ],
 })
 export class AppModule implements NestModule {

@@ -57,6 +57,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/validators/package.json ./packages/validators/
 COPY services/auth-service/package.json ./services/auth-service/
+COPY services/product-service/package.json ./services/product-service/
 COPY services/vendor-service/package.json ./services/vendor-service/
 
 # Frozen-lockfile install across the workspace so every transitive dep is
@@ -94,6 +95,7 @@ COPY packages/typescript-config ./packages/typescript-config
 COPY packages/utils ./packages/utils
 COPY packages/validators ./packages/validators
 COPY services/auth-service ./services/auth-service
+COPY services/product-service ./services/product-service
 COPY services/vendor-service ./services/vendor-service
 
 # Run turbo build for the api-gateway and its dependency graph.
