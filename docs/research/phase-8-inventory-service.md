@@ -250,7 +250,7 @@ Enterprise vendors may want longer reservation TTLs (e.g. 30 min for high-value 
 
 ### Research note
 
-- [ ] This file. §6 backfilled post-merge.
+- [x] This file. §6 backfilled post-merge.
 
 ### GitHub
 
@@ -275,19 +275,61 @@ Enterprise vendors may want longer reservation TTLs (e.g. 30 min for high-value 
 
 ## 6. Implementation reference
 
-To be backfilled post-merge with:
+**Merged:** 2026-05-16. PR <https://github.com/goldr0g3r/lotusgift/pull/44> (planning label PR-18). Squash SHA
+`96d410719bb044bde1cceaea2d87848eca0643bd`. Delivered: 79 files / +4047 / -51 across 2 commits squashed.
 
-- PR-18 URL
-- Squash SHA on `main`
-- Copilot review iteration count + themes
-- Lessons learned for P9 order-service (especially around `ReservationPort` consumption, idempotencyKey threading from cart to reservation, and the StockReadPort.batchGet hot-path under load)
+### Copilot / CI iteration timeline
+
+- **Commit 1 — `dd87d4a`** (initial wire, 79 files): inventory-service module + P2 shell population +
+  `RedisStockReadPort` + `ReservationPort` + gateway stub removal + cross-service-contracts update +
+  free-tier-budget Upstash quota fix. CI iter1: **lint** failed (`@repo/eslint-config/library` import in
+  `eslint.config.mjs`); **test** failed (`@repo/events` global coverage dropped below 80% after new
+  inventory event files without tests).
+- **Commit 2 — `410f210`**: restored minimal flat eslint config; added
+  `packages/events/src/inventory/events.test.ts`. CI iter2: all required checks green (lint, test,
+  typecheck, build, dep-cruiser, markdownlint, build-push).
+- **Copilot review:** not requested before merge (admin squash after green CI).
+
+### Test inventory (post-merge on `main`)
+
+| Package | Spec files | Tests |
+| --- | --- | --- |
+| `@lotusgift/inventory-service` | 8 | 14 |
+| `@repo/utils` (reservation + redis-stock-read ports) | 2 | 5 |
+| `@repo/events` (inventory v1 schemas) | 1 | 8 |
+
+Tier-1 line-coverage gate (≥85%) for inventory-service is **not yet enforced** in
+`jest.config.cjs` — local run ~35% lines; follow-up before phase-acceptance hardening if CI adds
+per-package thresholds.
+
+### Lessons learned for P9 order-service
+
+1. **`ReservationPort` + idempotencyKey** — order saga must pass the same idempotency key from cart →
+   `POST /inventory/reservations` so Redis `SET NX` dedupes retries; extend is capped at one call per key.
+2. **`StockReadPort.batchGet`** — product PDP/search should batch variant ids (≤200); port aggregates
+   snapshots with ledger fallback when `pendingLedgerCount > 5`.
+3. **Port binding at owner module** — `InventoryServiceModule.forRoot` registers `STOCK_READ_PORT` and
+   `RESERVATION_PORT`; gateway must not re-bind stubs.
+4. **`withTransaction` + outbox** — ledger append publishes `inventory.stock-ledger-appended.v1` inside
+   the session; analytics fire post-commit only.
+5. **Threshold outbox events** — `maybeEmitThresholdEvents` uses separate transactions post-append
+   (acceptable for MVP; P9 may want coalescing).
+6. **CLI bootstrap** — `inventory-transfer.cli.ts` uses standalone `InventoryServiceModule` context;
+   full Mongo/outbox wiring may require gateway `AppModule` for production ops runbooks.
 
 ## 7. Versions captured
 
-Captured via `pnpm ls --depth=0 --filter @lotusgift/inventory-service` after PR-18 lockfile sync:
+Captured via `pnpm ls --depth=0 --filter @lotusgift/inventory-service` on 2026-05-16 post-merge:
 
 ```text
-(captured post-install)
+@lotusgift/inventory-service@0.0.0
+@nestjs/mongoose 11.0.4
+@nestjs/schedule 6.1.3
+@upstash/redis 1.38.0
+nestjs-zod 5.3.0
+zod 4.4.3
+mongoose 8.23.0
+lru-cache 11.3.6
+typescript 5.9.2
+jest 30.3.0
 ```
-
-To be filled after the local smoke run.
