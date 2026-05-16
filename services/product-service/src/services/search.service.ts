@@ -70,8 +70,15 @@ export class SearchService {
     const filter: Record<string, unknown> = { status: 'PUBLISHED' };
 
     if (query.q && query.q.length > 0) {
+      // `searchTerms` is built lowercased in `atlas-search-sync.service.ts`
+      // and we lowercase the query here, so the ASCII case-folding is
+      // already handled. `$options: 'i'` makes the case-insensitive
+      // contract explicit (locale-safe for future Hindi / Devanagari
+      // content where `String.prototype.toLowerCase()` is a no-op) and
+      // protects future contributors who might add a writer to
+      // `searchTerms` without remembering to lowercase it.
       const escaped = this.escapeRegex(query.q.toLowerCase().trim());
-      filter.searchTerms = { $regex: escaped };
+      filter.searchTerms = { $regex: escaped, $options: 'i' };
     }
     if (query.occasion && query.occasion.length > 0) {
       filter.occasions = { $in: query.occasion };

@@ -87,13 +87,13 @@ describe('SearchService', () => {
     expect(result.facets.customizable.false).toBe(1);
   });
 
-  it('applies the q substring filter via $regex', async () => {
+  it('applies the q substring filter via case-insensitive $regex', async () => {
     countDocuments.mockResolvedValue(0);
     aggregate.mockResolvedValue([{}]);
     await service.search({ q: 'mug', page: 1, limit: 20 });
     const [filter] = find.mock.calls[0] as [Record<string, unknown>];
     expect(filter.status).toBe('PUBLISHED');
-    expect(filter.searchTerms).toEqual({ $regex: 'mug' });
+    expect(filter.searchTerms).toEqual({ $regex: 'mug', $options: 'i' });
   });
 
   it('applies multi-value facet filters via $in', async () => {

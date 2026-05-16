@@ -155,4 +155,87 @@ describe('VariantService', () => {
       service.removeVariant({ productId: 'p1', variantId: 'absent', actorId: 'u1' }),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('updates a variant inside a transaction + emits product.variant-updated.v1', async () => {
+    const product = makeProduct({
+      variants: [
+        {
+          id: 'va1',
+          sku: 'TEABOX-BLACK-M',
+          attributes: { color: 'Black', size: 'M' },
+          pricePaise: 50_000,
+          weightGrams: 500,
+          dimensionsMm: { lengthMm: 200, widthMm: 100, heightMm: 80 },
+          barcode: null,
+          enabled: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+    });
+    findOne.mockResolvedValue(product);
+    await service.updateVariant({
+      productId: 'p1',
+      variantId: 'va1',
+      patch: { pricePaise: 60_000 },
+      actorId: 'u1',
+    });
+    expect(product.variants[0].pricePaise).toBe(60_000);
+    expect(product.searchVersion).toBe(1);
+    expect(outboxPublish).toHaveBeenCalledTimes(1);
+    const [eventArg, opts] = outboxPublish.mock.calls[0] as [
+      { type: string; payload: { sku: string; productId: string } },
+      { session: unknown },
+    ];
+    expect(eventArg.type).toBe('product.variant-updated.v1');
+    expect(eventArg.payload.sku).toBe('TEABOX-BLACK-M');
+    expect(eventArg.payload.productId).toBe('p1');
+    expect(opts).toHaveProperty('session');
+    expect(product.save).toHaveBeenCalledWith(expect.objectContaining({ session: expect.anything() }));
+  });
+
+  it('removes a variant inside a transaction + emits product.variant-removed.v1', async () => {
+    const product = makeProduct({
+      status: 'DRAFT',
+      variants: [
+        {
+          id: 'va1',
+          sku: 'TEABOX-BLACK-M',
+          attributes: { color: 'Black', size: 'M' },
+          pricePaise: 50_000,
+          weightGrams: 500,
+          dimensionsMm: { lengthMm: 200, widthMm: 100, heightMm: 80 },
+          barcode: null,
+          enabled: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'va2',
+          sku: 'TEABOX-BLACK-L',
+          attributes: { color: 'Black', size: 'L' },
+          pricePaise: 55_000,
+          weightGrams: 600,
+          dimensionsMm: { lengthMm: 220, widthMm: 100, heightMm: 80 },
+          barcode: null,
+          enabled: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+    });
+    findOne.mockResolvedValue(product);
+    await service.removeVariant({ productId: 'p1', variantId: 'va1', actorId: 'u1' });
+    expect(product.variants).toHaveLength(1);
+    expect(product.variants[0].id).toBe('va2');
+    expect(outboxPublish).toHaveBeenCalledTimes(1);
+    const [eventArg, opts] = outboxPublish.mock.calls[0] as [
+      { type: string; payload: { sku: string; variantId: string } },
+      { session: unknown },
+    ];
+    expect(eventArg.type).toBe('product.variant-removed.v1');
+    expect(eventArg.payload.variantId).toBe('va1');
+    expect(eventArg.payload.sku).toBe('TEABOX-BLACK-M');
+    expect(opts).toHaveProperty('session');
+  });
 });

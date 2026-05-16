@@ -86,11 +86,89 @@ describe('AtlasSearchSyncService', () => {
     await service.onApplicationShutdown();
   });
 
-  it('subscribes to 4 outbox event types at bootstrap', () => {
+  it('subscribes to 6 outbox event types at bootstrap', () => {
     expect(handlerRegistry.has('product.published.v1')).toBe(true);
     expect(handlerRegistry.has('product.unpublished.v1')).toBe(true);
     expect(handlerRegistry.has('product.variant-added.v1')).toBe(true);
+    expect(handlerRegistry.has('product.variant-updated.v1')).toBe(true);
+    expect(handlerRegistry.has('product.variant-removed.v1')).toBe(true);
     expect(handlerRegistry.has('product.image-confirmed.v1')).toBe(true);
+  });
+
+  it('rebuilds the snapshot on product.variant-updated.v1', async () => {
+    productFindOne.mockResolvedValue({
+      id: 'p1',
+      vendorId: 'v1',
+      orgId: 'o1',
+      title: 'Black Mug',
+      slug: 'black-mug-q7hx2',
+      descriptionMd: 'A nice mug',
+      status: 'PUBLISHED',
+      categoryL1: 'drinkware',
+      categoryL2: 'mug',
+      occasions: ['birthday'],
+      recipientTypes: ['employee'],
+      customizable: false,
+      moq: 1,
+      leadTimeDays: 0,
+      basePricePaise: 50_000,
+      variants: [{ id: 'va1', pricePaise: 60_000 }],
+      ratingAggregate: { sum: 0, count: 0 },
+      searchVersion: 2,
+    });
+    const handler = handlerRegistry.get('product.variant-updated.v1');
+    expect(handler).toBeDefined();
+    await handler!({
+      type: 'product.variant-updated.v1',
+      payload: { productId: 'p1', variantId: 'va1', sku: 'TEABOX-BLACK-M', orgId: 'o1', vendorId: 'v1' },
+      idempotencyKey: 'key-updated',
+      eventId: 'e3',
+      occurredAt: new Date().toISOString(),
+    });
+    expect(indexFindOneAndUpdate).toHaveBeenCalledTimes(1);
+    const [, update] = indexFindOneAndUpdate.mock.calls[0] as [
+      unknown,
+      { $set: { minVariantPricePaise: number } },
+    ];
+    expect(update.$set.minVariantPricePaise).toBe(60_000);
+  });
+
+  it('rebuilds the snapshot on product.variant-removed.v1', async () => {
+    productFindOne.mockResolvedValue({
+      id: 'p1',
+      vendorId: 'v1',
+      orgId: 'o1',
+      title: 'Black Mug',
+      slug: 'black-mug-q7hx2',
+      descriptionMd: 'A nice mug',
+      status: 'PUBLISHED',
+      categoryL1: 'drinkware',
+      categoryL2: 'mug',
+      occasions: ['birthday'],
+      recipientTypes: ['employee'],
+      customizable: false,
+      moq: 1,
+      leadTimeDays: 0,
+      basePricePaise: 50_000,
+      variants: [{ id: 'va2', pricePaise: 55_000 }],
+      ratingAggregate: { sum: 0, count: 0 },
+      searchVersion: 3,
+    });
+    const handler = handlerRegistry.get('product.variant-removed.v1');
+    expect(handler).toBeDefined();
+    await handler!({
+      type: 'product.variant-removed.v1',
+      payload: { productId: 'p1', variantId: 'va1', sku: 'TEABOX-BLACK-M', orgId: 'o1', vendorId: 'v1' },
+      idempotencyKey: 'key-removed',
+      eventId: 'e4',
+      occurredAt: new Date().toISOString(),
+    });
+    expect(indexFindOneAndUpdate).toHaveBeenCalledTimes(1);
+    const [, update] = indexFindOneAndUpdate.mock.calls[0] as [
+      unknown,
+      { $set: { minVariantPricePaise: number } },
+    ];
+    expect(update.$set.minVariantPricePaise).toBe(55_000);
   });
 
   it('upserts the snapshot row on product.published.v1', async () => {

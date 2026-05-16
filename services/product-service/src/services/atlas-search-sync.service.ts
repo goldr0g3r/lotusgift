@@ -18,9 +18,13 @@ import {
   VendorProductPublishedV1,
   VendorProductUnpublishedV1,
   VendorProductVariantAddedV1,
+  VendorProductVariantRemovedV1,
+  VendorProductVariantUpdatedV1,
   type VendorProductPublishedV1Payload,
   type VendorProductUnpublishedV1Payload,
   type VendorProductVariantAddedV1Payload,
+  type VendorProductVariantRemovedV1Payload,
+  type VendorProductVariantUpdatedV1Payload,
 } from '@repo/events';
 
 import { PRODUCT_MODEL, type ProductDocument } from '../schemas/product.schema.js';
@@ -38,11 +42,13 @@ const log = new Logger('AtlasSearchSyncService');
  * burning into it from a public faceted-search endpoint risky at
  * launch).
  *
- * Subscribes to 4 product.* events at bootstrap; each handler is an
- * idempotent upsert keyed on `productId` so OutboxPort double-delivery
- * (LRU dedup window misses) doesn't double-write. `OnApplicationShutdown`
- * unsubscribes so re-mount during hot reload doesn't leave dangling
- * handlers.
+ * Subscribes to 6 product.* events at bootstrap (variant-updated +
+ * variant-removed added in the PR-17 Copilot review iteration so price /
+ * attribute / SKU mutations don't silently drift the snapshot); each
+ * handler is an idempotent upsert keyed on `productId` so OutboxPort
+ * double-delivery (LRU dedup window misses) doesn't double-write.
+ * `OnApplicationShutdown` unsubscribes so re-mount during hot reload
+ * doesn't leave dangling handlers.
  *
  * TODO(P21): swap `search.service.search()` read path to `$search`
  * aggregation when the cluster upgrades to M10+ per
@@ -79,12 +85,24 @@ export class AtlasSearchSyncService
       }),
     );
     this.subscriptions.push(
+      this.outbox.subscribe(VendorProductVariantUpdatedV1.name, async (event) => {
+        const payload = event.payload as VendorProductVariantUpdatedV1Payload;
+        await this.rebuildForProduct(payload.productId);
+      }),
+    );
+    this.subscriptions.push(
+      this.outbox.subscribe(VendorProductVariantRemovedV1.name, async (event) => {
+        const payload = event.payload as VendorProductVariantRemovedV1Payload;
+        await this.rebuildForProduct(payload.productId);
+      }),
+    );
+    this.subscriptions.push(
       this.outbox.subscribe(VendorProductImageConfirmedV1.name, async (event) => {
         const payload = event.payload as { productId: string };
         await this.rebuildForProduct(payload.productId);
       }),
     );
-    log.log('AtlasSearchSyncService bootstrapped — 4 outbox subscriptions active');
+    log.log('AtlasSearchSyncService bootstrapped — 6 outbox subscriptions active');
   }
 
   async onApplicationShutdown(): Promise<void> {

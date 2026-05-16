@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -82,7 +83,14 @@ export class ProductController {
   ): Promise<ReturnType<typeof mapProductToResponse>> {
     const orgId = session.activeOrganizationId;
     if (!orgId) {
-      throw new Error('Active organization required to create products');
+      // Defense-in-depth: `VendorActiveGuard` already rejects this case
+      // with the same code, but if a future refactor removes the guard
+      // we still want a proper RFC-9457 ProblemDetails response instead
+      // of a generic 500.
+      throw new ForbiddenException({
+        message: 'Active organization required to create products',
+        code: 'AUTH_FORBIDDEN',
+      });
     }
     const product = await this.products.create({
       ...(body as unknown as Parameters<ProductService['create']>[0]),

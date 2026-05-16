@@ -10,7 +10,11 @@ import { Connection, Model } from 'mongoose';
 
 import { OUTBOX_PORT, ulid, type OutboxPort } from '@repo/utils';
 import { withTransaction } from '@repo/database';
-import { VendorProductVariantAddedV1 } from '@repo/events';
+import {
+  VendorProductVariantAddedV1,
+  VendorProductVariantRemovedV1,
+  VendorProductVariantUpdatedV1,
+} from '@repo/events';
 import type { ServerAnalytics } from '@repo/analytics-sdk';
 import type { VariantCreateRequest, VariantUpdateRequest } from '@repo/validators';
 
@@ -153,7 +157,42 @@ export class VariantService {
     product.searchVersion = (product.searchVersion ?? 0) + 1;
     product.updatedBy = args.actorId;
     product.markModified('variants');
-    await product.save();
+
+    const newVersion = product.searchVersion;
+    await withTransaction(this.connection, async (session) => {
+      await product.save({ session });
+      // Publish in the same txn so `atlas-search-sync.service` rebuilds
+      // the snapshot for price / attribute / SKU rename changes — without
+      // this, `minVariantPricePaise` + `searchTerms` would silently
+      // drift from the source-of-truth product
+      // (`.cursor/rules/event-driven-discipline.mdc`).
+      await this.outbox.publish(
+        {
+          type: VendorProductVariantUpdatedV1.name,
+          idempotencyKey: `product:${product.id}:variant-updated:${args.variantId}:${newVersion}`,
+          payload: {
+            orgId: product.orgId,
+            vendorId: product.vendorId,
+            productId: product.id,
+            variantId: args.variantId,
+            sku: variant.sku,
+          },
+        },
+        { session },
+      );
+    });
+
+    this.analytics.capture({
+      distinctId: args.actorId,
+      event: 'variant updated',
+      properties: {
+        product_id: product.id,
+        variant_id: args.variantId,
+        vendor_id: product.vendorId,
+        org_id: product.orgId,
+      },
+    });
+
     return product;
   }
 
@@ -172,11 +211,56 @@ export class VariantService {
         code: 'PRODUCT_NO_VARIANTS',
       });
     }
+    const removedVariant = product.variants[idx];
+    if (!removedVariant) {
+      // Unreachable — `idx` came from `findIndex` against the same
+      // array we're indexing, but TS's `noUncheckedIndexedAccess` rule
+      // requires the guard.
+      throw new NotFoundException({
+        message: `Variant ${args.variantId} not found on product ${args.productId}`,
+        code: 'RESOURCE_NOT_FOUND',
+      });
+    }
+    const removedSku = removedVariant.sku;
     product.variants.splice(idx, 1);
     product.searchVersion = (product.searchVersion ?? 0) + 1;
     product.updatedBy = args.actorId;
     product.markModified('variants');
-    await product.save();
+
+    const newVersion = product.searchVersion;
+    await withTransaction(this.connection, async (session) => {
+      await product.save({ session });
+      // Publish in the same txn so `atlas-search-sync.service` removes
+      // the variant's price band + SKU from the snapshot — without this,
+      // the removed variant would silently keep surfacing in faceted
+      // search at its old price band.
+      await this.outbox.publish(
+        {
+          type: VendorProductVariantRemovedV1.name,
+          idempotencyKey: `product:${product.id}:variant-removed:${args.variantId}:${newVersion}`,
+          payload: {
+            orgId: product.orgId,
+            vendorId: product.vendorId,
+            productId: product.id,
+            variantId: args.variantId,
+            sku: removedSku,
+          },
+        },
+        { session },
+      );
+    });
+
+    this.analytics.capture({
+      distinctId: args.actorId,
+      event: 'variant removed',
+      properties: {
+        product_id: product.id,
+        variant_id: args.variantId,
+        vendor_id: product.vendorId,
+        org_id: product.orgId,
+      },
+    });
+
     return product;
   }
 

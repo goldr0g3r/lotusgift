@@ -6,6 +6,8 @@ import {
   VendorProductReviewApprovedV1,
   VendorProductUnpublishedV1,
   VendorProductVariantAddedV1,
+  VendorProductVariantRemovedV1,
+  VendorProductVariantUpdatedV1,
 } from './index.js';
 
 /**
@@ -82,6 +84,36 @@ describe('product events', () => {
     });
     expect(parsed.payload.sku).toBe('TEABOX-BLACK-M');
     expect(parsed.payload.attributes.color).toBe('Black');
+  });
+
+  it('product.variant-updated.v1 round-trip', () => {
+    const parsed = VendorProductVariantUpdatedV1.schema.parse({
+      ...baseEnvelope('product.variant-updated.v1'),
+      payload: {
+        orgId: ulid(),
+        vendorId: ulid(),
+        productId: ulid(),
+        variantId: ulid(),
+        sku: 'TEABOX-BLACK-M',
+      },
+    });
+    expect(parsed.type).toBe('product.variant-updated.v1');
+    expect(parsed.payload.sku).toBe('TEABOX-BLACK-M');
+  });
+
+  it('product.variant-removed.v1 round-trip', () => {
+    const parsed = VendorProductVariantRemovedV1.schema.parse({
+      ...baseEnvelope('product.variant-removed.v1'),
+      payload: {
+        orgId: ulid(),
+        vendorId: ulid(),
+        productId: ulid(),
+        variantId: ulid(),
+        sku: 'TEABOX-BLACK-M',
+      },
+    });
+    expect(parsed.type).toBe('product.variant-removed.v1');
+    expect(parsed.payload.sku).toBe('TEABOX-BLACK-M');
   });
 
   it('product.image-confirmed.v1 round-trip', () => {

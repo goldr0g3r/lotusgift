@@ -20,4 +20,3 @@ export type { DefinedEvent } from './builders.js';
 // the matching subpath shell + adds it to the top-level barrel).
 export * from './vendor/index.js';
 export * from './product/index.js';
-export * from './product/index.js';

@@ -8,7 +8,6 @@ import { loadEnv, type Env } from '@repo/config';
 import { STOCK_READ_PORT, StubStockReadPort } from '@repo/utils';
 import { AuthServiceModule } from '@lotusgift/auth-service';
 import { ProductServiceModule } from '@lotusgift/product-service';
-import { VendorServiceModule } from '@lotusgift/vendor-service';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
@@ -53,15 +52,15 @@ const env: Env = loadEnv(process.env);
     // the @Global() wrapper the AppModule-scoped provider isn't visible
     // to imported children.
     OutboxModule,
-    // Same forRoot(env) pattern as AuthServiceModule —
-    // VendorServiceModule's GeocoderService + PostHog analytics factory
-    // inject the typed `Env`.
-    VendorServiceModule.forRoot(env),
     // ProductServiceModule (P7) — corporate-gifting taxonomy + R2
     // presigned image uploads + Atlas Search snapshot sync + admin
-    // review moderation. Imports VendorServiceModule internally via
-    // its own forRoot(env) call so `VendorActiveGuard` can resolve
-    // `VendorService` (cross-module dependency legal per P7 D13).
+    // review moderation. Transitively imports `VendorServiceModule.forRoot(env)`
+    // (P7 D13 cross-service-port pattern) — registering VendorServiceModule
+    // here as well would call `forRoot` twice and duplicate every Mongo
+    // schema + PostHog shutdown hook. The transitive import registers
+    // all `VendorServiceModule` controllers (`VendorController`,
+    // `OnboardingController`, etc.) at the gateway scope, so the public
+    // vendor REST surface stays available.
     ProductServiceModule.forRoot(env),
     LinksModule,
   ],
