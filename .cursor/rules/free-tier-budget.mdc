@@ -10,7 +10,7 @@ LotusGift v2 ships on free tiers until revenue justifies an upgrade. Every cloud
 ## Do
 
 - Cite the live free-tier docs page (with retrieval date) in the research note that introduces the service.
-- Stay within: Atlas M0 (1 cluster · 3 search indexes · 3KB index def · <2M docs · <10GB), Oracle A1.Flex 4 OCPU+24GB ARM, Upstash Redis (10k cmds/day), Vercel Hobby, PostHog Cloud (1M events/mo), Cloudflare R2 (free egress).
+- Stay within: Atlas M0 (1 cluster · 3 search indexes · 3KB index def · <2M docs · <10GB), Oracle A1.Flex 4 OCPU+24GB ARM, Upstash Redis (500K commands/month · per-second peak 10k cmds · 256 MB data · 1 database · 10 GB monthly bandwidth — retrieved 2026-05-16 from https://upstash.com/docs/redis/overall/pricing), Vercel Hobby, PostHog Cloud (1M events/mo), Cloudflare R2 (free egress).
 - Run the burn cron weekly (`.github/workflows/free-tier-burn.yml`) and act on its output.
 
 ## Don't
@@ -26,6 +26,7 @@ LotusGift v2 ships on free tiers until revenue justifies an upgrade. Every cloud
 - MongoDB Atlas M0 — 1 cluster, 3 Atlas Search indexes (allocated to products,
   vendors, orders), retrieved 2026-05-12 from https://www.mongodb.com/docs/atlas/atlas-search/about/feature-compatibility/
 - Oracle A1.Flex — 4 OCPU + 24 GB RAM, retrieved 2026-05-12.
+- Upstash Redis — 500K commands/month (≈16k/day average); per-second peak 10k cmds; 256 MB data; 1 database; 10 GB monthly bandwidth, retrieved 2026-05-16 from https://upstash.com/docs/redis/overall/pricing
 ```
 
 ## References

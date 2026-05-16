@@ -48,3 +48,6 @@ export * from './vendor/index.js';
 // Product catalog + variant + R2 image + search + review schemas (P7 —
 // populates the empty P2 shell).
 export * from './product/index.js';
+
+// Inventory ledger + reservations + availability schemas (P8).
+export * from './inventory/index.js';

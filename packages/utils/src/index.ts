@@ -34,3 +34,19 @@ export {
   type StockReadPort,
   type StockSnapshot,
 } from './stock-read-port.js';
+
+export {
+  RESERVATION_PORT,
+  StubReservationPort,
+  type ReservationPort,
+  type ReservationExtendInput,
+  type ReservationReleaseInput,
+  type ReservationReserveInput,
+  type ReservationResult,
+  type ReservationSnapshot,
+} from './reservation-port.js';
+
+export {
+  RedisStockReadPort,
+  createRedisStockReadPort,
+} from './redis-stock-read-port.js';

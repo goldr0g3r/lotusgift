@@ -5,8 +5,8 @@ import { LoggerModule } from 'nestjs-pino';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { loadEnv, type Env } from '@repo/config';
-import { STOCK_READ_PORT, StubStockReadPort } from '@repo/utils';
 import { AuthServiceModule } from '@lotusgift/auth-service';
+import { InventoryServiceModule } from '@lotusgift/inventory-service';
 import { ProductServiceModule } from '@lotusgift/product-service';
 
 import { AppController } from './app.controller.js';
@@ -62,6 +62,9 @@ const env: Env = loadEnv(process.env);
     // `OnboardingController`, etc.) at the gateway scope, so the public
     // vendor REST surface stays available.
     ProductServiceModule.forRoot(env),
+    // P8 inventory-service — stock ledger + Redis reservations +
+    // `RedisStockReadPort` binding (replaces gateway-level StubStockReadPort).
+    InventoryServiceModule.forRoot(env),
     LinksModule,
   ],
   controllers: [AppController, HealthController],
@@ -71,11 +74,6 @@ const env: Env = loadEnv(process.env);
     { provide: APP_FILTER, useClass: GlobalProblemDetailsFilter },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
-    // First formalized cross-module port (P7 D12). Binds the stub at
-    // MVP; P8 inventory-service swaps in `RedisStockReadPort` by
-    // changing only this `useClass` entry. Documented in
-    // `docs/architecture/cross-service-contracts.md`.
-    { provide: STOCK_READ_PORT, useClass: StubStockReadPort },
   ],
 })
 export class AppModule implements NestModule {
