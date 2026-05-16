@@ -44,3 +44,7 @@ export type { LotusGiftErrorCode, ProblemDetails, ProblemDetailsFieldError } fro
 
 // Vendor + warehouse + KYC schemas (P6 — populates the empty P2 shell).
 export * from './vendor/index.js';
+
+// Product catalog + variant + R2 image + search + review schemas (P7 —
+// populates the empty P2 shell).
+export * from './product/index.js';

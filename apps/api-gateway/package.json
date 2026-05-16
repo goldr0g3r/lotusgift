@@ -21,6 +21,7 @@
     "@nestjs/platform-express": "^11.1.11",
     "@nestjs/swagger": "^11.2.1",
     "@lotusgift/auth-service": "workspace:*",
+    "@lotusgift/product-service": "workspace:*",
     "@lotusgift/vendor-service": "workspace:*",
     "@repo/api": "workspace:*",
     "@repo/analytics-sdk": "workspace:*",

@@ -14,6 +14,7 @@ Each `services/<name>` Nest library must be **swap-out-able to its own process**
 
 - **Reads** → call the gateway's typed client at `@repo/api/internal` (Kubb-emitted, internally namespaced).
 - **Writes** → publish an outbox event via `OutboxPort.publish(event, { transactionId })` in the same Mongo transaction.
+- **Public-surface re-use (P7 D12/D13 exception)** → importing from a sibling service's **package public surface** (`@lotusgift/<service>`, resolving to `services/<service>/src/index.ts`) IS allowed when re-using shared decorators (`RequireRole`, `RoleGuard`) or read-only service classes (`VendorService.getByOrgId()` for ownership guards). Reaching past `index.ts` into internal paths is still forbidden. The `dep-cruiser` `no-cross-service-import` rule enforces the index.ts boundary explicitly.
 
 ## Do
 

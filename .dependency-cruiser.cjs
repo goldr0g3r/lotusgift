@@ -103,13 +103,27 @@ module.exports = {
       name: "no-cross-service-import",
       severity: "error",
       comment:
-        "L4 services MUST NOT directly import another service. Read via @repo/api/internal (Kubb client); write via OutboxPort events. See .cursor/rules/microservice-boundaries.mdc.",
+        "L4 services MUST NOT reach into another service's internals. Imports that resolve to a sibling service's `src/index.ts` (the public package surface) ARE allowed — that's the explicit contract. Anything deeper is a layering violation; use @repo/api/internal for cross-service reads or OutboxPort for writes. See .cursor/rules/microservice-boundaries.mdc + phase-7 D12/D13 for the public-surface exception.",
       from: {
         path: "^services/([^/]+)/",
+        pathNot: "\\.(spec|test)\\.[jt]sx?$",
       },
       to: {
         path: "^services/([^/]+)/",
-        pathNot: "^services/$1/",
+        pathNot: ["^services/$1/", "^services/[^/]+/src/index\\.ts$"],
+      },
+    },
+    {
+      name: "no-cross-service-import-test",
+      severity: "warn",
+      comment:
+        "Cross-service imports in test files (e.g. importing fixtures, types, or stubs) are tolerated as a warning rather than an error — tests SHOULD prefer the package public surface (services/*/src/index.ts) but legacy tests are grandfathered until the next test-overhaul PR.",
+      from: {
+        path: "^services/([^/]+)/.*\\.(spec|test)\\.[jt]sx?$",
+      },
+      to: {
+        path: "^services/([^/]+)/",
+        pathNot: ["^services/$1/", "^services/[^/]+/src/index\\.ts$"],
       },
     },
     {

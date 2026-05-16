@@ -61,3 +61,27 @@ export type {
   WarehouseOwnerType,
   WeekdayKey,
 } from './india.js';
+
+export {
+  BRANDING_AREA_KEYS,
+  IMAGE_KIND_KEYS,
+  PRODUCT_CATEGORY_L1_KEYS,
+  PRODUCT_CATEGORY_L1_TO_L2,
+  PRODUCT_CATEGORY_L2_KEYS,
+  PRODUCT_OCCASIONS,
+  PRODUCT_STATUS_KEYS,
+  RECIPIENT_TYPES,
+  REVIEW_STATUS_KEYS,
+} from './product.js';
+export type {
+  BrandingArea,
+  HsnCode,
+  ImageKind,
+  ProductCategoryL1,
+  ProductCategoryL2,
+  ProductOccasion,
+  ProductStatus,
+  R2ImageKey,
+  RecipientType,
+  ReviewStatus,
+} from './product.js';

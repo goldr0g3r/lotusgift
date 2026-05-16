@@ -77,6 +77,27 @@ const baseEnv = z
     R2_BUCKET: z.string().optional(),
     R2_ENDPOINT: z.string().url().optional(),
 
+    // ---- Cloudflare R2 product images (P7 product-service) ----
+    // R2 is S3-compatible per https://developers.cloudflare.com/r2/api/s3/presigned-urls/
+    // The product-service issues presigned PUT URLs with a 15-min default expiry
+    // and a 5 MB max content-length (per phase-7 D17 — JPEG/PNG/WebP only, no SVG
+    // for XSS surface, no AVIF until Cloudflare Images transcoding ships per
+    // docs/runbooks/scaling-up.md).
+    R2_BUCKET_PRODUCT_IMAGES: z.string().optional(),
+    R2_PRESIGN_EXPIRY_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(60)
+      .max(604_800)
+      .default(900),
+    R2_MAX_IMAGE_SIZE_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1_024)
+      .max(50 * 1024 * 1024)
+      .default(5_242_880),
+    R2_PUBLIC_BASE_URL: z.string().url().optional(),
+
     // ---- OpenTelemetry → Grafana Cloud (P3) ----
     OTEL_SERVICE_NAME: z.string().default('lotusgift-api'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
@@ -147,6 +168,38 @@ const baseEnv = z
         path: ['NOMINATIM_USER_AGENT'],
         message:
           'NOMINATIM_USER_AGENT must be set to a contact-identifying value in production per OSM policy (https://operations.osmfoundation.org/policies/nominatim/)',
+      });
+    }
+    // R2 product-image upload prerequisites — every value must be set in production
+    // before the product-service can issue presigned URLs.
+    if (!env.R2_ENDPOINT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['R2_ENDPOINT'],
+        message:
+          'R2_ENDPOINT must be set in production to enable Cloudflare R2 presigned image uploads (P7 product-service)',
+      });
+    }
+    if (!env.R2_ACCESS_KEY_ID) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['R2_ACCESS_KEY_ID'],
+        message: 'R2_ACCESS_KEY_ID must be set in production for R2 presigned uploads',
+      });
+    }
+    if (!env.R2_SECRET_ACCESS_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['R2_SECRET_ACCESS_KEY'],
+        message: 'R2_SECRET_ACCESS_KEY must be set in production for R2 presigned uploads',
+      });
+    }
+    if (!env.R2_BUCKET_PRODUCT_IMAGES && !env.R2_BUCKET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['R2_BUCKET_PRODUCT_IMAGES'],
+        message:
+          'R2_BUCKET_PRODUCT_IMAGES (or R2_BUCKET fallback) must be set in production for the product-service image upload flow',
       });
     }
   });
