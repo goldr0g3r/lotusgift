@@ -17,9 +17,20 @@ This doc captures the cross-module ports as they're formalized phase-by-phase. E
 | **Interface** | `StockReadPort` in `packages/utils/src/stock-read-port.ts` |
 | **DI token** | `STOCK_READ_PORT = Symbol.for('@repo/utils#StockReadPort')` |
 | **Stub** | `StubStockReadPort` (returns `{ available: 0, reserved: 0, updatedAt: ISO-now }` for every variantId) |
-| **Bound at** | `apps/api-gateway/src/app.module.ts` — `{ provide: STOCK_READ_PORT, useClass: StubStockReadPort }` |
+| **Bound at** | `@Global() InventoryServiceModule.forRoot(env)` — `{ provide: STOCK_READ_PORT, useFactory: … RedisStockReadPort }` (PR-18; replaces gateway-level `StubStockReadPort`) |
 | **Consumer** | `services/product-service/src/services/product.service.ts` — `@Inject(STOCK_READ_PORT) stock: StockReadPort` populates the `availableStock` field on `ProductResponse` |
-| **Real impl ships in** | **P8 inventory-service** — `RedisStockReadPort` (Redis `SUNION` of per-warehouse on-hand counts + Mongo aggregate); the gateway DI binding flips `useClass: StubStockReadPort → useClass: RedisStockReadPort` at P8 |
+| **Real impl** | **P8 inventory-service (PR-18)** — `RedisStockReadPort` (Mongo snapshot aggregate + live `ReservationPort.peek()`); gateway no longer binds the stub at `app.module.ts` |
+
+### `ReservationPort` — P8 (PR-18) — produced by inventory-service
+
+| | |
+|---|---|
+| **Interface** | `ReservationPort` in `packages/utils/src/reservation-port.ts` |
+| **DI token** | `RESERVATION_PORT = Symbol.for('@repo/utils#ReservationPort')` |
+| **Stub** | `StubReservationPort` (returns `{ ok: true, … }` for every reserve call) |
+| **Bound at** | `@Global() InventoryServiceModule.forRoot(env)` — factory chooses `RedisReservationService` when Upstash env vars are set, else `InMemoryReservationService` (dev / CI) |
+| **Consumer (future)** | P9 order-service saga — `reserve` at cart checkout, `extend` at payment-auth, `release` + ledger consume at capture |
+| **Real impl** | `RedisReservationService` (`SET NX EX`) + `InMemoryReservationService` fallback per D21 |
 
 #### Method signature
 
@@ -43,6 +54,7 @@ Every requested `variantId` is present in the returned `Map` with `{ available: 
 
 | Port | Token | Stub | Producer phase | Consumer phases |
 |---|---|---|---|---|
+| `LedgerReadPort` | `LEDGER_READ_PORT` (proposed) | returns empty ledger page | P8 inventory-service (already has HTTP `GET /api/inventory/ledger`) | P9 order-service (reconciliation / chargeback) — TBD in P9 sub-plan |
 | `ShippingRateReadPort` | `SHIPPING_RATE_READ_PORT` | returns empty quote map | P11 shipping-service | P9 order-service (cart shipping estimate) + P16 web-customer (PDP "ships from" hint) |
 | `TaxComputePort` | `TAX_COMPUTE_PORT` | returns 0% GST + null HSN-validation | P13 tax-service | P9 order-service (order-line tax) + P10 payment-service (invoice total) |
 | `PaymentCapturePort` | `PAYMENT_CAPTURE_PORT` | always returns `{ status: 'failed', reason: 'STUB' }` | P10 payment-service | P9 order-service (order-saga capture step) |

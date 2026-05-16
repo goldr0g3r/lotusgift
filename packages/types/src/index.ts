@@ -85,3 +85,16 @@ export type {
   RecipientType,
   ReviewStatus,
 } from './product.js';
+
+export {
+  DEFAULT_RESERVATION_TTL_SEC,
+  RESERVATION_STATUS_KEYS,
+  RESERVATION_TTL_MAX_EXTENSIONS,
+  STOCK_LEDGER_REASONS,
+} from './inventory.js';
+export type {
+  LedgerEntryId,
+  ReservationId,
+  ReservationStatusKey,
+  StockLedgerReason,
+} from './inventory.js';

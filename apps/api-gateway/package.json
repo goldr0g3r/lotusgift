@@ -12,7 +12,8 @@
     "test:watch": "jest --watch",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "inventory:transfer": "node --import tsx ../../services/inventory-service/src/cli/inventory-transfer.cli.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.11",
@@ -21,6 +22,7 @@
     "@nestjs/platform-express": "^11.1.11",
     "@nestjs/swagger": "^11.2.1",
     "@lotusgift/auth-service": "workspace:*",
+    "@lotusgift/inventory-service": "workspace:*",
     "@lotusgift/product-service": "workspace:*",
     "@lotusgift/vendor-service": "workspace:*",
     "@repo/api": "workspace:*",

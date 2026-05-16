@@ -121,6 +121,30 @@ const baseEnv = z
       .default('https://nominatim.openstreetmap.org/search'),
     NOMINATIM_USER_AGENT: z.string().min(1).default('LotusGift-v2-Dev/0.1'),
     GEOCODE_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(2_592_000).default(86_400),
+
+    // ---- Inventory service (P8) ----
+    INVENTORY_RESERVATION_TTL_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(60)
+      .max(3_600)
+      .default(900),
+    INVENTORY_DEAD_STOCK_WINDOW_DAYS: z.coerce.number().int().min(30).max(90).default(60),
+    INVENTORY_DEFAULT_REORDER_POINT: z.coerce.number().int().min(0).default(5),
+    INVENTORY_DEFAULT_REORDER_QTY: z.coerce.number().int().min(1).default(50),
+    INVENTORY_DEFAULT_LOW_STOCK_THRESHOLD: z.coerce.number().int().min(0).default(10),
+    INVENTORY_RESERVATION_SWEEPER_INTERVAL_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(30)
+      .max(300)
+      .default(60),
+    INVENTORY_BATCH_AVAILABILITY_MAX_VARIANTS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(500)
+      .default(200),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;
