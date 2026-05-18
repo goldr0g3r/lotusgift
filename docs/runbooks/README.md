@@ -1,6 +1,11 @@
-# LotusGift v2 runbooks
+# Runbooks
 
-> Index of operational runbooks. Grouped by lifecycle phase. Each entry has a one-line summary + estimated time to execute end-to-end.
+**Audience**: on-call ops + phase lead (@goldr0g3r)
+**Phase**: P0 (bootstrap) → P22 (production operations)
+**Last reviewed**: 2026-05-18
+**Owner**: @goldr0g3r
+
+Operational procedures for recurring situations. One runbook per situation.
 
 For the architecture context, start at the parent plan: [`.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md`](../../.cursor/plans/lotusgift_v2_architecture_rebuild_512d4adf.plan.md).
 
@@ -11,6 +16,7 @@ For the architecture context, start at the parent plan: [`.cursor/plans/lotusgif
 | Runbook | When | Time |
 | --- | --- | --- |
 | [`github-setup.md`](github-setup.md) | Fresh contributor or recreated repo. Flips visibility public, provisions PAT, sets up Projects v2 board, milestones + labels, branch protection. | ~15 min |
+| [`project-views-setup.md`](project-views-setup.md) | **Manual** — create 8 GitHub Projects v2 views + Sprint iterations + PROJECTS_PAT secret. API doesn't support view creation. | ~15 min |
 | [`local-development.md`](local-development.md) | Fresh contributor workstation. Host-install Mongo + Redis (preferred) or docker compose (fallback). | ~15 min |
 | [`oracle-deploy.md`](oracle-deploy.md) | Fresh Oracle Always Free A1.Flex VM. End-to-end provisioning + nginx + Certbot + systemd + first deploy + GitHub Actions wire-up. | ~60 min |
 

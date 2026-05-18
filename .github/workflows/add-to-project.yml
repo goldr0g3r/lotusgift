@@ -1,0 +1,29 @@
+name: Add to project
+
+# Auto-adds every newly opened issue + PR to the LotusGift project (number 9).
+# Custom field values (Phase, Type, Priority, Workstream, Estimate, Start Date, Target Date)
+# are set separately -- by hand, by scripts/refresh-project-fields-and-items.ps1, or by the
+# agent that opened the issue/PR.
+
+on:
+  issues:
+    types: [opened, reopened]
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  issues: read
+  pull-requests: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  add-to-project:
+    name: Add to LotusGift project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: https://github.com/users/goldr0g3r/projects/9
+          github-token: ${{ secrets.PROJECTS_PAT }}

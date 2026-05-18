@@ -1,0 +1,70 @@
+name: Design Discovery
+description: Frontend Design Discovery awaiting user direction-pick per .github/instructions/design-discovery.instructions.md.
+title: 'Design: <app> — <page-family>'
+labels: ['type/design-discovery', 'design-discovery-review']
+assignees: ['goldr0g3r']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before any frontend PR lands for a page family, a Design Discovery must present ≥2 wireframe directions (LTR if applicable) and be approved. Open this issue to track the direction-pick.
+  - type: input
+    id: app
+    attributes:
+      label: App
+      description: Which app does this page family belong to?
+      placeholder: 'web-customer / web-vendor / web-admin / web-customer-service'
+    validations:
+      required: true
+  - type: input
+    id: page_family
+    attributes:
+      label: Page family
+      description: Name of the page family (e.g., Catalog, Cart, Checkout, Dashboard).
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target phase
+      options:
+        - Phase 16 - Web Customer App
+        - Phase 17 - Web Vendor App
+        - Phase 18 - Web Admin App
+        - Phase 19 - Web Customer Service App
+    validations:
+      required: true
+  - type: textarea
+    id: directions
+    attributes:
+      label: Direction summary
+      description: Brief description of each proposed direction.
+      placeholder: |
+        - **Direction A — <name>**: <one-line description>
+        - **Direction B — <name>**: <one-line description>
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Key constraints
+      description: Per .github/instructions/ rules.
+      value: |
+        - [ ] Uses `@repo/ui` Radix wrappers (no ad-hoc dialogs / dropdowns / popovers).
+        - [ ] Uses `@repo/design-tokens` (no hard-coded colour / spacing / type).
+        - [ ] CSS Modules + Sass only — no Tailwind.
+        - [ ] WCAG 2.2 AA verified via `@axe-core/playwright`.
+        - [ ] Wireframes committed under `docs/design/wireframes/`.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] User picks a direction.
+        - [ ] "Direction locked" addendum committed to the Design Discovery doc.
+        - [ ] Wireframes committed.
+        - [ ] Implementation PR opens ONLY after this issue is closed as approved.
+    validations:
+      required: true
